@@ -1,406 +1,4289 @@
 [
-  {"id": "1.1", "title": "Matrix Multiplication from Scratch", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.2", "title": "Vector Dot Product", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.3", "title": "L1 Norm (Manhattan Distance)", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.4", "title": "L2 Norm (Euclidean Distance)", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.5", "title": "Cosine Similarity", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch", "embeddings"]},
-  {"id": "1.6", "title": "Cosine Similarity Matrix (Batch)", "difficulty": "Medium", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch", "embeddings"]},
-  {"id": "1.7", "title": "Matrix Transpose", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.8", "title": "Matrix Inverse (2x2 and Gauss-Jordan)", "difficulty": "Medium", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.9", "title": "Eigenvalue Decomposition (Power Iteration)", "difficulty": "Medium", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.10", "title": "Singular Value Decomposition (Conceptual)", "difficulty": "Hard", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.11", "title": "Solve Linear System (Gaussian Elimination)", "difficulty": "Medium", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.12", "title": "Hadamard (Element-wise) Product", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.13", "title": "Outer Product", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.14", "title": "Frobenius Norm", "difficulty": "Easy", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.15", "title": "Pairwise Distance Matrix", "difficulty": "Medium", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "1.16", "title": "Orthogonal Projection", "difficulty": "Medium", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.17", "title": "Gram-Schmidt Orthogonalization", "difficulty": "Medium", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "1.18", "title": "Determinant (Recursive and LU)", "difficulty": "Medium", "category": "Linear Algebra & Matrix Operations", "tags": ["numpy", "from-scratch"]},
-  {"id": "2.1", "title": "Mean, Variance, Std from Scratch", "difficulty": "Easy", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.2", "title": "Covariance Matrix", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.3", "title": "Pearson Correlation Coefficient", "difficulty": "Easy", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.4", "title": "KL Divergence", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "information-theory"]},
-  {"id": "2.5", "title": "Jensen-Shannon Divergence", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "information-theory"]},
-  {"id": "2.6", "title": "Entropy and Cross-Entropy", "difficulty": "Easy", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "information-theory"]},
-  {"id": "2.7", "title": "Mutual Information", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "information-theory"]},
-  {"id": "2.8", "title": "Gaussian PDF and Log-Likelihood", "difficulty": "Easy", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.9", "title": "Multivariate Gaussian PDF", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.10", "title": "Maximum Likelihood Estimation (Gaussian)", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.11", "title": "Bayesian Inference (Conjugate Prior)", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.12", "title": "Bootstrap Confidence Interval", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.13", "title": "Permutation Test", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.14", "title": "Kernel Density Estimation", "difficulty": "Medium", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "2.15", "title": "Sampling from Discrete Distribution", "difficulty": "Easy", "category": "Probability & Statistics", "tags": ["numpy", "from-scratch", "statistics"]},
-  {"id": "3.1", "title": "Linear Regression (Closed-Form)", "difficulty": "Easy", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.2", "title": "Linear Regression (Gradient Descent)", "difficulty": "Easy", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "3.3", "title": "Logistic Regression", "difficulty": "Medium", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "3.4", "title": "Softmax Regression (Multinomial LR)", "difficulty": "Medium", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.5", "title": "K-Nearest Neighbors (KNN)", "difficulty": "Easy", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.6", "title": "Weighted KNN", "difficulty": "Easy", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.7", "title": "Decision Tree (CART) Classification", "difficulty": "Hard", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.8", "title": "Decision Tree Regression", "difficulty": "Medium", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.9", "title": "Naive Bayes (Gaussian)", "difficulty": "Medium", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.10", "title": "Naive Bayes (Multinomial)", "difficulty": "Medium", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "3.11", "title": "Support Vector Machine (Linear, Hinge Loss)", "difficulty": "Hard", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.12", "title": "Kernel SVM (RBF Kernel)", "difficulty": "Hard", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.13", "title": "Perceptron", "difficulty": "Easy", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.14", "title": "Ridge Regression (L2-Regularized)", "difficulty": "Easy", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "3.15", "title": "Lasso Regression (L1-Regularized)", "difficulty": "Medium", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "3.16", "title": "Elastic Net", "difficulty": "Medium", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "3.17", "title": "Polynomial Regression", "difficulty": "Easy", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.18", "title": "Gaussian Mixture Model (EM)", "difficulty": "Hard", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.19", "title": "Hidden Markov Model (Viterbi)", "difficulty": "Hard", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "3.20", "title": "K-Means++ Initialization", "difficulty": "Medium", "category": "Classic ML Algorithms", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.1", "title": "Single Neuron Forward Pass", "difficulty": "Easy", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.2", "title": "MLP Forward Pass", "difficulty": "Easy", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.3", "title": "Backpropagation (2-Layer Net)", "difficulty": "Hard", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "4.4", "title": "Backpropagation (Arbitrary Depth)", "difficulty": "Hard", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "4.5", "title": "Automatic Differentiation (Scalar)", "difficulty": "Hard", "category": "Neural Network Fundamentals", "tags": ["from-scratch"]},
-  {"id": "4.6", "title": "Xavier/Glorot Initialization", "difficulty": "Easy", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.7", "title": "He/Kaiming Initialization", "difficulty": "Easy", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.8", "title": "Layer Normalization", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.9", "title": "Batch Normalization", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.10", "title": "Group Normalization", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.11", "title": "RMSNorm", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.12", "title": "Dropout", "difficulty": "Easy", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "4.13", "title": "Residual Connection", "difficulty": "Easy", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.14", "title": "Skip Connection with Projection", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch"]},
-  {"id": "4.15", "title": "PyTorch nn.Module from Scratch", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["pytorch"]},
-  {"id": "4.16", "title": "PyTorch Training Loop", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["pytorch"]},
-  {"id": "4.17", "title": "PyTorch Custom Dataset and DataLoader", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["pytorch"]},
-  {"id": "4.18", "title": "Gradient Checking (Numerical)", "difficulty": "Medium", "category": "Neural Network Fundamentals", "tags": ["numpy", "from-scratch", "debugging"]},
-  {"id": "5.1", "title": "Sigmoid", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.2", "title": "Sigmoid Derivative", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.3", "title": "Tanh and Derivative", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.4", "title": "ReLU and Derivative", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.5", "title": "Leaky ReLU", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.6", "title": "ELU", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.7", "title": "GELU", "difficulty": "Medium", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.8", "title": "Swish / SiLU", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.9", "title": "Softmax", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.10", "title": "Log-Softmax", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.11", "title": "Binary Cross-Entropy", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.12", "title": "Categorical Cross-Entropy", "difficulty": "Medium", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.13", "title": "MSE Loss", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.14", "title": "MAE Loss", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.15", "title": "Huber Loss", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.16", "title": "Focal Loss", "difficulty": "Medium", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "5.17", "title": "Triplet Loss", "difficulty": "Medium", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch", "metric-learning"]},
-  {"id": "5.18", "title": "Contrastive Loss", "difficulty": "Medium", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch", "metric-learning"]},
-  {"id": "5.19", "title": "InfoNCE Loss", "difficulty": "Hard", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch", "contrastive"]},
-  {"id": "5.20", "title": "Hinge Loss", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.21", "title": "KL Divergence Loss", "difficulty": "Easy", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.22", "title": "Label Smoothing Cross-Entropy", "difficulty": "Medium", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch"]},
-  {"id": "5.23", "title": "CTC Loss (Simplified)", "difficulty": "Hard", "category": "Activation Functions & Loss Functions", "tags": ["numpy", "from-scratch", "sequence"]},
-  {"id": "6.1", "title": "Vanilla SGD", "difficulty": "Easy", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.2", "title": "SGD with Momentum", "difficulty": "Easy", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.3", "title": "Nesterov Accelerated Gradient", "difficulty": "Medium", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.4", "title": "Adagrad", "difficulty": "Medium", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.5", "title": "RMSProp", "difficulty": "Medium", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.6", "title": "Adam Optimizer", "difficulty": "Medium", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.7", "title": "AdamW", "difficulty": "Medium", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.8", "title": "Cosine Annealing LR", "difficulty": "Easy", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.9", "title": "Step Decay LR", "difficulty": "Easy", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.10", "title": "Linear Warmup + Decay", "difficulty": "Easy", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.11", "title": "Gradient Clipping (Norm)", "difficulty": "Easy", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.12", "title": "Gradient Clipping (Value)", "difficulty": "Easy", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "6.13", "title": "Learning Rate Finder", "difficulty": "Medium", "category": "Optimization Algorithms", "tags": ["pytorch", "optimization"]},
-  {"id": "6.14", "title": "Gradient Accumulation", "difficulty": "Medium", "category": "Optimization Algorithms", "tags": ["pytorch", "optimization"]},
-  {"id": "6.15", "title": "LAMB Optimizer", "difficulty": "Hard", "category": "Optimization Algorithms", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "7.1", "title": "L2 Regularization", "difficulty": "Easy", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "7.2", "title": "L1 Regularization", "difficulty": "Easy", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "7.3", "title": "Elastic Net Penalty", "difficulty": "Easy", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "7.4", "title": "Dropout (Inverted)", "difficulty": "Easy", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "7.5", "title": "DropConnect", "difficulty": "Medium", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "7.6", "title": "Data Augmentation (Images)", "difficulty": "Medium", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "cv", "regularization"]},
-  {"id": "7.7", "title": "Mixup", "difficulty": "Medium", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "7.8", "title": "CutMix", "difficulty": "Medium", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "cv", "regularization"]},
-  {"id": "7.9", "title": "Early Stopping", "difficulty": "Easy", "category": "Regularization & Generalization", "tags": ["from-scratch", "regularization"]},
-  {"id": "7.10", "title": "K-Fold Cross Validation", "difficulty": "Medium", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "7.11", "title": "Spectral Normalization", "difficulty": "Hard", "category": "Regularization & Generalization", "tags": ["numpy", "from-scratch", "regularization"]},
-  {"id": "8.1", "title": "Conv2D Forward Pass", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.2", "title": "Conv2D with im2col", "difficulty": "Hard", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.3", "title": "Conv1D Forward Pass", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch"]},
-  {"id": "8.4", "title": "Max Pooling 2D", "difficulty": "Easy", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.5", "title": "Average Pooling 2D", "difficulty": "Easy", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.6", "title": "Global Average Pooling", "difficulty": "Easy", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.7", "title": "Depthwise Separable Conv", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv", "on-device"]},
-  {"id": "8.8", "title": "Dilated Convolution", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.9", "title": "Transposed Convolution", "difficulty": "Hard", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.10", "title": "Residual Block (ResNet)", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.11", "title": "Bottleneck Block", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.12", "title": "Squeeze-and-Excitation Block", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.13", "title": "Output Size Calculator", "difficulty": "Easy", "category": "Convolutional Neural Networks", "tags": ["from-scratch", "cv"]},
-  {"id": "8.14", "title": "Parameter Count Calculator", "difficulty": "Easy", "category": "Convolutional Neural Networks", "tags": ["from-scratch", "cv"]},
-  {"id": "8.15", "title": "FLOPs Calculator", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["from-scratch", "cv", "on-device"]},
-  {"id": "8.16", "title": "BatchNorm for Conv", "difficulty": "Medium", "category": "Convolutional Neural Networks", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "8.17", "title": "Feature Map Visualization", "difficulty": "Easy", "category": "Convolutional Neural Networks", "tags": ["pytorch", "cv", "debugging"]},
-  {"id": "9.1", "title": "Vanilla RNN Cell", "difficulty": "Medium", "category": "Recurrent Neural Networks", "tags": ["numpy", "from-scratch", "sequence"]},
-  {"id": "9.2", "title": "RNN Forward (Full Sequence)", "difficulty": "Medium", "category": "Recurrent Neural Networks", "tags": ["numpy", "from-scratch", "sequence"]},
-  {"id": "9.3", "title": "LSTM Cell", "difficulty": "Medium", "category": "Recurrent Neural Networks", "tags": ["numpy", "from-scratch", "sequence"]},
-  {"id": "9.4", "title": "GRU Cell", "difficulty": "Medium", "category": "Recurrent Neural Networks", "tags": ["numpy", "from-scratch", "sequence"]},
-  {"id": "9.5", "title": "Bidirectional RNN", "difficulty": "Medium", "category": "Recurrent Neural Networks", "tags": ["numpy", "from-scratch", "sequence"]},
-  {"id": "9.6", "title": "Seq2Seq (Encoder-Decoder)", "difficulty": "Hard", "category": "Recurrent Neural Networks", "tags": ["numpy", "from-scratch", "sequence", "nlp"]},
-  {"id": "9.7", "title": "Backpropagation Through Time", "difficulty": "Hard", "category": "Recurrent Neural Networks", "tags": ["numpy", "from-scratch", "sequence", "optimization"]},
-  {"id": "9.8", "title": "Char-Level Language Model", "difficulty": "Hard", "category": "Recurrent Neural Networks", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "9.9", "title": "RNN in PyTorch", "difficulty": "Medium", "category": "Recurrent Neural Networks", "tags": ["pytorch", "sequence", "nlp"]},
-  {"id": "10.1", "title": "Scaled Dot-Product Attention", "difficulty": "Medium", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.2", "title": "Multi-Head Attention", "difficulty": "Medium", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.3", "title": "Causal Masking", "difficulty": "Medium", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.4", "title": "Cross-Attention", "difficulty": "Medium", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.5", "title": "Sinusoidal Positional Encoding", "difficulty": "Medium", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.6", "title": "Rotary Position Embeddings (RoPE)", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.7", "title": "Learned Positional Embeddings", "difficulty": "Easy", "category": "Attention & Transformers", "tags": ["pytorch"]},
-  {"id": "10.8", "title": "Transformer Encoder Block", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.9", "title": "Transformer Decoder Block", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.10", "title": "KV Cache", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "10.11", "title": "Grouped Query Attention (GQA)", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "10.12", "title": "Multi-Query Attention (MQA)", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "10.13", "title": "Flash Attention (Conceptual)", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "10.14", "title": "Sliding Window Attention", "difficulty": "Medium", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch", "optimization"]},
-  {"id": "10.15", "title": "ALiBi Position Bias", "difficulty": "Medium", "category": "Attention & Transformers", "tags": ["numpy", "from-scratch"]},
-  {"id": "10.16", "title": "Full Transformer in PyTorch", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["pytorch", "from-scratch"]},
-  {"id": "10.17", "title": "GPT-style Decoder-Only", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["pytorch", "from-scratch", "nlp"]},
-  {"id": "10.18", "title": "BERT-style Encoder + MLM", "difficulty": "Hard", "category": "Attention & Transformers", "tags": ["pytorch", "from-scratch", "nlp"]},
-  {"id": "11.1", "title": "Simple Vector Index", "difficulty": "Easy", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "11.2", "title": "KNN Search", "difficulty": "Easy", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "11.3", "title": "LSH", "difficulty": "Hard", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "11.4", "title": "HNSW Greedy Search", "difficulty": "Hard", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "11.5", "title": "Product Quantization", "difficulty": "Hard", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "retrieval", "compression"]},
-  {"id": "11.6", "title": "Inverted File Index (IVF)", "difficulty": "Hard", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "11.7", "title": "Word2Vec Skip-Gram", "difficulty": "Medium", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "nlp", "embeddings"]},
-  {"id": "11.8", "title": "Word2Vec CBOW", "difficulty": "Medium", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "nlp", "embeddings"]},
-  {"id": "11.9", "title": "GloVe Loss", "difficulty": "Medium", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "nlp", "embeddings"]},
-  {"id": "11.10", "title": "Sentence Embedding (Mean Pool)", "difficulty": "Easy", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "nlp", "embeddings"]},
-  {"id": "11.11", "title": "Sentence Embedding (CLS Token)", "difficulty": "Easy", "category": "Embeddings & Similarity Search", "tags": ["pytorch", "nlp", "embeddings"]},
-  {"id": "11.12", "title": "Embedding Lookup Table", "difficulty": "Easy", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "embeddings"]},
-  {"id": "11.13", "title": "L2 Normalize Embeddings", "difficulty": "Easy", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "embeddings"]},
-  {"id": "11.14", "title": "ColBERT MaxSim", "difficulty": "Medium", "category": "Embeddings & Similarity Search", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "11.15", "title": "Two-Tower Model", "difficulty": "Medium", "category": "Embeddings & Similarity Search", "tags": ["pytorch", "retrieval", "embeddings"]},
-  {"id": "12.1", "title": "TF-IDF", "difficulty": "Easy", "category": "Information Retrieval", "tags": ["numpy", "from-scratch", "retrieval", "nlp"]},
-  {"id": "12.2", "title": "BM25", "difficulty": "Medium", "category": "Information Retrieval", "tags": ["numpy", "from-scratch", "retrieval", "nlp"]},
-  {"id": "12.3", "title": "Reciprocal Rank Fusion", "difficulty": "Easy", "category": "Information Retrieval", "tags": ["from-scratch", "retrieval"]},
-  {"id": "12.4", "title": "Inverted Index", "difficulty": "Medium", "category": "Information Retrieval", "tags": ["from-scratch", "retrieval", "nlp"]},
-  {"id": "12.5", "title": "Boolean Retrieval", "difficulty": "Medium", "category": "Information Retrieval", "tags": ["from-scratch", "retrieval", "nlp"]},
-  {"id": "12.6", "title": "MMR", "difficulty": "Medium", "category": "Information Retrieval", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "12.7", "title": "Hybrid Search", "difficulty": "Medium", "category": "Information Retrieval", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "12.8", "title": "Query Expansion", "difficulty": "Medium", "category": "Information Retrieval", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "12.9", "title": "Cross-Encoder Reranker", "difficulty": "Medium", "category": "Information Retrieval", "tags": ["pytorch", "retrieval", "nlp"]},
-  {"id": "12.10", "title": "Sliding Window Chunking", "difficulty": "Easy", "category": "Information Retrieval", "tags": ["from-scratch", "retrieval", "nlp"]},
-  {"id": "12.11", "title": "Hierarchical Retrieval", "difficulty": "Medium", "category": "Information Retrieval", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "12.12", "title": "BM25F", "difficulty": "Hard", "category": "Information Retrieval", "tags": ["numpy", "from-scratch", "retrieval", "nlp"]},
-  {"id": "13.1", "title": "Accuracy", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "13.2", "title": "Precision, Recall, F1 (Binary)", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "13.3", "title": "Precision, Recall, F1 (Multi-class)", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "13.4", "title": "Confusion Matrix", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "13.5", "title": "ROC Curve and AUC", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "13.6", "title": "PR Curve and AP", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "13.7", "title": "mAP", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "13.8", "title": "Recall@K", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "13.9", "title": "Precision@K", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "13.10", "title": "NDCG", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "13.11", "title": "MRR", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "retrieval"]},
-  {"id": "13.12", "title": "BLEU Score", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["from-scratch", "nlp"]},
-  {"id": "13.13", "title": "ROUGE Score", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["from-scratch", "nlp"]},
-  {"id": "13.14", "title": "Perplexity", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "13.15", "title": "IoU", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "13.16", "title": "mAP for Object Detection", "difficulty": "Hard", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "13.17", "title": "Silhouette Score", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "13.18", "title": "R-Squared", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "13.19", "title": "Log Loss", "difficulty": "Easy", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "13.20", "title": "Cohen's Kappa", "difficulty": "Medium", "category": "Evaluation Metrics", "tags": ["numpy", "from-scratch"]},
-  {"id": "14.1", "title": "Contrastive Loss (Siamese)", "difficulty": "Medium", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "metric-learning"]},
-  {"id": "14.2", "title": "Triplet Loss", "difficulty": "Medium", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "metric-learning"]},
-  {"id": "14.3", "title": "Batch Hard Triplet Mining", "difficulty": "Hard", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "metric-learning"]},
-  {"id": "14.4", "title": "Batch All Triplet Loss", "difficulty": "Hard", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "metric-learning"]},
-  {"id": "14.5", "title": "InfoNCE / NT-Xent (SimCLR)", "difficulty": "Hard", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "contrastive"]},
-  {"id": "14.6", "title": "CLIP-style Contrastive Loss", "difficulty": "Hard", "category": "Contrastive Learning", "tags": ["numpy", "pytorch", "contrastive", "multimodal"]},
-  {"id": "14.7", "title": "Supervised Contrastive Loss", "difficulty": "Hard", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "contrastive"]},
-  {"id": "14.8", "title": "SimCLR Augmentation Pipeline", "difficulty": "Medium", "category": "Contrastive Learning", "tags": ["pytorch", "contrastive", "cv"]},
-  {"id": "14.9", "title": "Cosine Embedding Loss", "difficulty": "Easy", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "metric-learning"]},
-  {"id": "14.10", "title": "Center Loss", "difficulty": "Medium", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "metric-learning"]},
-  {"id": "14.11", "title": "ArcFace Loss", "difficulty": "Hard", "category": "Contrastive Learning", "tags": ["numpy", "from-scratch", "metric-learning", "cv"]},
-  {"id": "15.1", "title": "BPE Tokenizer", "difficulty": "Hard", "category": "NLP", "tags": ["from-scratch", "nlp"]},
-  {"id": "15.2", "title": "WordPiece Tokenizer", "difficulty": "Hard", "category": "NLP", "tags": ["from-scratch", "nlp"]},
-  {"id": "15.3", "title": "N-gram Language Model", "difficulty": "Medium", "category": "NLP", "tags": ["from-scratch", "nlp"]},
-  {"id": "15.4", "title": "Text Preprocessing Pipeline", "difficulty": "Easy", "category": "NLP", "tags": ["from-scratch", "nlp"]},
-  {"id": "15.5", "title": "Bag-of-Words", "difficulty": "Easy", "category": "NLP", "tags": ["from-scratch", "nlp"]},
-  {"id": "15.6", "title": "Beam Search Decoding", "difficulty": "Medium", "category": "NLP", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "15.7", "title": "Greedy Decoding", "difficulty": "Easy", "category": "NLP", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "15.8", "title": "Temperature Sampling", "difficulty": "Easy", "category": "NLP", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "15.9", "title": "Top-K Sampling", "difficulty": "Easy", "category": "NLP", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "15.10", "title": "Top-P (Nucleus) Sampling", "difficulty": "Medium", "category": "NLP", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "15.11", "title": "NER (BiLSTM-CRF)", "difficulty": "Hard", "category": "NLP", "tags": ["pytorch", "nlp", "sequence"]},
-  {"id": "15.12", "title": "Text Classification (CNN)", "difficulty": "Medium", "category": "NLP", "tags": ["pytorch", "nlp", "cv"]},
-  {"id": "15.13", "title": "Attention-based Text Classification", "difficulty": "Medium", "category": "NLP", "tags": ["pytorch", "nlp"]},
-  {"id": "15.14", "title": "Intent Detection Classifier", "difficulty": "Medium", "category": "NLP", "tags": ["pytorch", "nlp"]},
-  {"id": "15.15", "title": "Masked Language Model Training Step", "difficulty": "Medium", "category": "NLP", "tags": ["pytorch", "nlp"]},
-  {"id": "15.16", "title": "Causal Language Model Training Step", "difficulty": "Medium", "category": "NLP", "tags": ["pytorch", "nlp"]},
-  {"id": "15.17", "title": "Edit Distance (Levenshtein)", "difficulty": "Medium", "category": "NLP", "tags": ["from-scratch", "nlp"]},
-  {"id": "15.18", "title": "Longest Common Subsequence", "difficulty": "Medium", "category": "NLP", "tags": ["from-scratch", "nlp"]},
-  {"id": "15.19", "title": "Sequence Padding and Masking", "difficulty": "Easy", "category": "NLP", "tags": ["numpy", "from-scratch", "nlp"]},
-  {"id": "16.1", "title": "Image Resizing (Bilinear)", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.2", "title": "Image Convolution (2D Filter)", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.3", "title": "Gaussian Blur", "difficulty": "Easy", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.4", "title": "Sobel Edge Detection", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.5", "title": "Non-Maximum Suppression", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.6", "title": "Soft-NMS", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.7", "title": "Anchor Box Generation", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.8", "title": "ROI Pooling", "difficulty": "Hard", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.9", "title": "Image Normalization", "difficulty": "Easy", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.10", "title": "Data Augmentation (Crop + Flip)", "difficulty": "Easy", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.11", "title": "Color Jitter", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.12", "title": "Histogram Equalization", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "from-scratch", "cv"]},
-  {"id": "16.13", "title": "FPN Feature Pyramid Neck", "difficulty": "Hard", "category": "Computer Vision", "tags": ["pytorch", "from-scratch", "cv"]},
-  {"id": "16.14", "title": "YOLO-style Grid Detection Head", "difficulty": "Hard", "category": "Computer Vision", "tags": ["pytorch", "cv"]},
-  {"id": "16.15", "title": "Patch Embedding (ViT)", "difficulty": "Medium", "category": "Computer Vision", "tags": ["numpy", "pytorch", "from-scratch", "cv"]},
-  {"id": "17.1", "title": "Bagging", "difficulty": "Medium", "category": "Ensemble Methods", "tags": ["numpy", "from-scratch"]},
-  {"id": "17.2", "title": "Random Forest", "difficulty": "Hard", "category": "Ensemble Methods", "tags": ["numpy", "from-scratch"]},
-  {"id": "17.3", "title": "Gradient Boosting", "difficulty": "Hard", "category": "Ensemble Methods", "tags": ["numpy", "from-scratch"]},
-  {"id": "17.4", "title": "AdaBoost", "difficulty": "Hard", "category": "Ensemble Methods", "tags": ["numpy", "from-scratch"]},
-  {"id": "17.5", "title": "Stacking", "difficulty": "Medium", "category": "Ensemble Methods", "tags": ["numpy", "from-scratch"]},
-  {"id": "17.6", "title": "Majority Voting Ensemble", "difficulty": "Easy", "category": "Ensemble Methods", "tags": ["numpy", "from-scratch"]},
-  {"id": "17.7", "title": "Weighted Ensemble", "difficulty": "Easy", "category": "Ensemble Methods", "tags": ["numpy", "from-scratch"]},
-  {"id": "18.1", "title": "PCA", "difficulty": "Medium", "category": "Dimensionality Reduction", "tags": ["numpy", "from-scratch"]},
-  {"id": "18.2", "title": "PCA with SVD", "difficulty": "Medium", "category": "Dimensionality Reduction", "tags": ["numpy", "from-scratch"]},
-  {"id": "18.3", "title": "Incremental PCA", "difficulty": "Hard", "category": "Dimensionality Reduction", "tags": ["numpy", "from-scratch"]},
-  {"id": "18.4", "title": "t-SNE (Simplified)", "difficulty": "Hard", "category": "Dimensionality Reduction", "tags": ["numpy", "from-scratch", "visualization"]},
-  {"id": "18.5", "title": "UMAP (Simplified)", "difficulty": "Hard", "category": "Dimensionality Reduction", "tags": ["numpy", "from-scratch", "visualization"]},
-  {"id": "18.6", "title": "LDA", "difficulty": "Medium", "category": "Dimensionality Reduction", "tags": ["numpy", "from-scratch"]},
-  {"id": "18.7", "title": "Random Projection", "difficulty": "Medium", "category": "Dimensionality Reduction", "tags": ["numpy", "from-scratch"]},
-  {"id": "18.8", "title": "Autoencoder", "difficulty": "Medium", "category": "Dimensionality Reduction", "tags": ["pytorch", "from-scratch"]},
-  {"id": "18.9", "title": "Kernel PCA", "difficulty": "Hard", "category": "Dimensionality Reduction", "tags": ["numpy", "from-scratch"]},
-  {"id": "19.1", "title": "K-Means", "difficulty": "Medium", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "19.2", "title": "K-Means++ Initialization", "difficulty": "Medium", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "19.3", "title": "Mini-Batch K-Means", "difficulty": "Medium", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "19.4", "title": "DBSCAN", "difficulty": "Hard", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "19.5", "title": "Hierarchical Clustering", "difficulty": "Medium", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "19.6", "title": "Gaussian Mixture Model (EM)", "difficulty": "Hard", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "19.7", "title": "Spectral Clustering", "difficulty": "Hard", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "19.8", "title": "Elbow Method", "difficulty": "Easy", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "19.9", "title": "Mean Shift", "difficulty": "Hard", "category": "Clustering", "tags": ["numpy", "from-scratch", "clustering"]},
-  {"id": "20.1", "title": "Mini-Batch Data Loader", "difficulty": "Easy", "category": "Training Infrastructure", "tags": ["from-scratch"]},
-  {"id": "20.2", "title": "Stratified Batch Sampler", "difficulty": "Medium", "category": "Training Infrastructure", "tags": ["from-scratch"]},
-  {"id": "20.3", "title": "Learning Rate Scheduler", "difficulty": "Easy", "category": "Training Infrastructure", "tags": ["from-scratch", "optimization"]},
-  {"id": "20.4", "title": "Early Stopping with Patience", "difficulty": "Easy", "category": "Training Infrastructure", "tags": ["from-scratch"]},
-  {"id": "20.5", "title": "Model Checkpointing", "difficulty": "Easy", "category": "Training Infrastructure", "tags": ["pytorch"]},
-  {"id": "20.6", "title": "Training Logger", "difficulty": "Easy", "category": "Training Infrastructure", "tags": ["from-scratch"]},
-  {"id": "20.7", "title": "Gradient Accumulation Training Loop", "difficulty": "Medium", "category": "Training Infrastructure", "tags": ["pytorch", "optimization"]},
-  {"id": "20.8", "title": "Mixed Precision Training", "difficulty": "Medium", "category": "Training Infrastructure", "tags": ["pytorch", "optimization"]},
-  {"id": "20.9", "title": "K-Fold CV Trainer", "difficulty": "Medium", "category": "Training Infrastructure", "tags": ["pytorch", "from-scratch"]},
-  {"id": "20.10", "title": "EMA of Weights", "difficulty": "Medium", "category": "Training Infrastructure", "tags": ["pytorch", "optimization"]},
-  {"id": "20.11", "title": "Data Preprocessing Pipeline", "difficulty": "Easy", "category": "Training Infrastructure", "tags": ["from-scratch"]},
-  {"id": "20.12", "title": "Weighted Random Sampler", "difficulty": "Medium", "category": "Training Infrastructure", "tags": ["from-scratch"]},
-  {"id": "20.13", "title": "Curriculum Learning Scheduler", "difficulty": "Medium", "category": "Training Infrastructure", "tags": ["from-scratch"]},
-  {"id": "20.14", "title": "Label Smoothing", "difficulty": "Easy", "category": "Training Infrastructure", "tags": ["numpy", "from-scratch"]},
-  {"id": "21.1", "title": "Symmetric Quantization", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["numpy", "from-scratch", "on-device"]},
-  {"id": "21.2", "title": "Asymmetric Quantization", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["numpy", "from-scratch", "on-device"]},
-  {"id": "21.3", "title": "Per-Channel Quantization", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["numpy", "from-scratch", "on-device"]},
-  {"id": "21.4", "title": "Dynamic Quantization", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["pytorch", "on-device"]},
-  {"id": "21.5", "title": "Magnitude Pruning", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["numpy", "from-scratch", "on-device"]},
-  {"id": "21.6", "title": "Structured Pruning", "difficulty": "Hard", "category": "On-Device / Model Compression", "tags": ["pytorch", "on-device"]},
-  {"id": "21.7", "title": "Knowledge Distillation Loss", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["numpy", "pytorch", "from-scratch", "on-device"]},
-  {"id": "21.8", "title": "Model Size Estimator", "difficulty": "Easy", "category": "On-Device / Model Compression", "tags": ["from-scratch", "on-device"]},
-  {"id": "21.9", "title": "Low-Rank Factorization", "difficulty": "Hard", "category": "On-Device / Model Compression", "tags": ["numpy", "from-scratch", "on-device"]},
-  {"id": "21.10", "title": "Weight Sharing", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["numpy", "from-scratch", "on-device"]},
-  {"id": "21.11", "title": "FLOP Counter", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["from-scratch", "on-device"]},
-  {"id": "21.12", "title": "Latency Estimation", "difficulty": "Medium", "category": "On-Device / Model Compression", "tags": ["from-scratch", "on-device"]},
-  {"id": "21.13", "title": "Token Merging (ToMe)", "difficulty": "Hard", "category": "On-Device / Model Compression", "tags": ["pytorch", "on-device", "cv"]},
-  {"id": "22.1", "title": "Memory Store with Importance + Decay", "difficulty": "Medium", "category": "Memory Systems", "tags": ["from-scratch", "memory"]},
-  {"id": "22.2", "title": "Memory Consolidation", "difficulty": "Medium", "category": "Memory Systems", "tags": ["from-scratch", "memory"]},
-  {"id": "22.3", "title": "Memory Deduplication", "difficulty": "Medium", "category": "Memory Systems", "tags": ["numpy", "from-scratch", "memory"]},
-  {"id": "22.4", "title": "Memory Conflict Resolution", "difficulty": "Medium", "category": "Memory Systems", "tags": ["from-scratch", "memory"]},
-  {"id": "22.5", "title": "Sliding Window with Rolling Summary", "difficulty": "Medium", "category": "Memory Systems", "tags": ["from-scratch", "memory", "nlp"]},
-  {"id": "22.6", "title": "RAG Pipeline", "difficulty": "Medium", "category": "Memory Systems", "tags": ["pytorch", "retrieval", "nlp", "memory"]},
-  {"id": "22.7", "title": "Multi-Signal Memory Retrieval", "difficulty": "Medium", "category": "Memory Systems", "tags": ["numpy", "from-scratch", "memory", "retrieval"]},
-  {"id": "22.8", "title": "Episodic Memory Buffer", "difficulty": "Medium", "category": "Memory Systems", "tags": ["from-scratch", "memory"]},
-  {"id": "22.9", "title": "Hierarchical Memory", "difficulty": "Hard", "category": "Memory Systems", "tags": ["from-scratch", "memory"]},
-  {"id": "22.10", "title": "Context Window Token Counter", "difficulty": "Easy", "category": "Memory Systems", "tags": ["from-scratch", "nlp", "memory"]},
-  {"id": "23.1", "title": "Knowledge Graph from Triples", "difficulty": "Easy", "category": "Knowledge Graphs", "tags": ["from-scratch", "graph"]},
-  {"id": "23.2", "title": "Multi-Hop BFS on KG", "difficulty": "Medium", "category": "Knowledge Graphs", "tags": ["from-scratch", "graph"]},
-  {"id": "23.3", "title": "Shortest Path (BFS)", "difficulty": "Easy", "category": "Knowledge Graphs", "tags": ["from-scratch", "graph"]},
-  {"id": "23.4", "title": "PageRank", "difficulty": "Medium", "category": "Knowledge Graphs", "tags": ["numpy", "from-scratch", "graph"]},
-  {"id": "23.5", "title": "TransE", "difficulty": "Hard", "category": "Knowledge Graphs", "tags": ["numpy", "from-scratch", "graph", "embeddings"]},
-  {"id": "23.6", "title": "RotatE", "difficulty": "Hard", "category": "Knowledge Graphs", "tags": ["numpy", "from-scratch", "graph", "embeddings"]},
-  {"id": "23.7", "title": "Hybrid Graph + Vector Retrieval", "difficulty": "Medium", "category": "Knowledge Graphs", "tags": ["numpy", "from-scratch", "graph", "retrieval"]},
-  {"id": "23.8", "title": "Node2Vec Random Walks", "difficulty": "Medium", "category": "Knowledge Graphs", "tags": ["from-scratch", "graph", "embeddings"]},
-  {"id": "23.9", "title": "GCN Layer", "difficulty": "Hard", "category": "Knowledge Graphs", "tags": ["numpy", "pytorch", "from-scratch", "graph"]},
-  {"id": "23.10", "title": "GraphSAGE Aggregation", "difficulty": "Hard", "category": "Knowledge Graphs", "tags": ["numpy", "from-scratch", "graph"]},
-  {"id": "23.11", "title": "Community Detection", "difficulty": "Medium", "category": "Knowledge Graphs", "tags": ["from-scratch", "graph"]},
-  {"id": "23.12", "title": "KG Completion", "difficulty": "Hard", "category": "Knowledge Graphs", "tags": ["numpy", "from-scratch", "graph"]},
-  {"id": "24.1", "title": "User-Based CF", "difficulty": "Medium", "category": "Recommendation Systems", "tags": ["numpy", "from-scratch", "recsys"]},
-  {"id": "24.2", "title": "Item-Based CF", "difficulty": "Medium", "category": "Recommendation Systems", "tags": ["numpy", "from-scratch", "recsys"]},
-  {"id": "24.3", "title": "Matrix Factorization (ALS)", "difficulty": "Hard", "category": "Recommendation Systems", "tags": ["numpy", "from-scratch", "recsys"]},
-  {"id": "24.4", "title": "Matrix Factorization (SGD)", "difficulty": "Medium", "category": "Recommendation Systems", "tags": ["numpy", "from-scratch", "recsys"]},
-  {"id": "24.5", "title": "User Preference Model", "difficulty": "Medium", "category": "Recommendation Systems", "tags": ["from-scratch", "recsys"]},
-  {"id": "24.6", "title": "Content-Based Filtering", "difficulty": "Medium", "category": "Recommendation Systems", "tags": ["numpy", "from-scratch", "recsys"]},
-  {"id": "24.7", "title": "Implicit Feedback MF", "difficulty": "Hard", "category": "Recommendation Systems", "tags": ["numpy", "from-scratch", "recsys"]},
-  {"id": "24.8", "title": "Neural Collaborative Filtering", "difficulty": "Hard", "category": "Recommendation Systems", "tags": ["pytorch", "recsys"]},
-  {"id": "24.9", "title": "Two-Tower Recommendation Model", "difficulty": "Hard", "category": "Recommendation Systems", "tags": ["pytorch", "recsys", "embeddings"]},
-  {"id": "24.10", "title": "Popularity-Based Baseline", "difficulty": "Easy", "category": "Recommendation Systems", "tags": ["from-scratch", "recsys"]},
-  {"id": "24.11", "title": "Feature Extraction from User Logs", "difficulty": "Medium", "category": "Recommendation Systems", "tags": ["from-scratch", "recsys"]},
-  {"id": "24.12", "title": "Multi-Armed Bandit (Epsilon-Greedy)", "difficulty": "Medium", "category": "Recommendation Systems", "tags": ["numpy", "from-scratch", "recsys", "rl"]},
-  {"id": "24.13", "title": "Thompson Sampling", "difficulty": "Medium", "category": "Recommendation Systems", "tags": ["numpy", "from-scratch", "recsys", "rl"]},
-  {"id": "25.1", "title": "LRU Cache (OrderedDict)", "difficulty": "Medium", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "25.2", "title": "LRU Cache (DLL + HashMap)", "difficulty": "Hard", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "25.3", "title": "Trie (Prefix Tree)", "difficulty": "Medium", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures", "nlp"]},
-  {"id": "25.4", "title": "Min-Heap / Priority Queue", "difficulty": "Medium", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "25.5", "title": "Top-K Elements with Heap", "difficulty": "Easy", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "25.6", "title": "Bloom Filter", "difficulty": "Medium", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "25.7", "title": "Count-Min Sketch", "difficulty": "Medium", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "25.8", "title": "Ring Buffer", "difficulty": "Easy", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "25.9", "title": "Disjoint Set (Union-Find)", "difficulty": "Medium", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "25.10", "title": "KD-Tree", "difficulty": "Hard", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures", "retrieval"]},
-  {"id": "25.11", "title": "Reservoir Sampling", "difficulty": "Medium", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures", "statistics"]},
-  {"id": "25.12", "title": "Skip List", "difficulty": "Hard", "category": "Data Structures for ML", "tags": ["from-scratch", "data-structures"]},
-  {"id": "26.1", "title": "VAE", "difficulty": "Hard", "category": "Generative Models", "tags": ["pytorch", "from-scratch", "generative"]},
-  {"id": "26.2", "title": "VAE Loss", "difficulty": "Medium", "category": "Generative Models", "tags": ["numpy", "from-scratch", "generative"]},
-  {"id": "26.3", "title": "Reparameterization Trick", "difficulty": "Medium", "category": "Generative Models", "tags": ["numpy", "from-scratch", "generative"]},
-  {"id": "26.4", "title": "GAN Training Loop", "difficulty": "Hard", "category": "Generative Models", "tags": ["pytorch", "generative"]},
-  {"id": "26.5", "title": "GAN Loss Functions", "difficulty": "Medium", "category": "Generative Models", "tags": ["numpy", "from-scratch", "generative"]},
-  {"id": "26.6", "title": "Conditional GAN", "difficulty": "Hard", "category": "Generative Models", "tags": ["pytorch", "generative"]},
-  {"id": "26.7", "title": "DDPM Forward Process", "difficulty": "Hard", "category": "Generative Models", "tags": ["numpy", "pytorch", "from-scratch", "generative"]},
-  {"id": "26.8", "title": "DDPM Noise Schedule", "difficulty": "Medium", "category": "Generative Models", "tags": ["numpy", "from-scratch", "generative"]},
-  {"id": "26.9", "title": "Denoising Network Training Step", "difficulty": "Hard", "category": "Generative Models", "tags": ["pytorch", "generative"]},
-  {"id": "27.1", "title": "Multi-Armed Bandit (Epsilon-Greedy)", "difficulty": "Easy", "category": "RL Basics", "tags": ["numpy", "from-scratch", "rl"]},
-  {"id": "27.2", "title": "UCB1", "difficulty": "Medium", "category": "RL Basics", "tags": ["numpy", "from-scratch", "rl"]},
-  {"id": "27.3", "title": "Q-Learning (Tabular)", "difficulty": "Medium", "category": "RL Basics", "tags": ["numpy", "from-scratch", "rl"]},
-  {"id": "27.4", "title": "SARSA", "difficulty": "Medium", "category": "RL Basics", "tags": ["numpy", "from-scratch", "rl"]},
-  {"id": "27.5", "title": "Policy Gradient (REINFORCE)", "difficulty": "Hard", "category": "RL Basics", "tags": ["pytorch", "rl"]},
-  {"id": "27.6", "title": "DQN", "difficulty": "Hard", "category": "RL Basics", "tags": ["pytorch", "rl"]},
-  {"id": "27.7", "title": "Value Iteration", "difficulty": "Medium", "category": "RL Basics", "tags": ["numpy", "from-scratch", "rl"]},
-  {"id": "27.8", "title": "MCTS (Simplified)", "difficulty": "Hard", "category": "RL Basics", "tags": ["from-scratch", "rl"]},
-  {"id": "27.9", "title": "Reward Modeling (RLHF)", "difficulty": "Hard", "category": "RL Basics", "tags": ["pytorch", "rl", "nlp"]},
-  {"id": "27.10", "title": "PPO Clipped Objective", "difficulty": "Hard", "category": "RL Basics", "tags": ["pytorch", "rl"]},
-  {"id": "27.11", "title": "Discount Return Computation", "difficulty": "Easy", "category": "RL Basics", "tags": ["numpy", "from-scratch", "rl"]},
-  {"id": "27.12", "title": "GAE", "difficulty": "Hard", "category": "RL Basics", "tags": ["numpy", "from-scratch", "rl"]},
-  {"id": "28.1", "title": "Min-Max Scaling", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.2", "title": "Z-Score Standardization", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.3", "title": "Robust Scaling", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.4", "title": "One-Hot Encoding", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.5", "title": "Label Encoding", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["from-scratch", "preprocessing"]},
-  {"id": "28.6", "title": "Target Encoding", "difficulty": "Medium", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.7", "title": "Missing Value Imputation", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.8", "title": "KNN Imputation", "difficulty": "Medium", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.9", "title": "Feature Hashing", "difficulty": "Medium", "category": "Feature Engineering", "tags": ["from-scratch", "preprocessing"]},
-  {"id": "28.10", "title": "Polynomial Feature Expansion", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.11", "title": "Binning / Discretization", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.12", "title": "Log Transform and Box-Cox", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.13", "title": "TF-IDF Feature Extraction", "difficulty": "Medium", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing", "nlp"]},
-  {"id": "28.14", "title": "Principal Component Whitening", "difficulty": "Medium", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.15", "title": "Stratified Train/Test Split", "difficulty": "Easy", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "28.16", "title": "SMOTE (Simplified)", "difficulty": "Medium", "category": "Feature Engineering", "tags": ["numpy", "from-scratch", "preprocessing"]},
-  {"id": "29.1", "title": "CLIP-style Image-Text Matching", "difficulty": "Hard", "category": "Multimodal & Misc", "tags": ["pytorch", "multimodal", "contrastive"]},
-  {"id": "29.2", "title": "Vision Transformer (ViT) Minimal", "difficulty": "Hard", "category": "Multimodal & Misc", "tags": ["pytorch", "cv", "from-scratch"]},
-  {"id": "29.3", "title": "LoRA", "difficulty": "Hard", "category": "Multimodal & Misc", "tags": ["pytorch", "from-scratch", "optimization"]},
-  {"id": "29.4", "title": "Mixture of Experts (MoE) Layer", "difficulty": "Hard", "category": "Multimodal & Misc", "tags": ["pytorch", "from-scratch"]},
-  {"id": "29.5", "title": "RAG Pipeline", "difficulty": "Medium", "category": "Multimodal & Misc", "tags": ["pytorch", "retrieval", "nlp"]},
-  {"id": "29.6", "title": "Tokenizer Vocabulary Builder", "difficulty": "Medium", "category": "Multimodal & Misc", "tags": ["from-scratch", "nlp"]},
-  {"id": "29.7", "title": "Batch Inference with Dynamic Batching", "difficulty": "Medium", "category": "Multimodal & Misc", "tags": ["pytorch", "optimization"]},
-  {"id": "29.8", "title": "Speculative Decoding", "difficulty": "Hard", "category": "Multimodal & Misc", "tags": ["pytorch", "nlp", "optimization"]},
-  {"id": "29.9", "title": "Classifier-Free Guidance", "difficulty": "Hard", "category": "Multimodal & Misc", "tags": ["numpy", "from-scratch", "generative"]},
-  {"id": "29.10", "title": "DPO Loss", "difficulty": "Hard", "category": "Multimodal & Misc", "tags": ["pytorch", "rl", "nlp"]},
-  {"id": "29.11", "title": "Position-wise FFN", "difficulty": "Easy", "category": "Multimodal & Misc", "tags": ["numpy", "from-scratch"]},
-  {"id": "29.12", "title": "SwiGLU Activation", "difficulty": "Medium", "category": "Multimodal & Misc", "tags": ["numpy", "from-scratch"]}
+  {
+    "id": "1.1",
+    "title": "Matrix Multiplication from Scratch",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.2",
+    "title": "Vector Dot Product",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.3",
+    "title": "L1 Norm (Manhattan Distance)",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.4",
+    "title": "L2 Norm (Euclidean Distance)",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.5",
+    "title": "Cosine Similarity",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "1.6",
+    "title": "Cosine Similarity Matrix (Batch)",
+    "difficulty": "Medium",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "1.7",
+    "title": "Matrix Transpose",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.8",
+    "title": "Matrix Inverse (2x2 and Gauss-Jordan)",
+    "difficulty": "Medium",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.9",
+    "title": "Eigenvalue Decomposition (Power Iteration)",
+    "difficulty": "Medium",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.10",
+    "title": "Singular Value Decomposition (Conceptual)",
+    "difficulty": "Hard",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.11",
+    "title": "Solve Linear System (Gaussian Elimination)",
+    "difficulty": "Medium",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.12",
+    "title": "Hadamard (Element-wise) Product",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.13",
+    "title": "Outer Product",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.14",
+    "title": "Frobenius Norm",
+    "difficulty": "Easy",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.15",
+    "title": "Pairwise Distance Matrix",
+    "difficulty": "Medium",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "1.16",
+    "title": "Orthogonal Projection",
+    "difficulty": "Medium",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.17",
+    "title": "Gram-Schmidt Orthogonalization",
+    "difficulty": "Medium",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "1.18",
+    "title": "Determinant (Recursive and LU)",
+    "difficulty": "Medium",
+    "category": "Linear Algebra & Matrix Operations",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "2.1",
+    "title": "Mean, Variance, Std from Scratch",
+    "difficulty": "Easy",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.2",
+    "title": "Covariance Matrix",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.3",
+    "title": "Pearson Correlation Coefficient",
+    "difficulty": "Easy",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.4",
+    "title": "KL Divergence",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "information-theory"
+    ]
+  },
+  {
+    "id": "2.5",
+    "title": "Jensen-Shannon Divergence",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "information-theory"
+    ]
+  },
+  {
+    "id": "2.6",
+    "title": "Entropy and Cross-Entropy",
+    "difficulty": "Easy",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "information-theory"
+    ]
+  },
+  {
+    "id": "2.7",
+    "title": "Mutual Information",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "information-theory"
+    ]
+  },
+  {
+    "id": "2.8",
+    "title": "Gaussian PDF and Log-Likelihood",
+    "difficulty": "Easy",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.9",
+    "title": "Multivariate Gaussian PDF",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.10",
+    "title": "Maximum Likelihood Estimation (Gaussian)",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.11",
+    "title": "Bayesian Inference (Conjugate Prior)",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.12",
+    "title": "Bootstrap Confidence Interval",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.13",
+    "title": "Permutation Test",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.14",
+    "title": "Kernel Density Estimation",
+    "difficulty": "Medium",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "2.15",
+    "title": "Sampling from Discrete Distribution",
+    "difficulty": "Easy",
+    "category": "Probability & Statistics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "statistics"
+    ]
+  },
+  {
+    "id": "3.1",
+    "title": "Linear Regression (Closed-Form)",
+    "difficulty": "Easy",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.2",
+    "title": "Linear Regression (Gradient Descent)",
+    "difficulty": "Easy",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "3.3",
+    "title": "Logistic Regression",
+    "difficulty": "Medium",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "3.4",
+    "title": "Softmax Regression (Multinomial LR)",
+    "difficulty": "Medium",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.5",
+    "title": "K-Nearest Neighbors (KNN)",
+    "difficulty": "Easy",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.6",
+    "title": "Weighted KNN",
+    "difficulty": "Easy",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.7",
+    "title": "Decision Tree (CART) Classification",
+    "difficulty": "Hard",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.8",
+    "title": "Decision Tree Regression",
+    "difficulty": "Medium",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.9",
+    "title": "Naive Bayes (Gaussian)",
+    "difficulty": "Medium",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.10",
+    "title": "Naive Bayes (Multinomial)",
+    "difficulty": "Medium",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "3.11",
+    "title": "Support Vector Machine (Linear, Hinge Loss)",
+    "difficulty": "Hard",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.12",
+    "title": "Kernel SVM (RBF Kernel)",
+    "difficulty": "Hard",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.13",
+    "title": "Perceptron",
+    "difficulty": "Easy",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.14",
+    "title": "Ridge Regression (L2-Regularized)",
+    "difficulty": "Easy",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "3.15",
+    "title": "Lasso Regression (L1-Regularized)",
+    "difficulty": "Medium",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "3.16",
+    "title": "Elastic Net",
+    "difficulty": "Medium",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "3.17",
+    "title": "Polynomial Regression",
+    "difficulty": "Easy",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.18",
+    "title": "Gaussian Mixture Model (EM)",
+    "difficulty": "Hard",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.19",
+    "title": "Hidden Markov Model (Viterbi)",
+    "difficulty": "Hard",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "3.20",
+    "title": "K-Means++ Initialization",
+    "difficulty": "Medium",
+    "category": "Classic ML Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.1",
+    "title": "Single Neuron Forward Pass",
+    "difficulty": "Easy",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.2",
+    "title": "MLP Forward Pass",
+    "difficulty": "Easy",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.3",
+    "title": "Backpropagation (2-Layer Net)",
+    "difficulty": "Hard",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "4.4",
+    "title": "Backpropagation (Arbitrary Depth)",
+    "difficulty": "Hard",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "4.5",
+    "title": "Automatic Differentiation (Scalar)",
+    "difficulty": "Hard",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.6",
+    "title": "Xavier/Glorot Initialization",
+    "difficulty": "Easy",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.7",
+    "title": "He/Kaiming Initialization",
+    "difficulty": "Easy",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.8",
+    "title": "Layer Normalization",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.9",
+    "title": "Batch Normalization",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.10",
+    "title": "Group Normalization",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.11",
+    "title": "RMSNorm",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.12",
+    "title": "Dropout",
+    "difficulty": "Easy",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "4.13",
+    "title": "Residual Connection",
+    "difficulty": "Easy",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.14",
+    "title": "Skip Connection with Projection",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "4.15",
+    "title": "PyTorch nn.Module from Scratch",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "pytorch"
+    ]
+  },
+  {
+    "id": "4.16",
+    "title": "PyTorch Training Loop",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "pytorch"
+    ]
+  },
+  {
+    "id": "4.17",
+    "title": "PyTorch Custom Dataset and DataLoader",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "pytorch"
+    ]
+  },
+  {
+    "id": "4.18",
+    "title": "Gradient Checking (Numerical)",
+    "difficulty": "Medium",
+    "category": "Neural Network Fundamentals",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "debugging"
+    ]
+  },
+  {
+    "id": "5.1",
+    "title": "Sigmoid",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.2",
+    "title": "Sigmoid Derivative",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.3",
+    "title": "Tanh and Derivative",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.4",
+    "title": "ReLU and Derivative",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.5",
+    "title": "Leaky ReLU",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.6",
+    "title": "ELU",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.7",
+    "title": "GELU",
+    "difficulty": "Medium",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.8",
+    "title": "Swish / SiLU",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.9",
+    "title": "Softmax",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.10",
+    "title": "Log-Softmax",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.11",
+    "title": "Binary Cross-Entropy",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.12",
+    "title": "Categorical Cross-Entropy",
+    "difficulty": "Medium",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.13",
+    "title": "MSE Loss",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.14",
+    "title": "MAE Loss",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.15",
+    "title": "Huber Loss",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.16",
+    "title": "Focal Loss",
+    "difficulty": "Medium",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "5.17",
+    "title": "Triplet Loss",
+    "difficulty": "Medium",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning"
+    ]
+  },
+  {
+    "id": "5.18",
+    "title": "Contrastive Loss",
+    "difficulty": "Medium",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning"
+    ]
+  },
+  {
+    "id": "5.19",
+    "title": "InfoNCE Loss",
+    "difficulty": "Hard",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "contrastive"
+    ]
+  },
+  {
+    "id": "5.20",
+    "title": "Hinge Loss",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.21",
+    "title": "KL Divergence Loss",
+    "difficulty": "Easy",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.22",
+    "title": "Label Smoothing Cross-Entropy",
+    "difficulty": "Medium",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "5.23",
+    "title": "CTC Loss (Simplified)",
+    "difficulty": "Hard",
+    "category": "Activation Functions & Loss Functions",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "sequence"
+    ]
+  },
+  {
+    "id": "6.1",
+    "title": "Vanilla SGD",
+    "difficulty": "Easy",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.2",
+    "title": "SGD with Momentum",
+    "difficulty": "Easy",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.3",
+    "title": "Nesterov Accelerated Gradient",
+    "difficulty": "Medium",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.4",
+    "title": "Adagrad",
+    "difficulty": "Medium",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.5",
+    "title": "RMSProp",
+    "difficulty": "Medium",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.6",
+    "title": "Adam Optimizer",
+    "difficulty": "Medium",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.7",
+    "title": "AdamW",
+    "difficulty": "Medium",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.8",
+    "title": "Cosine Annealing LR",
+    "difficulty": "Easy",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.9",
+    "title": "Step Decay LR",
+    "difficulty": "Easy",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.10",
+    "title": "Linear Warmup + Decay",
+    "difficulty": "Easy",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.11",
+    "title": "Gradient Clipping (Norm)",
+    "difficulty": "Easy",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.12",
+    "title": "Gradient Clipping (Value)",
+    "difficulty": "Easy",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.13",
+    "title": "Learning Rate Finder",
+    "difficulty": "Medium",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "pytorch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.14",
+    "title": "Gradient Accumulation",
+    "difficulty": "Medium",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "pytorch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "6.15",
+    "title": "LAMB Optimizer",
+    "difficulty": "Hard",
+    "category": "Optimization Algorithms",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "7.1",
+    "title": "L2 Regularization",
+    "difficulty": "Easy",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.2",
+    "title": "L1 Regularization",
+    "difficulty": "Easy",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.3",
+    "title": "Elastic Net Penalty",
+    "difficulty": "Easy",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.4",
+    "title": "Dropout (Inverted)",
+    "difficulty": "Easy",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.5",
+    "title": "DropConnect",
+    "difficulty": "Medium",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.6",
+    "title": "Data Augmentation (Images)",
+    "difficulty": "Medium",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.7",
+    "title": "Mixup",
+    "difficulty": "Medium",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.8",
+    "title": "CutMix",
+    "difficulty": "Medium",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.9",
+    "title": "Early Stopping",
+    "difficulty": "Easy",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.10",
+    "title": "K-Fold Cross Validation",
+    "difficulty": "Medium",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "7.11",
+    "title": "Spectral Normalization",
+    "difficulty": "Hard",
+    "category": "Regularization & Generalization",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "regularization"
+    ]
+  },
+  {
+    "id": "8.1",
+    "title": "Conv2D Forward Pass",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.2",
+    "title": "Conv2D with im2col",
+    "difficulty": "Hard",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.3",
+    "title": "Conv1D Forward Pass",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "8.4",
+    "title": "Max Pooling 2D",
+    "difficulty": "Easy",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.5",
+    "title": "Average Pooling 2D",
+    "difficulty": "Easy",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.6",
+    "title": "Global Average Pooling",
+    "difficulty": "Easy",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.7",
+    "title": "Depthwise Separable Conv",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv",
+      "on-device"
+    ]
+  },
+  {
+    "id": "8.8",
+    "title": "Dilated Convolution",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.9",
+    "title": "Transposed Convolution",
+    "difficulty": "Hard",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.10",
+    "title": "Residual Block (ResNet)",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.11",
+    "title": "Bottleneck Block",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.12",
+    "title": "Squeeze-and-Excitation Block",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.13",
+    "title": "Output Size Calculator",
+    "difficulty": "Easy",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.14",
+    "title": "Parameter Count Calculator",
+    "difficulty": "Easy",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.15",
+    "title": "FLOPs Calculator",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "from-scratch",
+      "cv",
+      "on-device"
+    ]
+  },
+  {
+    "id": "8.16",
+    "title": "BatchNorm for Conv",
+    "difficulty": "Medium",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "8.17",
+    "title": "Feature Map Visualization",
+    "difficulty": "Easy",
+    "category": "Convolutional Neural Networks",
+    "tags": [
+      "pytorch",
+      "cv",
+      "debugging"
+    ]
+  },
+  {
+    "id": "9.1",
+    "title": "Vanilla RNN Cell",
+    "difficulty": "Medium",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "sequence"
+    ]
+  },
+  {
+    "id": "9.2",
+    "title": "RNN Forward (Full Sequence)",
+    "difficulty": "Medium",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "sequence"
+    ]
+  },
+  {
+    "id": "9.3",
+    "title": "LSTM Cell",
+    "difficulty": "Medium",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "sequence"
+    ]
+  },
+  {
+    "id": "9.4",
+    "title": "GRU Cell",
+    "difficulty": "Medium",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "sequence"
+    ]
+  },
+  {
+    "id": "9.5",
+    "title": "Bidirectional RNN",
+    "difficulty": "Medium",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "sequence"
+    ]
+  },
+  {
+    "id": "9.6",
+    "title": "Seq2Seq (Encoder-Decoder)",
+    "difficulty": "Hard",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "sequence",
+      "nlp"
+    ]
+  },
+  {
+    "id": "9.7",
+    "title": "Backpropagation Through Time",
+    "difficulty": "Hard",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "sequence",
+      "optimization"
+    ]
+  },
+  {
+    "id": "9.8",
+    "title": "Char-Level Language Model",
+    "difficulty": "Hard",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "9.9",
+    "title": "RNN in PyTorch",
+    "difficulty": "Medium",
+    "category": "Recurrent Neural Networks",
+    "tags": [
+      "pytorch",
+      "sequence",
+      "nlp"
+    ]
+  },
+  {
+    "id": "10.1",
+    "title": "Scaled Dot-Product Attention",
+    "difficulty": "Medium",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.2",
+    "title": "Multi-Head Attention",
+    "difficulty": "Medium",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.3",
+    "title": "Causal Masking",
+    "difficulty": "Medium",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.4",
+    "title": "Cross-Attention",
+    "difficulty": "Medium",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.5",
+    "title": "Sinusoidal Positional Encoding",
+    "difficulty": "Medium",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.6",
+    "title": "Rotary Position Embeddings (RoPE)",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.7",
+    "title": "Learned Positional Embeddings",
+    "difficulty": "Easy",
+    "category": "Attention & Transformers",
+    "tags": [
+      "pytorch"
+    ]
+  },
+  {
+    "id": "10.8",
+    "title": "Transformer Encoder Block",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.9",
+    "title": "Transformer Decoder Block",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.10",
+    "title": "KV Cache",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "10.11",
+    "title": "Grouped Query Attention (GQA)",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "10.12",
+    "title": "Multi-Query Attention (MQA)",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "10.13",
+    "title": "Flash Attention (Conceptual)",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "10.14",
+    "title": "Sliding Window Attention",
+    "difficulty": "Medium",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "10.15",
+    "title": "ALiBi Position Bias",
+    "difficulty": "Medium",
+    "category": "Attention & Transformers",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.16",
+    "title": "Full Transformer in PyTorch",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "pytorch",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "10.17",
+    "title": "GPT-style Decoder-Only",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "pytorch",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "10.18",
+    "title": "BERT-style Encoder + MLM",
+    "difficulty": "Hard",
+    "category": "Attention & Transformers",
+    "tags": [
+      "pytorch",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "11.1",
+    "title": "Simple Vector Index",
+    "difficulty": "Easy",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "11.2",
+    "title": "KNN Search",
+    "difficulty": "Easy",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "11.3",
+    "title": "LSH",
+    "difficulty": "Hard",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "11.4",
+    "title": "HNSW Greedy Search",
+    "difficulty": "Hard",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "11.5",
+    "title": "Product Quantization",
+    "difficulty": "Hard",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval",
+      "compression"
+    ]
+  },
+  {
+    "id": "11.6",
+    "title": "Inverted File Index (IVF)",
+    "difficulty": "Hard",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "11.7",
+    "title": "Word2Vec Skip-Gram",
+    "difficulty": "Medium",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "11.8",
+    "title": "Word2Vec CBOW",
+    "difficulty": "Medium",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "11.9",
+    "title": "GloVe Loss",
+    "difficulty": "Medium",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "11.10",
+    "title": "Sentence Embedding (Mean Pool)",
+    "difficulty": "Easy",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "11.11",
+    "title": "Sentence Embedding (CLS Token)",
+    "difficulty": "Easy",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "pytorch",
+      "nlp",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "11.12",
+    "title": "Embedding Lookup Table",
+    "difficulty": "Easy",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "11.13",
+    "title": "L2 Normalize Embeddings",
+    "difficulty": "Easy",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "11.14",
+    "title": "ColBERT MaxSim",
+    "difficulty": "Medium",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "11.15",
+    "title": "Two-Tower Model",
+    "difficulty": "Medium",
+    "category": "Embeddings & Similarity Search",
+    "tags": [
+      "pytorch",
+      "retrieval",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "12.1",
+    "title": "TF-IDF",
+    "difficulty": "Easy",
+    "category": "Information Retrieval",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval",
+      "nlp"
+    ]
+  },
+  {
+    "id": "12.2",
+    "title": "BM25",
+    "difficulty": "Medium",
+    "category": "Information Retrieval",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval",
+      "nlp"
+    ]
+  },
+  {
+    "id": "12.3",
+    "title": "Reciprocal Rank Fusion",
+    "difficulty": "Easy",
+    "category": "Information Retrieval",
+    "tags": [
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "12.4",
+    "title": "Inverted Index",
+    "difficulty": "Medium",
+    "category": "Information Retrieval",
+    "tags": [
+      "from-scratch",
+      "retrieval",
+      "nlp"
+    ]
+  },
+  {
+    "id": "12.5",
+    "title": "Boolean Retrieval",
+    "difficulty": "Medium",
+    "category": "Information Retrieval",
+    "tags": [
+      "from-scratch",
+      "retrieval",
+      "nlp"
+    ]
+  },
+  {
+    "id": "12.6",
+    "title": "MMR",
+    "difficulty": "Medium",
+    "category": "Information Retrieval",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "12.7",
+    "title": "Hybrid Search",
+    "difficulty": "Medium",
+    "category": "Information Retrieval",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "12.8",
+    "title": "Query Expansion",
+    "difficulty": "Medium",
+    "category": "Information Retrieval",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "12.9",
+    "title": "Cross-Encoder Reranker",
+    "difficulty": "Medium",
+    "category": "Information Retrieval",
+    "tags": [
+      "pytorch",
+      "retrieval",
+      "nlp"
+    ]
+  },
+  {
+    "id": "12.10",
+    "title": "Sliding Window Chunking",
+    "difficulty": "Easy",
+    "category": "Information Retrieval",
+    "tags": [
+      "from-scratch",
+      "retrieval",
+      "nlp"
+    ]
+  },
+  {
+    "id": "12.11",
+    "title": "Hierarchical Retrieval",
+    "difficulty": "Medium",
+    "category": "Information Retrieval",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "12.12",
+    "title": "BM25F",
+    "difficulty": "Hard",
+    "category": "Information Retrieval",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval",
+      "nlp"
+    ]
+  },
+  {
+    "id": "13.1",
+    "title": "Accuracy",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "13.2",
+    "title": "Precision, Recall, F1 (Binary)",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "13.3",
+    "title": "Precision, Recall, F1 (Multi-class)",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "13.4",
+    "title": "Confusion Matrix",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "13.5",
+    "title": "ROC Curve and AUC",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "13.6",
+    "title": "PR Curve and AP",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "13.7",
+    "title": "mAP",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "13.8",
+    "title": "Recall@K",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "13.9",
+    "title": "Precision@K",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "13.10",
+    "title": "NDCG",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "13.11",
+    "title": "MRR",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "13.12",
+    "title": "BLEU Score",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "13.13",
+    "title": "ROUGE Score",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "13.14",
+    "title": "Perplexity",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "13.15",
+    "title": "IoU",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "13.16",
+    "title": "mAP for Object Detection",
+    "difficulty": "Hard",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "13.17",
+    "title": "Silhouette Score",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "13.18",
+    "title": "R-Squared",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "13.19",
+    "title": "Log Loss",
+    "difficulty": "Easy",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "13.20",
+    "title": "Cohen's Kappa",
+    "difficulty": "Medium",
+    "category": "Evaluation Metrics",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "14.1",
+    "title": "Contrastive Loss (Siamese)",
+    "difficulty": "Medium",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning"
+    ]
+  },
+  {
+    "id": "14.2",
+    "title": "Triplet Loss",
+    "difficulty": "Medium",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning"
+    ]
+  },
+  {
+    "id": "14.3",
+    "title": "Batch Hard Triplet Mining",
+    "difficulty": "Hard",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning"
+    ]
+  },
+  {
+    "id": "14.4",
+    "title": "Batch All Triplet Loss",
+    "difficulty": "Hard",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning"
+    ]
+  },
+  {
+    "id": "14.5",
+    "title": "InfoNCE / NT-Xent (SimCLR)",
+    "difficulty": "Hard",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "contrastive"
+    ]
+  },
+  {
+    "id": "14.6",
+    "title": "CLIP-style Contrastive Loss",
+    "difficulty": "Hard",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "pytorch",
+      "contrastive",
+      "multimodal"
+    ]
+  },
+  {
+    "id": "14.7",
+    "title": "Supervised Contrastive Loss",
+    "difficulty": "Hard",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "contrastive"
+    ]
+  },
+  {
+    "id": "14.8",
+    "title": "SimCLR Augmentation Pipeline",
+    "difficulty": "Medium",
+    "category": "Contrastive Learning",
+    "tags": [
+      "pytorch",
+      "contrastive",
+      "cv"
+    ]
+  },
+  {
+    "id": "14.9",
+    "title": "Cosine Embedding Loss",
+    "difficulty": "Easy",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning"
+    ]
+  },
+  {
+    "id": "14.10",
+    "title": "Center Loss",
+    "difficulty": "Medium",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning"
+    ]
+  },
+  {
+    "id": "14.11",
+    "title": "ArcFace Loss",
+    "difficulty": "Hard",
+    "category": "Contrastive Learning",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "metric-learning",
+      "cv"
+    ]
+  },
+  {
+    "id": "15.1",
+    "title": "BPE Tokenizer",
+    "difficulty": "Hard",
+    "category": "NLP",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.2",
+    "title": "WordPiece Tokenizer",
+    "difficulty": "Hard",
+    "category": "NLP",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.3",
+    "title": "N-gram Language Model",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.4",
+    "title": "Text Preprocessing Pipeline",
+    "difficulty": "Easy",
+    "category": "NLP",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.5",
+    "title": "Bag-of-Words",
+    "difficulty": "Easy",
+    "category": "NLP",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.6",
+    "title": "Beam Search Decoding",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.7",
+    "title": "Greedy Decoding",
+    "difficulty": "Easy",
+    "category": "NLP",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.8",
+    "title": "Temperature Sampling",
+    "difficulty": "Easy",
+    "category": "NLP",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.9",
+    "title": "Top-K Sampling",
+    "difficulty": "Easy",
+    "category": "NLP",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.10",
+    "title": "Top-P (Nucleus) Sampling",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.11",
+    "title": "NER (BiLSTM-CRF)",
+    "difficulty": "Hard",
+    "category": "NLP",
+    "tags": [
+      "pytorch",
+      "nlp",
+      "sequence"
+    ]
+  },
+  {
+    "id": "15.12",
+    "title": "Text Classification (CNN)",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "pytorch",
+      "nlp",
+      "cv"
+    ]
+  },
+  {
+    "id": "15.13",
+    "title": "Attention-based Text Classification",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "pytorch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.14",
+    "title": "Intent Detection Classifier",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "pytorch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.15",
+    "title": "Masked Language Model Training Step",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "pytorch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.16",
+    "title": "Causal Language Model Training Step",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "pytorch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.17",
+    "title": "Edit Distance (Levenshtein)",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.18",
+    "title": "Longest Common Subsequence",
+    "difficulty": "Medium",
+    "category": "NLP",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "15.19",
+    "title": "Sequence Padding and Masking",
+    "difficulty": "Easy",
+    "category": "NLP",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "16.1",
+    "title": "Image Resizing (Bilinear)",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.2",
+    "title": "Image Convolution (2D Filter)",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.3",
+    "title": "Gaussian Blur",
+    "difficulty": "Easy",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.4",
+    "title": "Sobel Edge Detection",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.5",
+    "title": "Non-Maximum Suppression",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.6",
+    "title": "Soft-NMS",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.7",
+    "title": "Anchor Box Generation",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.8",
+    "title": "ROI Pooling",
+    "difficulty": "Hard",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.9",
+    "title": "Image Normalization",
+    "difficulty": "Easy",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.10",
+    "title": "Data Augmentation (Crop + Flip)",
+    "difficulty": "Easy",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.11",
+    "title": "Color Jitter",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.12",
+    "title": "Histogram Equalization",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.13",
+    "title": "FPN Feature Pyramid Neck",
+    "difficulty": "Hard",
+    "category": "Computer Vision",
+    "tags": [
+      "pytorch",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.14",
+    "title": "YOLO-style Grid Detection Head",
+    "difficulty": "Hard",
+    "category": "Computer Vision",
+    "tags": [
+      "pytorch",
+      "cv"
+    ]
+  },
+  {
+    "id": "16.15",
+    "title": "Patch Embedding (ViT)",
+    "difficulty": "Medium",
+    "category": "Computer Vision",
+    "tags": [
+      "numpy",
+      "pytorch",
+      "from-scratch",
+      "cv"
+    ]
+  },
+  {
+    "id": "17.1",
+    "title": "Bagging",
+    "difficulty": "Medium",
+    "category": "Ensemble Methods",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "17.2",
+    "title": "Random Forest",
+    "difficulty": "Hard",
+    "category": "Ensemble Methods",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "17.3",
+    "title": "Gradient Boosting",
+    "difficulty": "Hard",
+    "category": "Ensemble Methods",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "17.4",
+    "title": "AdaBoost",
+    "difficulty": "Hard",
+    "category": "Ensemble Methods",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "17.5",
+    "title": "Stacking",
+    "difficulty": "Medium",
+    "category": "Ensemble Methods",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "17.6",
+    "title": "Majority Voting Ensemble",
+    "difficulty": "Easy",
+    "category": "Ensemble Methods",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "17.7",
+    "title": "Weighted Ensemble",
+    "difficulty": "Easy",
+    "category": "Ensemble Methods",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "18.1",
+    "title": "PCA",
+    "difficulty": "Medium",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "18.2",
+    "title": "PCA with SVD",
+    "difficulty": "Medium",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "18.3",
+    "title": "Incremental PCA",
+    "difficulty": "Hard",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "18.4",
+    "title": "t-SNE (Simplified)",
+    "difficulty": "Hard",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "visualization"
+    ]
+  },
+  {
+    "id": "18.5",
+    "title": "UMAP (Simplified)",
+    "difficulty": "Hard",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "visualization"
+    ]
+  },
+  {
+    "id": "18.6",
+    "title": "LDA",
+    "difficulty": "Medium",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "18.7",
+    "title": "Random Projection",
+    "difficulty": "Medium",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "18.8",
+    "title": "Autoencoder",
+    "difficulty": "Medium",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "pytorch",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "18.9",
+    "title": "Kernel PCA",
+    "difficulty": "Hard",
+    "category": "Dimensionality Reduction",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "19.1",
+    "title": "K-Means",
+    "difficulty": "Medium",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "19.2",
+    "title": "K-Means++ Initialization",
+    "difficulty": "Medium",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "19.3",
+    "title": "Mini-Batch K-Means",
+    "difficulty": "Medium",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "19.4",
+    "title": "DBSCAN",
+    "difficulty": "Hard",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "19.5",
+    "title": "Hierarchical Clustering",
+    "difficulty": "Medium",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "19.6",
+    "title": "Gaussian Mixture Model (EM)",
+    "difficulty": "Hard",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "19.7",
+    "title": "Spectral Clustering",
+    "difficulty": "Hard",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "19.8",
+    "title": "Elbow Method",
+    "difficulty": "Easy",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "19.9",
+    "title": "Mean Shift",
+    "difficulty": "Hard",
+    "category": "Clustering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "clustering"
+    ]
+  },
+  {
+    "id": "20.1",
+    "title": "Mini-Batch Data Loader",
+    "difficulty": "Easy",
+    "category": "Training Infrastructure",
+    "tags": [
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "20.2",
+    "title": "Stratified Batch Sampler",
+    "difficulty": "Medium",
+    "category": "Training Infrastructure",
+    "tags": [
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "20.3",
+    "title": "Learning Rate Scheduler",
+    "difficulty": "Easy",
+    "category": "Training Infrastructure",
+    "tags": [
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "20.4",
+    "title": "Early Stopping with Patience",
+    "difficulty": "Easy",
+    "category": "Training Infrastructure",
+    "tags": [
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "20.5",
+    "title": "Model Checkpointing",
+    "difficulty": "Easy",
+    "category": "Training Infrastructure",
+    "tags": [
+      "pytorch"
+    ]
+  },
+  {
+    "id": "20.6",
+    "title": "Training Logger",
+    "difficulty": "Easy",
+    "category": "Training Infrastructure",
+    "tags": [
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "20.7",
+    "title": "Gradient Accumulation Training Loop",
+    "difficulty": "Medium",
+    "category": "Training Infrastructure",
+    "tags": [
+      "pytorch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "20.8",
+    "title": "Mixed Precision Training",
+    "difficulty": "Medium",
+    "category": "Training Infrastructure",
+    "tags": [
+      "pytorch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "20.9",
+    "title": "K-Fold CV Trainer",
+    "difficulty": "Medium",
+    "category": "Training Infrastructure",
+    "tags": [
+      "pytorch",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "20.10",
+    "title": "EMA of Weights",
+    "difficulty": "Medium",
+    "category": "Training Infrastructure",
+    "tags": [
+      "pytorch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "20.11",
+    "title": "Data Preprocessing Pipeline",
+    "difficulty": "Easy",
+    "category": "Training Infrastructure",
+    "tags": [
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "20.12",
+    "title": "Weighted Random Sampler",
+    "difficulty": "Medium",
+    "category": "Training Infrastructure",
+    "tags": [
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "20.13",
+    "title": "Curriculum Learning Scheduler",
+    "difficulty": "Medium",
+    "category": "Training Infrastructure",
+    "tags": [
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "20.14",
+    "title": "Label Smoothing",
+    "difficulty": "Easy",
+    "category": "Training Infrastructure",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "21.1",
+    "title": "Symmetric Quantization",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.2",
+    "title": "Asymmetric Quantization",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.3",
+    "title": "Per-Channel Quantization",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.4",
+    "title": "Dynamic Quantization",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "pytorch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.5",
+    "title": "Magnitude Pruning",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.6",
+    "title": "Structured Pruning",
+    "difficulty": "Hard",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "pytorch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.7",
+    "title": "Knowledge Distillation Loss",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "numpy",
+      "pytorch",
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.8",
+    "title": "Model Size Estimator",
+    "difficulty": "Easy",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.9",
+    "title": "Low-Rank Factorization",
+    "difficulty": "Hard",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.10",
+    "title": "Weight Sharing",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.11",
+    "title": "FLOP Counter",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.12",
+    "title": "Latency Estimation",
+    "difficulty": "Medium",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "from-scratch",
+      "on-device"
+    ]
+  },
+  {
+    "id": "21.13",
+    "title": "Token Merging (ToMe)",
+    "difficulty": "Hard",
+    "category": "On-Device / Model Compression",
+    "tags": [
+      "pytorch",
+      "on-device",
+      "cv"
+    ]
+  },
+  {
+    "id": "22.1",
+    "title": "Memory Store with Importance + Decay",
+    "difficulty": "Medium",
+    "category": "Memory Systems",
+    "tags": [
+      "from-scratch",
+      "memory"
+    ]
+  },
+  {
+    "id": "22.2",
+    "title": "Memory Consolidation",
+    "difficulty": "Medium",
+    "category": "Memory Systems",
+    "tags": [
+      "from-scratch",
+      "memory"
+    ]
+  },
+  {
+    "id": "22.3",
+    "title": "Memory Deduplication",
+    "difficulty": "Medium",
+    "category": "Memory Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "memory"
+    ]
+  },
+  {
+    "id": "22.4",
+    "title": "Memory Conflict Resolution",
+    "difficulty": "Medium",
+    "category": "Memory Systems",
+    "tags": [
+      "from-scratch",
+      "memory"
+    ]
+  },
+  {
+    "id": "22.5",
+    "title": "Sliding Window with Rolling Summary",
+    "difficulty": "Medium",
+    "category": "Memory Systems",
+    "tags": [
+      "from-scratch",
+      "memory",
+      "nlp"
+    ]
+  },
+  {
+    "id": "22.6",
+    "title": "RAG Pipeline",
+    "difficulty": "Medium",
+    "category": "Memory Systems",
+    "tags": [
+      "pytorch",
+      "retrieval",
+      "nlp",
+      "memory"
+    ]
+  },
+  {
+    "id": "22.7",
+    "title": "Multi-Signal Memory Retrieval",
+    "difficulty": "Medium",
+    "category": "Memory Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "memory",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "22.8",
+    "title": "Episodic Memory Buffer",
+    "difficulty": "Medium",
+    "category": "Memory Systems",
+    "tags": [
+      "from-scratch",
+      "memory"
+    ]
+  },
+  {
+    "id": "22.9",
+    "title": "Hierarchical Memory",
+    "difficulty": "Hard",
+    "category": "Memory Systems",
+    "tags": [
+      "from-scratch",
+      "memory"
+    ]
+  },
+  {
+    "id": "22.10",
+    "title": "Context Window Token Counter",
+    "difficulty": "Easy",
+    "category": "Memory Systems",
+    "tags": [
+      "from-scratch",
+      "nlp",
+      "memory"
+    ]
+  },
+  {
+    "id": "23.1",
+    "title": "Knowledge Graph from Triples",
+    "difficulty": "Easy",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "from-scratch",
+      "graph"
+    ]
+  },
+  {
+    "id": "23.2",
+    "title": "Multi-Hop BFS on KG",
+    "difficulty": "Medium",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "from-scratch",
+      "graph"
+    ]
+  },
+  {
+    "id": "23.3",
+    "title": "Shortest Path (BFS)",
+    "difficulty": "Easy",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "from-scratch",
+      "graph"
+    ]
+  },
+  {
+    "id": "23.4",
+    "title": "PageRank",
+    "difficulty": "Medium",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "graph"
+    ]
+  },
+  {
+    "id": "23.5",
+    "title": "TransE",
+    "difficulty": "Hard",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "graph",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "23.6",
+    "title": "RotatE",
+    "difficulty": "Hard",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "graph",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "23.7",
+    "title": "Hybrid Graph + Vector Retrieval",
+    "difficulty": "Medium",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "graph",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "23.8",
+    "title": "Node2Vec Random Walks",
+    "difficulty": "Medium",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "from-scratch",
+      "graph",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "23.9",
+    "title": "GCN Layer",
+    "difficulty": "Hard",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "numpy",
+      "pytorch",
+      "from-scratch",
+      "graph"
+    ]
+  },
+  {
+    "id": "23.10",
+    "title": "GraphSAGE Aggregation",
+    "difficulty": "Hard",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "graph"
+    ]
+  },
+  {
+    "id": "23.11",
+    "title": "Community Detection",
+    "difficulty": "Medium",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "from-scratch",
+      "graph"
+    ]
+  },
+  {
+    "id": "23.12",
+    "title": "KG Completion",
+    "difficulty": "Hard",
+    "category": "Knowledge Graphs",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "graph"
+    ]
+  },
+  {
+    "id": "24.1",
+    "title": "User-Based CF",
+    "difficulty": "Medium",
+    "category": "Recommendation Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.2",
+    "title": "Item-Based CF",
+    "difficulty": "Medium",
+    "category": "Recommendation Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.3",
+    "title": "Matrix Factorization (ALS)",
+    "difficulty": "Hard",
+    "category": "Recommendation Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.4",
+    "title": "Matrix Factorization (SGD)",
+    "difficulty": "Medium",
+    "category": "Recommendation Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.5",
+    "title": "User Preference Model",
+    "difficulty": "Medium",
+    "category": "Recommendation Systems",
+    "tags": [
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.6",
+    "title": "Content-Based Filtering",
+    "difficulty": "Medium",
+    "category": "Recommendation Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.7",
+    "title": "Implicit Feedback MF",
+    "difficulty": "Hard",
+    "category": "Recommendation Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.8",
+    "title": "Neural Collaborative Filtering",
+    "difficulty": "Hard",
+    "category": "Recommendation Systems",
+    "tags": [
+      "pytorch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.9",
+    "title": "Two-Tower Recommendation Model",
+    "difficulty": "Hard",
+    "category": "Recommendation Systems",
+    "tags": [
+      "pytorch",
+      "recsys",
+      "embeddings"
+    ]
+  },
+  {
+    "id": "24.10",
+    "title": "Popularity-Based Baseline",
+    "difficulty": "Easy",
+    "category": "Recommendation Systems",
+    "tags": [
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.11",
+    "title": "Feature Extraction from User Logs",
+    "difficulty": "Medium",
+    "category": "Recommendation Systems",
+    "tags": [
+      "from-scratch",
+      "recsys"
+    ]
+  },
+  {
+    "id": "24.12",
+    "title": "Multi-Armed Bandit (Epsilon-Greedy)",
+    "difficulty": "Medium",
+    "category": "Recommendation Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "recsys",
+      "rl"
+    ]
+  },
+  {
+    "id": "24.13",
+    "title": "Thompson Sampling",
+    "difficulty": "Medium",
+    "category": "Recommendation Systems",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "recsys",
+      "rl"
+    ]
+  },
+  {
+    "id": "25.1",
+    "title": "LRU Cache (OrderedDict)",
+    "difficulty": "Medium",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "25.2",
+    "title": "LRU Cache (DLL + HashMap)",
+    "difficulty": "Hard",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "25.3",
+    "title": "Trie (Prefix Tree)",
+    "difficulty": "Medium",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures",
+      "nlp"
+    ]
+  },
+  {
+    "id": "25.4",
+    "title": "Min-Heap / Priority Queue",
+    "difficulty": "Medium",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "25.5",
+    "title": "Top-K Elements with Heap",
+    "difficulty": "Easy",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "25.6",
+    "title": "Bloom Filter",
+    "difficulty": "Medium",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "25.7",
+    "title": "Count-Min Sketch",
+    "difficulty": "Medium",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "25.8",
+    "title": "Ring Buffer",
+    "difficulty": "Easy",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "25.9",
+    "title": "Disjoint Set (Union-Find)",
+    "difficulty": "Medium",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "25.10",
+    "title": "KD-Tree",
+    "difficulty": "Hard",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "25.11",
+    "title": "Reservoir Sampling",
+    "difficulty": "Medium",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures",
+      "statistics"
+    ]
+  },
+  {
+    "id": "25.12",
+    "title": "Skip List",
+    "difficulty": "Hard",
+    "category": "Data Structures for ML",
+    "tags": [
+      "from-scratch",
+      "data-structures"
+    ]
+  },
+  {
+    "id": "26.1",
+    "title": "VAE",
+    "difficulty": "Hard",
+    "category": "Generative Models",
+    "tags": [
+      "pytorch",
+      "from-scratch",
+      "generative"
+    ]
+  },
+  {
+    "id": "26.2",
+    "title": "VAE Loss",
+    "difficulty": "Medium",
+    "category": "Generative Models",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "generative"
+    ]
+  },
+  {
+    "id": "26.3",
+    "title": "Reparameterization Trick",
+    "difficulty": "Medium",
+    "category": "Generative Models",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "generative"
+    ]
+  },
+  {
+    "id": "26.4",
+    "title": "GAN Training Loop",
+    "difficulty": "Hard",
+    "category": "Generative Models",
+    "tags": [
+      "pytorch",
+      "generative"
+    ]
+  },
+  {
+    "id": "26.5",
+    "title": "GAN Loss Functions",
+    "difficulty": "Medium",
+    "category": "Generative Models",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "generative"
+    ]
+  },
+  {
+    "id": "26.6",
+    "title": "Conditional GAN",
+    "difficulty": "Hard",
+    "category": "Generative Models",
+    "tags": [
+      "pytorch",
+      "generative"
+    ]
+  },
+  {
+    "id": "26.7",
+    "title": "DDPM Forward Process",
+    "difficulty": "Hard",
+    "category": "Generative Models",
+    "tags": [
+      "numpy",
+      "pytorch",
+      "from-scratch",
+      "generative"
+    ]
+  },
+  {
+    "id": "26.8",
+    "title": "DDPM Noise Schedule",
+    "difficulty": "Medium",
+    "category": "Generative Models",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "generative"
+    ]
+  },
+  {
+    "id": "26.9",
+    "title": "Denoising Network Training Step",
+    "difficulty": "Hard",
+    "category": "Generative Models",
+    "tags": [
+      "pytorch",
+      "generative"
+    ]
+  },
+  {
+    "id": "27.1",
+    "title": "Multi-Armed Bandit (Epsilon-Greedy)",
+    "difficulty": "Easy",
+    "category": "RL Basics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.2",
+    "title": "UCB1",
+    "difficulty": "Medium",
+    "category": "RL Basics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.3",
+    "title": "Q-Learning (Tabular)",
+    "difficulty": "Medium",
+    "category": "RL Basics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.4",
+    "title": "SARSA",
+    "difficulty": "Medium",
+    "category": "RL Basics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.5",
+    "title": "Policy Gradient (REINFORCE)",
+    "difficulty": "Hard",
+    "category": "RL Basics",
+    "tags": [
+      "pytorch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.6",
+    "title": "DQN",
+    "difficulty": "Hard",
+    "category": "RL Basics",
+    "tags": [
+      "pytorch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.7",
+    "title": "Value Iteration",
+    "difficulty": "Medium",
+    "category": "RL Basics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.8",
+    "title": "MCTS (Simplified)",
+    "difficulty": "Hard",
+    "category": "RL Basics",
+    "tags": [
+      "from-scratch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.9",
+    "title": "Reward Modeling (RLHF)",
+    "difficulty": "Hard",
+    "category": "RL Basics",
+    "tags": [
+      "pytorch",
+      "rl",
+      "nlp"
+    ]
+  },
+  {
+    "id": "27.10",
+    "title": "PPO Clipped Objective",
+    "difficulty": "Hard",
+    "category": "RL Basics",
+    "tags": [
+      "pytorch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.11",
+    "title": "Discount Return Computation",
+    "difficulty": "Easy",
+    "category": "RL Basics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "rl"
+    ]
+  },
+  {
+    "id": "27.12",
+    "title": "GAE",
+    "difficulty": "Hard",
+    "category": "RL Basics",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "rl"
+    ]
+  },
+  {
+    "id": "28.1",
+    "title": "Min-Max Scaling",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.2",
+    "title": "Z-Score Standardization",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.3",
+    "title": "Robust Scaling",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.4",
+    "title": "One-Hot Encoding",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.5",
+    "title": "Label Encoding",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.6",
+    "title": "Target Encoding",
+    "difficulty": "Medium",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.7",
+    "title": "Missing Value Imputation",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.8",
+    "title": "KNN Imputation",
+    "difficulty": "Medium",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.9",
+    "title": "Feature Hashing",
+    "difficulty": "Medium",
+    "category": "Feature Engineering",
+    "tags": [
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.10",
+    "title": "Polynomial Feature Expansion",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.11",
+    "title": "Binning / Discretization",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.12",
+    "title": "Log Transform and Box-Cox",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.13",
+    "title": "TF-IDF Feature Extraction",
+    "difficulty": "Medium",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing",
+      "nlp"
+    ]
+  },
+  {
+    "id": "28.14",
+    "title": "Principal Component Whitening",
+    "difficulty": "Medium",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.15",
+    "title": "Stratified Train/Test Split",
+    "difficulty": "Easy",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "28.16",
+    "title": "SMOTE (Simplified)",
+    "difficulty": "Medium",
+    "category": "Feature Engineering",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "preprocessing"
+    ]
+  },
+  {
+    "id": "29.1",
+    "title": "CLIP-style Image-Text Matching",
+    "difficulty": "Hard",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "pytorch",
+      "multimodal",
+      "contrastive"
+    ]
+  },
+  {
+    "id": "29.2",
+    "title": "Vision Transformer (ViT) Minimal",
+    "difficulty": "Hard",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "pytorch",
+      "cv",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "29.3",
+    "title": "LoRA",
+    "difficulty": "Hard",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "pytorch",
+      "from-scratch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "29.4",
+    "title": "Mixture of Experts (MoE) Layer",
+    "difficulty": "Hard",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "pytorch",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "29.5",
+    "title": "RAG Pipeline",
+    "difficulty": "Medium",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "pytorch",
+      "retrieval",
+      "nlp"
+    ]
+  },
+  {
+    "id": "29.6",
+    "title": "Tokenizer Vocabulary Builder",
+    "difficulty": "Medium",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "from-scratch",
+      "nlp"
+    ]
+  },
+  {
+    "id": "29.7",
+    "title": "Batch Inference with Dynamic Batching",
+    "difficulty": "Medium",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "pytorch",
+      "optimization"
+    ]
+  },
+  {
+    "id": "29.8",
+    "title": "Speculative Decoding",
+    "difficulty": "Hard",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "pytorch",
+      "nlp",
+      "optimization"
+    ]
+  },
+  {
+    "id": "29.9",
+    "title": "Classifier-Free Guidance",
+    "difficulty": "Hard",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "numpy",
+      "from-scratch",
+      "generative"
+    ]
+  },
+  {
+    "id": "29.10",
+    "title": "DPO Loss",
+    "difficulty": "Hard",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "pytorch",
+      "rl",
+      "nlp"
+    ]
+  },
+  {
+    "id": "29.11",
+    "title": "Position-wise FFN",
+    "difficulty": "Easy",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  },
+  {
+    "id": "29.12",
+    "title": "SwiGLU Activation",
+    "difficulty": "Medium",
+    "category": "Multimodal & Misc",
+    "tags": [
+      "numpy",
+      "from-scratch"
+    ]
+  }
 ]

@@ -1,20 +1,48 @@
 {
   "id": "29.5",
-  "title": "RAG Pipeline",
+  "title": "RAG Pipeline (Retrieve-Augment-Generate)",
   "difficulty": "Medium",
   "category": "Multimodal & Misc",
-  "tags": ["rag", "retrieval", "embeddings", "information-retrieval"],
-  "description": "Implement a simplified RAG (Retrieval-Augmented Generation) pipeline.\n\nComponents:\n1. **Embed:** Represent each document and query as a dense vector (use provided embedding function)\n2. **Index:** Store document embeddings\n3. **Retrieve:** Given a query, find top-k most similar documents using cosine similarity\n4. **Format:** Return formatted context string: numbered list of retrieved documents\n\nImplement a `RAGPipeline` class:\n- `__init__(embed_fn)`: store embedding function\n- `index(documents)`: embed and store all documents\n- `retrieve(query, k)`: return top-k (doc_text, similarity_score) pairs\n- `format_context(query, k)`: return formatted string of retrieved docs\n\nCosine similarity: `sim(a, b) = (a @ b) / (||a|| * ||b||)`",
-  "constraints": ["Use numpy only (embed_fn provided externally)", "L2-normalize for cosine similarity", "Return top-k sorted by descending similarity"],
-  "starter_code": "import numpy as np\n\nclass RAGPipeline:\n    def __init__(self, embed_fn):\n        \"\"\"embed_fn: callable(text: str) -> np.ndarray (1D vector)\"\"\"\n        self.embed_fn = embed_fn\n        self.documents = []\n        self.embeddings = None\n    \n    def index(self, documents: list) -> None:\n        \"\"\"Embed and store all documents.\"\"\"\n        pass\n    \n    def retrieve(self, query: str, k: int = 3) -> list:\n        \"\"\"Return top-k (document, score) pairs.\"\"\"\n        pass\n    \n    def format_context(self, query: str, k: int = 3) -> str:\n        \"\"\"Return formatted context string.\"\"\"\n        pass",
-  "solution_code": "import numpy as np\n\nclass RAGPipeline:\n    def __init__(self, embed_fn):\n        self.embed_fn = embed_fn\n        self.documents = []\n        self.embeddings = None\n    \n    def index(self, documents: list) -> None:\n        self.documents = list(documents)\n        embs = np.array([self.embed_fn(doc) for doc in documents])\n        norms = np.linalg.norm(embs, axis=1, keepdims=True) + 1e-8\n        self.embeddings = embs / norms  # normalized\n    \n    def retrieve(self, query: str, k: int = 3) -> list:\n        q_emb = self.embed_fn(query)\n        q_norm = q_emb / (np.linalg.norm(q_emb) + 1e-8)\n        scores = self.embeddings @ q_norm  # cosine similarity\n        top_k_idx = np.argsort(scores)[::-1][:k]\n        return [(self.documents[i], float(scores[i])) for i in top_k_idx]\n    \n    def format_context(self, query: str, k: int = 3) -> str:\n        results = self.retrieve(query, k)\n        lines = [f\"{i+1}. {doc}\" for i, (doc, score) in enumerate(results)]\n        return \"\\n\".join(lines)",
-  "explanation": "**Key concepts:**\n\n1. **RAG:** Combines a retrieval system with a language model. Retrieval provides relevant context; the LLM generates answers grounded in that context.\n\n2. **Cosine similarity:** Measures angle between vectors, invariant to magnitude. Pre-normalizing embeddings makes retrieval a simple matrix-vector product.\n\n3. **Dense vs sparse retrieval:** RAG typically uses dense embeddings (neural) over BM25 (sparse), though hybrid is common.\n\n4. **Indexing:** For large corpora, approximate nearest neighbor (FAISS, ScaNN) replaces brute-force cosine search.",
-  "test_cases": [
-    {"name": "Retrieves correct document", "code": "def embed_fn(text):\n    vecs = {'cat': np.array([1,0,0]), 'dog': np.array([0,1,0]), 'fish': np.array([0,0,1])}\n    return vecs.get(text.lower().split()[0], np.ones(3)/3)\nrag = RAGPipeline(embed_fn)\nrag.index(['cat is a pet', 'dog is loyal', 'fish swims'])\nresults = rag.retrieve('cat meows', k=1)\nassert 'cat' in results[0][0]"},
-    {"name": "Returns k results", "code": "def embed_fn(text): return np.random.randn(4)\nrag = RAGPipeline(embed_fn)\nrag.index(['doc1', 'doc2', 'doc3', 'doc4'])\nresults = rag.retrieve('query', k=3)\nassert len(results) == 3"},
-    {"name": "Scores are in [-1, 1]", "code": "def embed_fn(text): return np.ones(3)\nrag = RAGPipeline(embed_fn)\nrag.index(['a', 'b', 'c'])\nresults = rag.retrieve('q', k=3)\nfor doc, score in results:\n    assert -1.01 <= score <= 1.01"},
-    {"name": "format_context returns numbered list", "code": "def embed_fn(text): return np.array([1.0, 0.0])\nrag = RAGPipeline(embed_fn)\nrag.index(['first doc', 'second doc'])\nctx = rag.format_context('query', k=2)\nassert '1.' in ctx and '2.' in ctx"}
+  "tags": ["rag", "retrieval-augmented-generation", "embedding", "cosine-similarity", "information-retrieval"],
+  "description": "Implement a simplified RAG (Retrieval-Augmented Generation) pipeline:\n\n1. **Index**: Store document embeddings.\n2. **Retrieve**: Given a query embedding, find the top-k most similar documents using cosine similarity.\n3. **Format**: Combine retrieved documents with the query into a prompt string.\n\nImplement:\n- `cosine_similarity(query, docs)`: Compute cosine similarity between query (1D) and each row of docs.\n- `retrieve(query_emb, doc_embs, doc_texts, k)`: Return top-k (text, score) pairs sorted by descending similarity.\n- `format_rag_prompt(query_text, retrieved_docs)`: Build a prompt string with context.",
+  "constraints": [
+    "query_emb: 1D array of shape (dim,)",
+    "doc_embs: 2D array of shape (n_docs, dim)",
+    "k <= n_docs",
+    "Cosine similarity: dot product of L2-normalized vectors",
+    "numpy and stdlib only"
   ],
-  "hints": ["Pre-normalize embeddings at index time for fast cosine retrieval", "cosine_sim = normalized_embeddings @ normalized_query", "np.argsort(scores)[::-1][:k] gives top-k indices"],
+  "starter_code": "import numpy as np\nfrom typing import List, Tuple\n\ndef cosine_similarity(query: np.ndarray, docs: np.ndarray) -> np.ndarray:\n    \"\"\"\n    Compute cosine similarity between query (dim,) and each row of docs (n, dim).\n    Returns array of shape (n,).\n    \"\"\"\n    pass\n\ndef retrieve(\n    query_emb: np.ndarray,\n    doc_embs: np.ndarray,\n    doc_texts: List[str],\n    k: int\n) -> List[Tuple[str, float]]:\n    \"\"\"\n    Return top-k (doc_text, similarity_score) pairs, sorted descending by score.\n    \"\"\"\n    pass\n\ndef format_rag_prompt(\n    query_text: str,\n    retrieved_docs: List[Tuple[str, float]]\n) -> str:\n    \"\"\"\n    Format a RAG prompt: list context docs then the query.\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\nfrom typing import List, Tuple\n\ndef cosine_similarity(query: np.ndarray, docs: np.ndarray) -> np.ndarray:\n    query_norm = query / (np.linalg.norm(query) + 1e-8)\n    docs_norm = docs / (np.linalg.norm(docs, axis=1, keepdims=True) + 1e-8)\n    return docs_norm @ query_norm  # (n,)\n\ndef retrieve(\n    query_emb: np.ndarray,\n    doc_embs: np.ndarray,\n    doc_texts: List[str],\n    k: int\n) -> List[Tuple[str, float]]:\n    scores = cosine_similarity(query_emb, doc_embs)\n    top_k_idx = np.argsort(scores)[::-1][:k]\n    return [(doc_texts[i], float(scores[i])) for i in top_k_idx]\n\ndef format_rag_prompt(\n    query_text: str,\n    retrieved_docs: List[Tuple[str, float]]\n) -> str:\n    lines = [\"Context:\"]\n    for i, (doc, score) in enumerate(retrieved_docs, 1):\n        lines.append(f\"[{i}] {doc}\")\n    lines.append(\"\")\n    lines.append(f\"Question: {query_text}\")\n    lines.append(\"Answer:\")\n    return \"\\n\".join(lines)\n",
+  "explanation": "**RAG (Lewis et al. 2020)**: Augments language model generation with retrieved documents. Instead of relying solely on parametric knowledge, the model can condition on retrieved evidence.\n\n**Cosine similarity**: Measures the angle between embedding vectors. Range [-1, 1]. Equivalent to dot product after L2-normalization. Better than Euclidean distance for high-dimensional embeddings.\n\n**Retrieval**: Sort documents by similarity and return top-k. In production, approximate nearest neighbor (ANN) indices (FAISS, ScaNN) replace brute-force search.\n\n**Prompt formatting**: The retrieved context is prepended to the query so the LLM can cite evidence. Order matters — most relevant first or last (recency bias).\n\n**Extensions**: In production RAG: BM25 hybrid retrieval, reranking, HyDE (hypothetical document embedding), query expansion.",
+  "test_cases": [
+    {
+      "name": "cosine_similarity_identical",
+      "code": "import numpy as np\nquery = np.array([1.0, 0.0, 0.0])\ndocs = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]])\nsims = cosine_similarity(query, docs)\nnp.testing.assert_allclose(sims[0], 1.0, atol=1e-6)   # identical\nnp.testing.assert_allclose(sims[1], 0.0, atol=1e-6)   # orthogonal\nnp.testing.assert_allclose(sims[2], -1.0, atol=1e-6)  # opposite"
+    },
+    {
+      "name": "retrieve_returns_top_k",
+      "code": "import numpy as np\nquery = np.array([1.0, 0.0])\ndoc_embs = np.array([[1.0, 0.0], [0.0, 1.0], [0.9, 0.1], [-1.0, 0.0]])\ndoc_texts = ['A', 'B', 'C', 'D']\nresults = retrieve(query, doc_embs, doc_texts, k=2)\nassert len(results) == 2\nassert results[0][0] == 'A'  # most similar\nassert results[1][0] == 'C'  # second most"
+    },
+    {
+      "name": "retrieve_sorted_descending",
+      "code": "import numpy as np\nnp.random.seed(0)\ndim = 8\nquery = np.random.randn(dim)\ndoc_embs = np.random.randn(10, dim)\ndoc_texts = [f'doc_{i}' for i in range(10)]\nresults = retrieve(query, doc_embs, doc_texts, k=5)\nscores = [r[1] for r in results]\nassert scores == sorted(scores, reverse=True)"
+    },
+    {
+      "name": "format_prompt_contains_query",
+      "code": "query = 'What is machine learning?'\ndocs = [('ML is a subset of AI.', 0.95), ('Deep learning uses neural nets.', 0.87)]\nprompt = format_rag_prompt(query, docs)\nassert 'What is machine learning?' in prompt\nassert 'ML is a subset of AI.' in prompt\nassert 'Context' in prompt"
+    },
+    {
+      "name": "cosine_range_minus_one_to_one",
+      "code": "import numpy as np\nnp.random.seed(1)\nquery = np.random.randn(16)\ndocs = np.random.randn(20, 16)\nsims = cosine_similarity(query, docs)\nassert np.all(sims >= -1.0 - 1e-6) and np.all(sims <= 1.0 + 1e-6)"
+    }
+  ],
+  "hints": [
+    "Normalize query and each doc row to unit length, then compute dot products.",
+    "np.linalg.norm with axis=1, keepdims=True for row-wise normalization of docs.",
+    "np.argsort returns ascending; reverse with [::-1] and take first k elements.",
+    "format_rag_prompt: prepend 'Context:' with numbered docs, then 'Question:' and 'Answer:'.",
+    "Add small eps (1e-8) to denominators in normalization to handle zero vectors."
+  ],
   "related_problems": ["29.1", "29.6", "29.7"]
 }

@@ -1,20 +1,49 @@
 {
   "id": "29.4",
-  "title": "Mixture of Experts (MoE)",
+  "title": "Mixture of Experts (MoE) Layer",
   "difficulty": "Hard",
   "category": "Multimodal & Misc",
-  "tags": ["mixture-of-experts", "moe", "routing", "sparse"],
-  "description": "Implement a Mixture of Experts (MoE) layer with top-k routing.\n\nGiven input x (batch x d_model), expert weights, and a router:\n1. **Router:** Compute gate logits g = x @ W_router (batch x n_experts)\n2. **Top-k selection:** For each sample, select the k experts with highest gate logits\n3. **Softmax on top-k:** Apply softmax only to the selected k logits for each sample\n4. **Expert computation:** Each expert is a linear layer: expert_i(x) = x @ W_e[i] + b_e[i] (d_model -> d_ff -> d_model simplified to just d_model -> d_model)\n5. **Weighted combination:** Output = sum over top-k experts of (softmax_weight * expert_output)\n\nReturn output of shape (batch, d_model).\n\n**Args:** x (batch x d_model), W_router (d_model x n_experts), experts list of (W: d_model x d_model, b: d_model), k",
-  "constraints": ["Use numpy only", "Top-k selection per sample", "Softmax over selected k logits only", "Return (batch, d_model) output"],
-  "starter_code": "import numpy as np\n\ndef moe_forward(x: np.ndarray, W_router: np.ndarray, experts: list, k: int) -> np.ndarray:\n    \"\"\"MoE forward pass with top-k routing.\n    \n    Args:\n        x: Input, shape (batch, d_model)\n        W_router: Router weights, shape (d_model, n_experts)\n        experts: List of (W, b) tuples, each W: (d_model, d_model), b: (d_model,)\n        k: Number of experts to activate per sample\n    \n    Returns:\n        output: Shape (batch, d_model)\n    \"\"\"\n    pass",
-  "solution_code": "import numpy as np\n\ndef moe_forward(x: np.ndarray, W_router: np.ndarray, experts: list, k: int) -> np.ndarray:\n    batch, d_model = x.shape\n    n_experts = len(experts)\n    output = np.zeros((batch, d_model))\n    \n    gate_logits = x @ W_router  # (batch, n_experts)\n    \n    for i in range(batch):\n        logits_i = gate_logits[i]\n        top_k_idx = np.argsort(logits_i)[-k:]  # top-k indices\n        top_k_logits = logits_i[top_k_idx]\n        \n        # Softmax over top-k only\n        top_k_logits -= top_k_logits.max()\n        weights = np.exp(top_k_logits)\n        weights /= weights.sum()\n        \n        for w, expert_idx in zip(weights, top_k_idx):\n            W_e, b_e = experts[expert_idx]\n            expert_out = x[i] @ W_e + b_e\n            output[i] += w * expert_out\n    \n    return output",
-  "explanation": "**Key concepts:**\n\n1. **Sparse activation:** Only k out of n experts are activated per token, keeping computation constant regardless of n.\n\n2. **Top-k routing:** The router is a simple linear layer. Choosing top-k experts per token is the most common routing strategy.\n\n3. **Load balancing:** In practice, an auxiliary load-balancing loss prevents all tokens from routing to the same expert.\n\n4. **Used in:** Mixtral, GPT-4 (rumored), Switch Transformer. Allows very large model capacity at fixed compute cost.",
-  "test_cases": [
-    {"name": "Output shape correct", "code": "np.random.seed(0)\nbatch, d, n_exp, k = 4, 8, 3, 2\nW_r = np.random.randn(d, n_exp)\nexperts = [(np.random.randn(d, d)*0.1, np.zeros(d)) for _ in range(n_exp)]\nx = np.random.randn(batch, d)\nout = moe_forward(x, W_r, experts, k)\nassert out.shape == (batch, d)"},
-    {"name": "k=1 selects single expert", "code": "np.random.seed(1)\nd, n_exp = 4, 3\nW_r = np.random.randn(d, n_exp)\nexperts = [(np.eye(d), np.zeros(d)) for _ in range(n_exp)]\nx = np.random.randn(2, d)\nout = moe_forward(x, W_r, experts, k=1)\nassert out.shape == (2, d)"},
-    {"name": "Identity experts preserve input", "code": "np.random.seed(2)\nd, n_exp, k = 4, 2, 2\nW_r = np.ones((d, n_exp))  # equal routing\nexperts = [(np.eye(d), np.zeros(d)) for _ in range(n_exp)]\nx = np.random.randn(3, d)\nout = moe_forward(x, W_r, experts, k)\n# With equal weights and identity experts, output should equal input\nassert np.allclose(out, x, atol=1e-6)"},
-    {"name": "Returns numpy array", "code": "np.random.seed(3)\nd, n_exp, k = 6, 4, 2\nW_r = np.random.randn(d, n_exp)\nexperts = [(np.random.randn(d, d)*0.01, np.zeros(d)) for _ in range(n_exp)]\nx = np.random.randn(5, d)\nresult = moe_forward(x, W_r, experts, k)\nassert isinstance(result, np.ndarray)"}
+  "tags": ["mixture-of-experts", "moe", "routing", "top-k", "sparse", "transformer"],
+  "description": "Implement a Mixture of Experts (MoE) layer with a learned router and top-k expert selection.\n\nGiven input tokens x of shape (batch, d_model):\n1. **Router**: Compute routing logits = x @ W_router. Shape: (batch, n_experts).\n2. **Top-k selection**: For each token, select the top-k experts by routing logit. Apply softmax only over these k experts to get weights.\n3. **Expert computation**: Each expert is a simple linear layer: expert_i(x) = x @ W_experts[i] + b_experts[i].\n4. **Weighted sum**: Output = sum over selected experts of (weight_i * expert_i(x)).\n\nImplement:\n- `moe_router(x, W_router, k)`: Returns (top_k_indices, top_k_weights) for each token.\n- `moe_forward(x, W_router, W_experts, b_experts, k)`: Full MoE forward pass.",
+  "constraints": [
+    "x: shape (batch, d_model)",
+    "W_router: shape (d_model, n_experts)",
+    "W_experts: shape (n_experts, d_model, d_out)",
+    "b_experts: shape (n_experts, d_out)",
+    "k <= n_experts",
+    "numpy and stdlib only"
   ],
-  "hints": ["np.argsort(logits)[-k:] gives top-k indices", "Softmax: subtract max, exponentiate, normalize", "Sum weighted expert outputs for each sample"],
-  "related_problems": ["29.3", "29.11", "29.12"]
+  "starter_code": "import numpy as np\nfrom typing import Tuple\n\ndef moe_router(\n    x: np.ndarray,\n    W_router: np.ndarray,\n    k: int\n) -> Tuple[np.ndarray, np.ndarray]:\n    \"\"\"\n    Compute routing weights.\n    Returns:\n      indices: shape (batch, k) — top-k expert indices per token\n      weights: shape (batch, k) — softmax weights over top-k\n    \"\"\"\n    pass\n\ndef moe_forward(\n    x: np.ndarray,\n    W_router: np.ndarray,\n    W_experts: np.ndarray,\n    b_experts: np.ndarray,\n    k: int\n) -> np.ndarray:\n    \"\"\"\n    Full MoE forward pass.\n    Returns: shape (batch, d_out)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\nfrom typing import Tuple\n\ndef moe_router(\n    x: np.ndarray,\n    W_router: np.ndarray,\n    k: int\n) -> Tuple[np.ndarray, np.ndarray]:\n    logits = x @ W_router  # (batch, n_experts)\n    # Top-k indices (descending)\n    top_k_idx = np.argsort(logits, axis=1)[:, -k:][:, ::-1]  # (batch, k)\n    # Gather top-k logits and compute softmax over them\n    batch = x.shape[0]\n    top_k_logits = logits[np.arange(batch)[:, None], top_k_idx]  # (batch, k)\n    # Numerically stable softmax\n    top_k_logits = top_k_logits - top_k_logits.max(axis=1, keepdims=True)\n    exp_logits = np.exp(top_k_logits)\n    weights = exp_logits / exp_logits.sum(axis=1, keepdims=True)  # (batch, k)\n    return top_k_idx, weights\n\ndef moe_forward(\n    x: np.ndarray,\n    W_router: np.ndarray,\n    W_experts: np.ndarray,\n    b_experts: np.ndarray,\n    k: int\n) -> np.ndarray:\n    batch, d_model = x.shape\n    d_out = W_experts.shape[2]\n    indices, weights = moe_router(x, W_router, k)\n\n    output = np.zeros((batch, d_out))\n    for i in range(batch):\n        for j in range(k):\n            expert_idx = indices[i, j]\n            expert_out = x[i] @ W_experts[expert_idx] + b_experts[expert_idx]  # (d_out,)\n            output[i] += weights[i, j] * expert_out\n    return output\n",
+  "explanation": "**MoE (Shazeer et al. 2017, Switch Transformer 2021)**: Replaces dense FFN layers with multiple expert networks. Only k of n_experts are activated per token — sparse computation that scales model capacity without proportional compute increase.\n\n**Router**: A small linear layer maps each token to n_experts logits. Top-k selection picks the k highest-scoring experts.\n\n**Routing weights**: Softmax applied only over the k selected experts (not all n_experts). This normalizes the contribution of each expert.\n\n**Output**: Weighted combination of k expert outputs. Each expert is an independent FFN (here simplified to a linear layer).\n\n**Load balancing**: In practice, auxiliary losses encourage equal usage of all experts (to avoid collapse where only 1-2 experts receive most tokens).\n\n**Used in**: Mixtral, GPT-4 (reportedly), Switch Transformer, GLaM.",
+  "test_cases": [
+    {
+      "name": "router_output_shapes",
+      "code": "import numpy as np\nnp.random.seed(0)\nbatch, d_model, n_experts, k = 4, 8, 6, 2\nx = np.random.randn(batch, d_model)\nW_router = np.random.randn(d_model, n_experts)\nindices, weights = moe_router(x, W_router, k)\nassert indices.shape == (batch, k)\nassert weights.shape == (batch, k)"
+    },
+    {
+      "name": "router_weights_sum_to_one",
+      "code": "import numpy as np\nnp.random.seed(1)\nbatch, d_model, n_experts, k = 5, 6, 4, 2\nx = np.random.randn(batch, d_model)\nW_router = np.random.randn(d_model, n_experts)\n_, weights = moe_router(x, W_router, k)\nnp.testing.assert_allclose(weights.sum(axis=1), np.ones(batch), atol=1e-6)"
+    },
+    {
+      "name": "moe_forward_output_shape",
+      "code": "import numpy as np\nnp.random.seed(2)\nbatch, d_model, d_out, n_experts, k = 4, 8, 6, 4, 2\nx = np.random.randn(batch, d_model)\nW_router = np.random.randn(d_model, n_experts) * 0.1\nW_experts = np.random.randn(n_experts, d_model, d_out) * 0.1\nb_experts = np.zeros((n_experts, d_out))\nout = moe_forward(x, W_router, W_experts, b_experts, k)\nassert out.shape == (batch, d_out)"
+    },
+    {
+      "name": "top_k_indices_are_valid",
+      "code": "import numpy as np\nnp.random.seed(3)\nbatch, d_model, n_experts, k = 6, 4, 5, 3\nx = np.random.randn(batch, d_model)\nW_router = np.random.randn(d_model, n_experts)\nindices, _ = moe_router(x, W_router, k)\nassert np.all(indices >= 0) and np.all(indices < n_experts)\n# Each row should have unique indices\nfor row in indices:\n    assert len(set(row)) == k"
+    },
+    {
+      "name": "k_equals_1_is_hard_routing",
+      "code": "import numpy as np\nnp.random.seed(4)\nbatch, d_model, n_experts = 4, 6, 8\nx = np.random.randn(batch, d_model)\nW_router = np.random.randn(d_model, n_experts)\nindices, weights = moe_router(x, W_router, k=1)\n# With k=1, weights should all be exactly 1.0\nnp.testing.assert_allclose(weights, np.ones((batch, 1)), atol=1e-6)"
+    }
+  ],
+  "hints": [
+    "Compute logits = x @ W_router, shape (batch, n_experts).",
+    "np.argsort gives ascending order; take the last k and reverse for top-k descending.",
+    "Gather top-k logits: logits[np.arange(batch)[:, None], top_k_idx].",
+    "Apply softmax only over the k selected logits (not all n_experts).",
+    "In moe_forward, loop over batch and k; for each (token, expert) pair, compute expert output and accumulate."
+  ],
+  "related_problems": ["29.2", "29.3", "29.5"]
 }

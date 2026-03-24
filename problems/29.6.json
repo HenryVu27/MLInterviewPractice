@@ -3,19 +3,46 @@
   "title": "Tokenizer Vocabulary Builder",
   "difficulty": "Medium",
   "category": "Multimodal & Misc",
-  "tags": ["nlp", "tokenization", "vocabulary", "preprocessing"],
-  "description": "Implement a word-level tokenizer vocabulary builder with frequency cutoff.\n\nGiven a corpus (list of sentences), build a vocabulary by:\n1. Tokenize each sentence: lowercase and split on whitespace\n2. Count word frequencies\n3. Keep only words with frequency >= min_freq\n4. Add special tokens: `<pad>` (0), `<unk>` (1), `<bos>` (2), `<eos>` (3)\n5. Assign integer ids to remaining words sorted by frequency (descending), then alphabetically for ties\n\nImplement:\n- `build_vocab(corpus, min_freq)`: returns Vocabulary object\n- `encode(sentence)`: tokenize and convert to list of ids (unknown words -> `<unk>` id)\n- `decode(ids)`: convert ids back to words (special token ids return their token string)",
-  "constraints": ["Use numpy only + Python stdlib (collections.Counter)", "Special tokens always at indices 0-3", "Words sorted by descending frequency, then alphabetically for ties"],
-  "starter_code": "import numpy as np\nfrom collections import Counter\n\nclass Vocabulary:\n    def __init__(self, min_freq: int = 1):\n        self.min_freq = min_freq\n        self.word2idx = {}\n        self.idx2word = {}\n    \n    def build(self, corpus: list) -> 'Vocabulary':\n        \"\"\"Build vocabulary from list of sentences.\"\"\"\n        pass\n    \n    def encode(self, sentence: str) -> list:\n        \"\"\"Encode sentence to list of integer ids.\"\"\"\n        pass\n    \n    def decode(self, ids: list) -> list:\n        \"\"\"Decode list of ids to words.\"\"\"\n        pass\n    \n    def __len__(self):\n        return len(self.word2idx)",
-  "solution_code": "import numpy as np\nfrom collections import Counter\n\nclass Vocabulary:\n    SPECIAL_TOKENS = ['<pad>', '<unk>', '<bos>', '<eos>']\n    \n    def __init__(self, min_freq: int = 1):\n        self.min_freq = min_freq\n        self.word2idx = {}\n        self.idx2word = {}\n    \n    def build(self, corpus: list) -> 'Vocabulary':\n        all_tokens = []\n        for sentence in corpus:\n            all_tokens.extend(sentence.lower().split())\n        \n        counts = Counter(all_tokens)\n        filtered = {w: c for w, c in counts.items() if c >= self.min_freq}\n        \n        # Sort by frequency desc, then alphabetically\n        sorted_words = sorted(filtered.keys(), key=lambda w: (-filtered[w], w))\n        \n        self.word2idx = {t: i for i, t in enumerate(self.SPECIAL_TOKENS)}\n        for word in sorted_words:\n            self.word2idx[word] = len(self.word2idx)\n        \n        self.idx2word = {i: w for w, i in self.word2idx.items()}\n        return self\n    \n    def encode(self, sentence: str) -> list:\n        unk_id = self.word2idx['<unk>']\n        return [self.word2idx.get(t, unk_id) for t in sentence.lower().split()]\n    \n    def decode(self, ids: list) -> list:\n        return [self.idx2word.get(i, '<unk>') for i in ids]\n    \n    def __len__(self):\n        return len(self.word2idx)",
-  "solution_code": "import numpy as np\nfrom collections import Counter\n\nclass Vocabulary:\n    SPECIAL_TOKENS = ['<pad>', '<unk>', '<bos>', '<eos>']\n    \n    def __init__(self, min_freq: int = 1):\n        self.min_freq = min_freq\n        self.word2idx = {}\n        self.idx2word = {}\n    \n    def build(self, corpus: list) -> 'Vocabulary':\n        all_tokens = []\n        for sentence in corpus:\n            all_tokens.extend(sentence.lower().split())\n        \n        counts = Counter(all_tokens)\n        filtered = {w: c for w, c in counts.items() if c >= self.min_freq}\n        sorted_words = sorted(filtered.keys(), key=lambda w: (-filtered[w], w))\n        \n        self.word2idx = {t: i for i, t in enumerate(self.SPECIAL_TOKENS)}\n        for word in sorted_words:\n            self.word2idx[word] = len(self.word2idx)\n        \n        self.idx2word = {i: w for w, i in self.word2idx.items()}\n        return self\n    \n    def encode(self, sentence: str) -> list:\n        unk_id = self.word2idx['<unk>']\n        return [self.word2idx.get(t, unk_id) for t in sentence.lower().split()]\n    \n    def decode(self, ids: list) -> list:\n        return [self.idx2word.get(i, '<unk>') for i in ids]\n    \n    def __len__(self):\n        return len(self.word2idx)",
-  "explanation": "**Key concepts:**\n\n1. **Special tokens:** pad (for batching), unk (unknown words), bos/eos (sequence boundaries) are standard in NLP.\n\n2. **Frequency cutoff:** Rare words (typos, misspellings, domain-specific hapax legomena) often add noise. min_freq prunes them.\n\n3. **Sorted vocabulary:** Frequency-descending ordering groups common words at low indices, which can be exploited for efficient sparse representations.\n\n4. **Subword tokenization:** Real systems use BPE or SentencePiece for subword units, avoiding OOV words entirely.",
-  "test_cases": [
-    {"name": "Special tokens at 0-3", "code": "vocab = Vocabulary()\nvocab.build(['hello world', 'hello'])\nassert vocab.word2idx['<pad>'] == 0\nassert vocab.word2idx['<unk>'] == 1\nassert vocab.word2idx['<bos>'] == 2\nassert vocab.word2idx['<eos>'] == 3"},
-    {"name": "min_freq filters rare words", "code": "vocab = Vocabulary(min_freq=2)\nvocab.build(['a b c', 'a b', 'a'])\nassert 'a' in vocab.word2idx\nassert 'c' not in vocab.word2idx, 'c appears once, should be filtered'"},
-    {"name": "Encode-decode roundtrip", "code": "vocab = Vocabulary()\nvocab.build(['hello world'])\nids = vocab.encode('hello world')\nwords = vocab.decode(ids)\nassert words == ['hello', 'world']"},
-    {"name": "Unknown word maps to unk id", "code": "vocab = Vocabulary()\nvocab.build(['known word'])\nids = vocab.encode('unknown token')\nassert all(i == vocab.word2idx['<unk>'] for i in ids)"}
+  "tags": ["tokenizer", "vocabulary", "frequency-cutoff", "nlp", "text-processing"],
+  "description": "Implement a simple word-level tokenizer vocabulary builder that:\n1. Counts word frequencies across a corpus.\n2. Filters words by a minimum frequency cutoff.\n3. Assigns integer IDs to remaining words (sorted by descending frequency, ties broken alphabetically).\n4. Adds special tokens: [PAD]=0, [UNK]=1, [BOS]=2, [EOS]=3.\n\nImplement:\n- `build_vocab(corpus, min_freq)`: Return vocab dict mapping token -> id.\n- `encode(text, vocab)`: Tokenize and encode text; use [UNK] for out-of-vocab words.\n- `decode(ids, vocab)`: Convert id sequence back to string (space-joined).",
+  "constraints": [
+    "corpus: list of strings (sentences/documents)",
+    "Tokenization: split on whitespace and lowercase",
+    "min_freq: minimum count for a word to enter vocab",
+    "Special tokens have fixed IDs: [PAD]=0, [UNK]=1, [BOS]=2, [EOS]=3",
+    "numpy and stdlib only (use collections.Counter)"
   ],
-  "hints": ["Counter for word frequencies", "sorted(words, key=lambda w: (-freq[w], w)) for frequency-desc, alpha-tiebreak", "Start word2idx with special tokens, then append filtered words"],
-  "related_problems": ["29.5", "29.7", "28.13"]
+  "starter_code": "from typing import List, Dict\nimport numpy as np\n\nSPECIAL_TOKENS = {'[PAD]': 0, '[UNK]': 1, '[BOS]': 2, '[EOS]': 3}\n\ndef build_vocab(corpus: List[str], min_freq: int = 1) -> Dict[str, int]:\n    \"\"\"\n    Build vocabulary from corpus.\n    Words with count < min_freq are excluded.\n    Sort remaining by descending frequency, then alphabetically for ties.\n    Special tokens [PAD]=0, [UNK]=1, [BOS]=2, [EOS]=3 are always included.\n    Returns dict: token -> id.\n    \"\"\"\n    pass\n\ndef encode(text: str, vocab: Dict[str, int]) -> List[int]:\n    \"\"\"\n    Lowercase, split on whitespace, map each token to its id.\n    Unknown tokens map to vocab['[UNK]'] = 1.\n    \"\"\"\n    pass\n\ndef decode(ids: List[int], vocab: Dict[str, int]) -> str:\n    \"\"\"\n    Map ids back to tokens and join with spaces.\n    \"\"\"\n    pass\n",
+  "solution_code": "from typing import List, Dict\nimport numpy as np\nfrom collections import Counter\n\nSPECIAL_TOKENS = {'[PAD]': 0, '[UNK]': 1, '[BOS]': 2, '[EOS]': 3}\n\ndef build_vocab(corpus: List[str], min_freq: int = 1) -> Dict[str, int]:\n    counts = Counter()\n    for doc in corpus:\n        counts.update(doc.lower().split())\n    # Filter by min_freq\n    filtered = {w: c for w, c in counts.items() if c >= min_freq}\n    # Sort: descending frequency, then alphabetical for ties\n    sorted_words = sorted(filtered.keys(), key=lambda w: (-filtered[w], w))\n    # Build vocab starting after special tokens\n    vocab = dict(SPECIAL_TOKENS)\n    next_id = len(SPECIAL_TOKENS)\n    for word in sorted_words:\n        if word not in vocab:  # don't overwrite special tokens\n            vocab[word] = next_id\n            next_id += 1\n    return vocab\n\ndef encode(text: str, vocab: Dict[str, int]) -> List[int]:\n    unk_id = vocab['[UNK]']\n    return [vocab.get(token, unk_id) for token in text.lower().split()]\n\ndef decode(ids: List[int], vocab: Dict[str, int]) -> str:\n    inv_vocab = {v: k for k, v in vocab.items()}\n    return ' '.join(inv_vocab.get(i, '[UNK]') for i in ids)\n",
+  "explanation": "**Vocabulary building**: In NLP, a vocabulary maps tokens (words or subwords) to integer indices. Fixed-size vocabularies are necessary for embedding lookups and output projection layers.\n\n**Frequency cutoff**: Rare words contribute little signal and greatly increase vocabulary size. The min_freq threshold prunes them. In practice, words appearing < 5 times are often dropped.\n\n**Sorting strategy**: Frequent words get lower IDs (often more cache-friendly). Alphabetical tiebreaking ensures deterministic ordering.\n\n**Special tokens**: [PAD] for batch padding (id 0 so zero-padding works), [UNK] for OOV words, [BOS]/[EOS] to mark sequence boundaries for seq2seq models.\n\n**Word-level vs BPE**: This is a simple word-level tokenizer. Production systems use Byte-Pair Encoding (BPE) or SentencePiece for better handling of rare words.",
+  "test_cases": [
+    {
+      "name": "basic_vocab_build",
+      "code": "corpus = ['the cat sat on the mat', 'the cat is on the mat']\nvocab = build_vocab(corpus, min_freq=1)\nassert '[PAD]' in vocab and vocab['[PAD]'] == 0\nassert '[UNK]' in vocab and vocab['[UNK]'] == 1\nassert 'the' in vocab  # frequent word\nassert 'cat' in vocab"
+    },
+    {
+      "name": "min_freq_cutoff",
+      "code": "corpus = ['hello world', 'hello there', 'world is big']\nvocab = build_vocab(corpus, min_freq=2)\n# 'hello' and 'world' appear 2 times\nassert 'hello' in vocab\nassert 'world' in vocab\n# 'there', 'is', 'big' appear only once\nassert 'there' not in vocab\nassert 'is' not in vocab"
+    },
+    {
+      "name": "frequency_ordering",
+      "code": "corpus = ['a a a b b c']\nvocab = build_vocab(corpus, min_freq=1)\n# 'a' (3 times) should have lower id than 'b' (2 times) which < 'c' (1 time)\nassert vocab['a'] < vocab['b'] < vocab['c']"
+    },
+    {
+      "name": "encode_decode_roundtrip",
+      "code": "corpus = ['the quick brown fox jumps']\nvocab = build_vocab(corpus, min_freq=1)\ntext = 'the fox'\nids = encode(text, vocab)\nreconstructed = decode(ids, vocab)\nassert reconstructed == text"
+    },
+    {
+      "name": "unknown_token_mapping",
+      "code": "corpus = ['hello world']\nvocab = build_vocab(corpus, min_freq=1)\nids = encode('hello unknown word', vocab)\nassert ids[0] == vocab['hello']\nassert ids[1] == vocab['[UNK]']  # 'unknown' not in vocab\nassert ids[2] == vocab['[UNK]']  # 'word' not in vocab"
+    }
+  ],
+  "hints": [
+    "Use collections.Counter to count word frequencies after lowercasing and splitting.",
+    "Filter: {w: c for w, c in counts.items() if c >= min_freq}.",
+    "Sort: sorted(words, key=lambda w: (-freq[w], w)) gives descending freq, alphabetical ties.",
+    "Start assigning IDs from len(SPECIAL_TOKENS) = 4 onwards.",
+    "Decode: build inverse vocab (id->token) by swapping key/value pairs."
+  ],
+  "related_problems": ["29.5", "29.7", "29.8"]
 }

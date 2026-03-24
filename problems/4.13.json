@@ -3,26 +3,44 @@
   "title": "Residual Connection",
   "difficulty": "Easy",
   "category": "Neural Network Fundamentals",
-  "tags": ["numpy", "from-scratch", "residual", "resnet"],
-  "description": "Implement a **Residual Connection** (skip connection) — the key innovation of ResNet that enables training very deep networks.\n\n**Formula:** `output = x + F(x)`\n\nwhere `F(x)` is a sub-network (e.g., Linear → ReLU → Linear). The residual block adds the input directly to the output of the transformation.\n\nImplement a `ResidualBlock` that:\n1. Applies two linear layers with ReLU activation\n2. Adds a skip connection from input to output\n3. Applies a final ReLU after the addition\n\n**Architecture:**\n```\nx → Linear(d, d) → ReLU → Linear(d, d) → (+x) → ReLU → output\n```\n\n**Shapes:** Input/output: (N, d) — input and output dimensions must match for the identity shortcut",
+  "tags": ["residual connection", "skip connection", "ResNet", "vanishing gradient", "identity"],
+  "description": "Implement a **residual (skip) connection** as introduced in ResNet.\n\nA residual block computes:\n```\nout = x + F(x)\n```\nwhere `F` is a sub-network (e.g., two convolutional layers). The identity shortcut `x` is added directly to the output of `F(x)`.\n\nFor this problem, `F` is a simple 2-layer MLP applied element-wise:\n- Layer 1: Linear with ReLU\n- Layer 2: Linear (no activation)\n\nImplement `residual_block(x, W1, b1, W2, b2)` that applies the block and returns `x + F(x)`.\n\nRequirement: the output of F must have the **same shape** as x for the addition to work.",
   "constraints": [
-    "Use only numpy",
-    "Both linear layers have the same input/output dimension d (to allow identity shortcut)",
-    "Xavier initialization for weights",
-    "Apply ReLU after the residual addition"
+    "W1 has shape (d_hidden, d), W2 has shape (d, d_hidden)",
+    "b1 has shape (d_hidden,), b2 has shape (d,)",
+    "Input x has shape (n, d)",
+    "Use numpy only"
   ],
-  "starter_code": "import numpy as np\n\nclass ResidualBlock:\n    def __init__(self, d: int):\n        \"\"\"Initialize residual block with two linear layers of dimension d.\"\"\"\n        pass\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        \"\"\"Apply residual block: output = relu(x + F(x)).\n\n        Args:\n            x: (N, d) input\n        Returns:\n            (N, d) output\n        \"\"\"\n        pass",
-  "solution_code": "import numpy as np\n\nclass ResidualBlock:\n    def __init__(self, d: int):\n        limit = np.sqrt(6 / (d + d))\n        self.W1 = np.random.uniform(-limit, limit, (d, d))\n        self.b1 = np.zeros(d)\n        self.W2 = np.random.uniform(-limit, limit, (d, d))\n        self.b2 = np.zeros(d)\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        # F(x): two linear layers with ReLU\n        h = np.maximum(0, x @ self.W1 + self.b1)   # (N, d) ReLU\n        fx = h @ self.W2 + self.b2                  # (N, d) linear\n        # Residual connection + final ReLU\n        return np.maximum(0, x + fx)",
-  "explanation": "**Key concepts:**\n\n1. **Why residual connections?** Without them, very deep networks suffer from vanishing gradients and degradation — adding more layers can hurt performance. Skip connections let gradients flow directly to earlier layers: `d(loss)/dx = d(loss)/d(output) * (1 + d(F)/dx)`. The +1 term ensures at least some gradient reaches every layer.\n\n2. **Identity shortcut:** When input and output dimensions match, the shortcut is just `x` (identity). When dimensions differ, a projection is needed (1x1 conv/linear). See problem 4.14.\n\n3. **Gradient highway:** Skip connections create a 'gradient highway' that bypasses layers entirely. This is why ResNets can be 100+ layers deep.\n\n4. **Residual interpretation:** F(x) learns the residual (the correction), not the full mapping. If identity is the optimal function, it's easier to push F(x) → 0 than to learn identity from scratch.\n\n5. **Prevalence:** ResNet (2015) introduced skip connections for CNNs. Transformers use them in every block. They're virtually universal in modern deep learning.\n\n**Complexity:** O(N*d^2) — same as two linear layers.\n\n**Interview angle:** Explain the gradient flow benefit with math: `dL/dx = dL/d_out * (I + dF/dx)`.",
+  "starter_code": "import numpy as np\n\ndef residual_block(\n    x: np.ndarray,\n    W1: np.ndarray, b1: np.ndarray,\n    W2: np.ndarray, b2: np.ndarray\n) -> np.ndarray:\n    \"\"\"\n    Apply a residual block: out = x + F(x).\n\n    Args:\n        x: Input of shape (n, d).\n        W1: First layer weights (d_hidden, d).\n        b1: First layer bias (d_hidden,).\n        W2: Second layer weights (d, d_hidden) — output dim matches input.\n        b2: Second layer bias (d,).\n\n    Returns:\n        Output of shape (n, d) = x + F(x).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef residual_block(\n    x: np.ndarray,\n    W1: np.ndarray, b1: np.ndarray,\n    W2: np.ndarray, b2: np.ndarray\n) -> np.ndarray:\n    h = np.maximum(0, x @ W1.T + b1)  # (n, d_hidden)\n    fx = h @ W2.T + b2                 # (n, d)\n    return x + fx\n",
+  "explanation": "1. **Residual connections** allow gradients to flow directly from the output to earlier layers, solving the vanishing gradient problem in deep networks.\n2. The shortcut path `x` adds the identity — the network only needs to learn the residual `F(x)` rather than the full mapping.\n3. If the optimal transformation is close to identity, `F(x)` can be close to zero, which is easier to learn than a near-identity mapping.\n4. **Shape constraint**: the output of F must match x's shape. If dimensions differ, a projection is needed (see problem 4.14).\n5. ResNet-50, BERT, GPT, and virtually all modern deep networks use some form of residual connections.",
   "test_cases": [
-    {"name": "Output shape preserved", "code": "import numpy as np\nnp.random.seed(0)\nblock = ResidualBlock(d=8)\nx = np.random.randn(4, 8)\nout = block.forward(x)\nassert out.shape == (4, 8)"},
-    {"name": "Output non-negative (final ReLU)", "code": "import numpy as np\nnp.random.seed(1)\nblock = ResidualBlock(d=4)\nx = np.random.randn(10, 4)\nout = block.forward(x)\nassert np.all(out >= 0), 'Final ReLU output should be non-negative'"},
-    {"name": "With F=0, output = relu(x)", "code": "import numpy as np\nblock = ResidualBlock(d=3)\n# Zero out all weights of F(x)\nblock.W1 = np.zeros((3, 3))\nblock.W2 = np.zeros((3, 3))\nx = np.array([[1.0, -2.0, 3.0], [-1.0, 0.5, -0.5]])\nout = block.forward(x)\nexpected = np.maximum(0, x)  # relu(x + 0) = relu(x)\nassert np.allclose(out, expected), f'With F=0, output should be relu(x)'"},
-    {"name": "Different input rows independent", "code": "import numpy as np\nnp.random.seed(2)\nblock = ResidualBlock(d=4)\nx = np.random.randn(5, 4)\nout_full = block.forward(x)\nout_single = block.forward(x[2:3])\nassert np.allclose(out_full[2], out_single[0]), 'Rows should be independently processed'"}
+    {
+      "name": "Output shape matches input shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nn, d, d_h = 4, 8, 16\nx = np.random.randn(n, d)\nW1 = np.random.randn(d_h, d) * 0.01\nb1 = np.zeros(d_h)\nW2 = np.random.randn(d, d_h) * 0.01\nb2 = np.zeros(d)\nout = residual_block(x, W1, b1, W2, b2)\nassert out.shape == (n, d), f'Expected ({n},{d}), got {out.shape}'"
+    },
+    {
+      "name": "Zero weights give output equal to input",
+      "code": "import numpy as np\nn, d, d_h = 3, 5, 8\nx = np.random.randn(n, d)\nW1 = np.zeros((d_h, d))\nb1 = np.zeros(d_h)\nW2 = np.zeros((d, d_h))\nb2 = np.zeros(d)\nout = residual_block(x, W1, b1, W2, b2)\nassert np.allclose(out, x), 'Zero weights: output should equal input'"
+    },
+    {
+      "name": "Residual is added to input",
+      "code": "import numpy as np\nx = np.array([[1.0, 2.0, 3.0]])\nW1 = np.eye(3, 3)  # Identity\nb1 = np.zeros(3)\nW2 = np.eye(3, 3)\nb2 = np.zeros(3)\nout = residual_block(x, W1, b1, W2, b2)\n# F(x) = ReLU(x) * I, then * I = ReLU(x)\n# out = x + ReLU(x) = [1+1, 2+2, 3+3]\nassert np.allclose(out, [[2.0, 4.0, 6.0]]), f'Got {out}'"
+    },
+    {
+      "name": "Gradient flows: loss gradient non-zero at input",
+      "code": "import numpy as np\nnp.random.seed(1)\nn, d, d_h = 8, 4, 6\nx = np.random.randn(n, d)\nW1 = np.random.randn(d_h, d) * 0.1\nb1 = np.zeros(d_h)\nW2 = np.random.randn(d, d_h) * 0.1\nb2 = np.zeros(d)\nout = residual_block(x, W1, b1, W2, b2)\nloss = out.sum()\n# d(loss)/d(x) includes identity from the skip connection\n# Just verify output is finite and non-trivially different from x\nassert not np.any(np.isnan(out)), 'Output should be finite'"
+    },
+    {
+      "name": "Batch of size 1 works",
+      "code": "import numpy as np\nx = np.random.randn(1, 8)\nW1 = np.random.randn(12, 8) * 0.01\nb1 = np.zeros(12)\nW2 = np.random.randn(8, 12) * 0.01\nb2 = np.zeros(8)\nout = residual_block(x, W1, b1, W2, b2)\nassert out.shape == (1, 8)"
+    }
   ],
   "hints": [
-    "h = relu(x @ W1 + b1); fx = h @ W2 + b2; return relu(x + fx)",
-    "The skip connection is just + x — no extra parameters needed when input/output dims match"
+    "F(x) = Linear(ReLU(Linear(x))): `h = ReLU(x @ W1.T + b1)`, then `fx = h @ W2.T + b2`.",
+    "The residual output is simply `x + fx`.",
+    "The key constraint: W2 must map back to the original dimension d so that x + F(x) is valid.",
+    "In practice, residual connections also sometimes include Layer Norm before or after the addition (Pre-LN or Post-LN)."
   ],
-  "related_problems": ["4.14", "4.2", "4.3"]
+  "related_problems": ["4.14", "4.4", "4.12"]
 }

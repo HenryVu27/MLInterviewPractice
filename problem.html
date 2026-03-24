@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Problem - ML Interview Practice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       Header with navigation and timer
+  ============================================================ -->
+  <header class="header">
+    <div class="header-logo">
+      <h1>ML Interview Practice</h1>
+    </div>
+
+    <nav class="header-nav" aria-label="Problem navigation">
+      <a href="index.html" class="nav-link-back" id="nav-back">&#8592; List</a>
+      <span class="sep">|</span>
+      <a href="#" class="nav-link" id="nav-prev" aria-label="Previous problem">&#8592; Prev</a>
+      <a href="#" class="nav-link" id="nav-next" aria-label="Next problem">Next &#8594;</a>
+      <span class="sep">|</span>
+
+      <!-- Timer -->
+      <button class="btn btn-secondary" id="timer-btn" aria-label="Start timer">Start</button>
+      <span class="timer-display" id="timer-display" aria-live="polite" aria-label="Elapsed time">00:00</span>
+    </nav>
+  </header>
+
+  <!-- ============================================================
+       Split Layout
+  ============================================================ -->
+  <div class="problem-layout">
+
+    <!-- ============================================================
+         Left Panel - Problem description
+    ============================================================ -->
+    <section class="problem-left" aria-label="Problem description">
+
+      <!-- Title + meta -->
+      <div class="problem-header">
+        <h2 class="problem-title" id="problem-title">Loading...</h2>
+        <div class="problem-meta" id="problem-meta">
+          <!-- JS injects: badge, category, topic tags -->
+        </div>
+      </div>
+
+      <!-- Description (markdown rendered by problem.js) -->
+      <div class="problem-description" id="problem-description">
+        <!-- JS injects rendered HTML here -->
+      </div>
+
+      <!-- Constraints -->
+      <div class="constraints-section" id="constraints-section">
+        <p class="section-title">Constraints</p>
+        <ul class="constraints-list" id="constraints-list">
+          <!-- JS injects <li> items here -->
+        </ul>
+      </div>
+
+      <!-- Hints -->
+      <div class="hints-section" id="hints-section">
+        <p class="section-title">Hints</p>
+        <div class="hints-list" id="hints-list">
+          <!-- JS injects hint-toggle + hint-content pairs here -->
+        </div>
+      </div>
+
+      <!-- Related Problems -->
+      <div class="related-section" id="related-section">
+        <p class="section-title">Related Problems</p>
+        <ul class="related-list" id="related-list">
+          <!-- JS injects <li><a> items here -->
+        </ul>
+      </div>
+
+    </section>
+
+    <!-- ============================================================
+         Right Panel - Editor, tests, solution
+    ============================================================ -->
+    <section class="problem-right" aria-label="Code editor and results">
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button class="btn btn-primary" id="btn-run" disabled>
+          Run Tests
+        </button>
+        <button class="btn btn-secondary" id="btn-reset">
+          Reset Code
+        </button>
+        <div class="spacer"></div>
+        <button class="btn btn-danger" id="btn-solution">
+          Show Solution
+        </button>
+      </div>
+
+      <!-- Code Editor (CodeMirror mounts here) -->
+      <div class="editor-container" id="editor-container" aria-label="Code editor">
+        <!-- CodeMirror instance injected by problem.js -->
+      </div>
+
+      <!-- Test Results Panel -->
+      <div class="test-results" id="test-results" aria-label="Test results" aria-live="polite">
+        <div class="test-results-header">
+          <span>Test Results</span>
+          <span id="test-summary"></span>
+        </div>
+        <!-- JS injects .test-result.pass/.fail elements here -->
+      </div>
+
+      <!-- Solution Panel (hidden until revealed) -->
+      <div class="solution-panel" id="solution-panel" aria-label="Reference solution">
+        <div class="solution-panel-header">
+          <span>Reference Solution</span>
+          <button class="btn btn-secondary" id="btn-close-solution" aria-label="Close solution">&#10005;</button>
+        </div>
+        <pre id="solution-code"></pre>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- ============================================================
+       Loading Overlay (bottom-right toast style)
+  ============================================================ -->
+  <div class="loading-overlay" id="loading-overlay" aria-live="polite" aria-label="Loading">
+    <div class="spinner" role="presentation"></div>
+    <span id="loading-text">Running tests...</span>
+  </div>
+
+  <script type="module" src="problem.js"></script>
+</body>
+</html>

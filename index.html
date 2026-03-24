@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML Interview Practice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       Header
+  ============================================================ -->
+  <header class="header">
+    <div class="header-logo">
+      <h1>ML Interview Practice</h1>
+      <span class="tagline">253 problems. Pure numpy. No excuses.</span>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       Stats Bar  (populated by app.js)
+  ============================================================ -->
+  <div id="stats-bar" aria-label="Progress statistics">
+    <!-- JS injects stat-item elements here -->
+  </div>
+
+  <!-- ============================================================
+       Filter Bar
+  ============================================================ -->
+  <div class="filter-bar" role="search" aria-label="Problem filters">
+
+    <!-- Category -->
+    <label class="filter-label" for="filter-category">Category</label>
+    <select id="filter-category" aria-label="Filter by category">
+      <option value="">All Categories</option>
+    </select>
+
+    <!-- Difficulty toggles -->
+    <span class="filter-label">Difficulty</span>
+    <div class="difficulty-filters" role="group" aria-label="Filter by difficulty">
+      <button class="diff-btn easy active"   data-difficulty="easy"   aria-pressed="true">Easy</button>
+      <button class="diff-btn medium active" data-difficulty="medium" aria-pressed="true">Medium</button>
+      <button class="diff-btn hard active"   data-difficulty="hard"   aria-pressed="true">Hard</button>
+    </div>
+
+    <!-- Status -->
+    <label class="filter-label" for="filter-status">Status</label>
+    <select id="filter-status" aria-label="Filter by status">
+      <option value="">All</option>
+      <option value="solved">Solved</option>
+      <option value="attempted">Attempted</option>
+      <option value="unsolved">Unsolved</option>
+    </select>
+
+    <!-- Search -->
+    <input
+      type="text"
+      id="filter-search"
+      placeholder="Search problems..."
+      aria-label="Search problems"
+      autocomplete="off"
+      spellcheck="false"
+    />
+
+  </div>
+
+  <!-- ============================================================
+       Problem Table
+  ============================================================ -->
+  <div class="table-container">
+    <table class="problem-table" aria-label="Problem list">
+      <thead>
+        <tr>
+          <th class="col-num">#</th>
+          <th class="col-title">Title</th>
+          <th class="col-difficulty">Difficulty</th>
+          <th class="col-category">Category</th>
+          <th class="col-status">Status</th>
+          <th class="col-time">Best</th>
+        </tr>
+      </thead>
+      <tbody id="problem-list">
+        <!-- Rows injected by app.js -->
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

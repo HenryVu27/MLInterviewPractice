@@ -1,0 +1,46 @@
+{
+  "id": "12.8",
+  "title": "Query Expansion (Pseudo-Relevance Feedback)",
+  "difficulty": "Medium",
+  "category": "Information Retrieval",
+  "tags": ["numpy", "from-scratch", "retrieval"],
+  "description": "Pseudo-Relevance Feedback (PRF) improves retrieval by assuming the top-k results of an initial query are relevant and using them to expand the query vector.\n\nThe Rocchio algorithm computes an updated query vector:\n\n  new_query = alpha * query + beta * mean(top_k_docs) - gamma * mean(non_relevant_docs)\n\nIn the pseudo-relevance setting we have no true non-relevant labels, so gamma is often set to 0.\n\nImplement `rocchio_expansion(query_vec, doc_vecs, top_k, alpha=1.0, beta=0.75, gamma=0.0)` where:\n- query_vec: shape (d,) — original query embedding\n- doc_vecs: shape (M, d) — all document embeddings\n- top_k: number of top documents to treat as pseudo-relevant (ranked by cosine similarity)\n- alpha, beta, gamma: Rocchio weights\n\nReturn the updated query vector (shape (d,), L2-normalized).",
+  "constraints": [
+    "All embeddings are L2-normalized float64 arrays",
+    "top_k <= M",
+    "Return value must be L2-normalized",
+    "No external libraries beyond numpy"
+  ],
+  "starter_code": "import numpy as np\n\ndef rocchio_expansion(query_vec, doc_vecs, top_k, alpha=1.0, beta=0.75, gamma=0.0):\n    \"\"\"\n    Expand query using Rocchio pseudo-relevance feedback.\n\n    Args:\n        query_vec: np.ndarray of shape (d,)\n        doc_vecs:  np.ndarray of shape (M, d)\n        top_k: int, number of pseudo-relevant docs\n        alpha: weight for original query\n        beta:  weight for relevant centroid\n        gamma: weight for non-relevant centroid (0 for PRF)\n\n    Returns:\n        new_query: np.ndarray of shape (d,), L2-normalized\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef rocchio_expansion(query_vec, doc_vecs, top_k, alpha=1.0, beta=0.75, gamma=0.0):\n    # rank documents by cosine similarity\n    scores = doc_vecs @ query_vec  # (M,)\n    ranked = np.argsort(-scores)   # descending\n\n    relevant_docs = doc_vecs[ranked[:top_k]]       # (top_k, d)\n    non_relevant_docs = doc_vecs[ranked[top_k:]]   # (M-top_k, d)\n\n    relevant_centroid = relevant_docs.mean(axis=0)  # (d,)\n\n    new_query = alpha * query_vec + beta * relevant_centroid\n\n    if gamma > 0 and len(non_relevant_docs) > 0:\n        non_relevant_centroid = non_relevant_docs.mean(axis=0)\n        new_query -= gamma * non_relevant_centroid\n\n    # L2 normalize\n    norm = np.linalg.norm(new_query)\n    if norm > 0:\n        new_query /= norm\n    return new_query\n",
+  "explanation": "The Rocchio algorithm was originally designed for TF-IDF vector spaces but applies equally to dense embeddings.\n\nKey ideas:\n1. Retrieve top-k documents using current query (initial retrieval).\n2. Compute the centroid of these pseudo-relevant documents.\n3. Shift the query toward the relevant centroid (beta term) and away from non-relevant documents (gamma term).\n4. L2-normalize the result so it can be used in cosine similarity retrieval again.\n\nIn pseudo-relevance feedback, there are no true relevance labels, so we assume the top-k are relevant. This is a simple but effective heuristic that often improves recall.\n\nThe alpha term retains the original query signal, preventing excessive drift into the document space.",
+  "test_cases": [
+    {
+      "name": "output_shape_and_normalized",
+      "code": "import numpy as np\nnp.random.seed(0)\nM, d = 10, 4\ndoc_vecs = np.random.randn(M, d)\ndoc_vecs /= np.linalg.norm(doc_vecs, axis=1, keepdims=True)\nquery = np.random.randn(d)\nquery /= np.linalg.norm(query)\nnew_q = rocchio_expansion(query, doc_vecs, top_k=3)\nassert new_q.shape == (d,)\nassert abs(np.linalg.norm(new_q) - 1.0) < 1e-9, 'Result must be L2-normalized'"
+    },
+    {
+      "name": "zero_beta_returns_original_query",
+      "code": "import numpy as np\nnp.random.seed(1)\nM, d = 8, 4\ndoc_vecs = np.random.randn(M, d)\ndoc_vecs /= np.linalg.norm(doc_vecs, axis=1, keepdims=True)\nquery = np.random.randn(d)\nquery /= np.linalg.norm(query)\nnew_q = rocchio_expansion(query, doc_vecs, top_k=3, alpha=1.0, beta=0.0, gamma=0.0)\nassert np.allclose(new_q, query, atol=1e-9), 'beta=0,gamma=0 should return normalized original query'"
+    },
+    {
+      "name": "query_shifts_toward_relevant_centroid",
+      "code": "import numpy as np\nnp.random.seed(2)\nd = 4\n# One cluster of docs far from query\nquery = np.array([1.0, 0.0, 0.0, 0.0])\ntarget = np.array([0.0, 1.0, 0.0, 0.0])\ndoc_vecs = np.tile(target, (5, 1))  # all docs point in target direction\nnew_q = rocchio_expansion(query, doc_vecs, top_k=5, alpha=1.0, beta=1.0, gamma=0.0)\n# new query should be closer to target than original\norig_sim = query @ target\nnew_sim = new_q @ target\nassert new_sim > orig_sim, f'Query should move toward docs: {new_sim} <= {orig_sim}'"
+    },
+    {
+      "name": "top_k_one_uses_single_doc",
+      "code": "import numpy as np\nnp.random.seed(3)\nM, d = 6, 4\nquery = np.array([1.0, 0.0, 0.0, 0.0])\ndoc_vecs = np.random.randn(M, d)\ndoc_vecs /= np.linalg.norm(doc_vecs, axis=1, keepdims=True)\nnew_q = rocchio_expansion(query, doc_vecs, top_k=1, alpha=1.0, beta=0.75, gamma=0.0)\nassert new_q.shape == (d,)\nassert abs(np.linalg.norm(new_q) - 1.0) < 1e-9"
+    },
+    {
+      "name": "gamma_shifts_away_from_nonrelevant",
+      "code": "import numpy as np\nd = 4\nquery = np.array([1.0, 0.0, 0.0, 0.0])\nrelevant = np.tile(np.array([1.0, 0.0, 0.0, 0.0]), (2, 1))\nnon_rel = np.tile(np.array([0.0, 1.0, 0.0, 0.0]), (3, 1))\ndoc_vecs = np.vstack([relevant, non_rel])\nnew_q_no_gamma = rocchio_expansion(query, doc_vecs, top_k=2, alpha=1.0, beta=0.5, gamma=0.0)\nnew_q_gamma = rocchio_expansion(query, doc_vecs, top_k=2, alpha=1.0, beta=0.5, gamma=0.5)\n# gamma version should have less component in non-relevant direction\nassert new_q_gamma[1] < new_q_no_gamma[1] + 1e-9, 'gamma should reduce non-relevant component'"
+    }
+  ],
+  "hints": [
+    "First rank documents by dot product (since they are L2-normalized), then slice the top-k.",
+    "The relevant centroid is just doc_vecs[top_k_indices].mean(axis=0).",
+    "Always L2-normalize the result so it works as a query embedding in subsequent retrieval.",
+    "When gamma=0, the non-relevant centroid is not needed — skip that computation."
+  ],
+  "related_problems": ["12.7", "12.9", "12.11"]
+}

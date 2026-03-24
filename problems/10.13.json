@@ -1,0 +1,47 @@
+{
+  "id": "10.13",
+  "title": "Flash Attention (Conceptual)",
+  "difficulty": "Hard",
+  "category": "Attention & Transformers",
+  "tags": ["numpy", "from-scratch", "optimization"],
+  "description": "Standard attention requires O(N^2) memory to store the full attention matrix. Flash Attention avoids this by processing Q, K, V in tiles and accumulating the softmax numerator and denominator incrementally without ever materializing the full N x N matrix.\n\nImplement `flash_attention(Q, K, V, block_size)` where:\n- Q, K, V are arrays of shape (N, d)\n- block_size is the tile size B\n- Output is the attention output of shape (N, d)\n\nAlgorithm (single-head, no masking):\n1. Split Q into row tiles of size B, K and V into column tiles of size B.\n2. For each row tile of Q, iterate over all column tiles of K/V.\n3. Maintain running max m_i, running softmax denominator l_i, and running output O_i.\n4. For each (Q_tile, K_tile, V_tile):\n   a. Compute S = Q_tile @ K_tile.T / sqrt(d)\n   b. Compute tile max m_new = max(m_i, rowmax(S))\n   c. Update l_i and O_i using the safe softmax recurrence\n5. Finalize O_i = O_i / l_i\n\nThe result must be numerically equivalent to standard scaled dot-product attention.",
+  "constraints": [
+    "Q, K, V are numpy arrays of shape (N, d) with float64 dtype",
+    "block_size divides N evenly for simplicity",
+    "N >= 1, d >= 1, block_size >= 1",
+    "No external libraries beyond numpy and math",
+    "Output must match standard attention to within 1e-9 absolute tolerance"
+  ],
+  "starter_code": "import numpy as np\n\ndef flash_attention(Q, K, V, block_size):\n    \"\"\"\n    Tiled (Flash) attention that avoids materializing the full N x N attention matrix.\n\n    Args:\n        Q: np.ndarray of shape (N, d)\n        K: np.ndarray of shape (N, d)\n        V: np.ndarray of shape (N, d)\n        block_size: int, tile size B (must divide N)\n\n    Returns:\n        O: np.ndarray of shape (N, d)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef flash_attention(Q, K, V, block_size):\n    N, d = Q.shape\n    scale = 1.0 / np.sqrt(d)\n    O = np.zeros((N, d), dtype=np.float64)\n    l = np.zeros(N, dtype=np.float64)\n    m = np.full(N, -np.inf, dtype=np.float64)\n\n    num_blocks = N // block_size\n\n    for i in range(num_blocks):\n        row_start = i * block_size\n        row_end = row_start + block_size\n        Qi = Q[row_start:row_end]          # (B, d)\n        Oi = np.zeros((block_size, d))\n        li = np.zeros(block_size)\n        mi = np.full(block_size, -np.inf)\n\n        for j in range(num_blocks):\n            col_start = j * block_size\n            col_end = col_start + block_size\n            Kj = K[col_start:col_end]      # (B, d)\n            Vj = V[col_start:col_end]      # (B, d)\n\n            S = (Qi @ Kj.T) * scale        # (B, B)\n            m_tile = S.max(axis=1)         # (B,)\n            m_new = np.maximum(mi, m_tile) # (B,)\n\n            alpha = np.exp(mi - m_new)     # (B,)\n            P = np.exp(S - m_new[:, None]) # (B, B)\n            p_sum = P.sum(axis=1)          # (B,)\n\n            Oi = alpha[:, None] * Oi + P @ Vj\n            li = alpha * li + p_sum\n            mi = m_new\n\n        O[row_start:row_end] = Oi / li[:, None]\n\n    return O\n",
+  "explanation": "Flash Attention reformulates scaled dot-product attention to avoid the O(N^2) memory footprint of the attention matrix.\n\nKey insight: softmax can be computed incrementally using the log-sum-exp trick. For each row i and a new block of keys j, we update:\n- m_new = max(m_old, tile_max)\n- l_new = exp(m_old - m_new) * l_old + sum(exp(S_tile - m_new))\n- O_new = exp(m_old - m_new) * O_old + P_tile @ V_tile\n\nAfter all column tiles are processed, O is divided by l to normalize.\n\nThis is mathematically equivalent to standard attention O = softmax(QK^T/sqrt(d))V but never stores the full N x N matrix. Memory is O(N * block_size) instead of O(N^2).\n\nTime complexity remains O(N^2 * d) but cache efficiency is dramatically improved.",
+  "test_cases": [
+    {
+      "name": "matches_standard_attention_small",
+      "code": "import numpy as np\n\ndef standard_attention(Q, K, V):\n    d = Q.shape[1]\n    scores = Q @ K.T / np.sqrt(d)\n    scores -= scores.max(axis=1, keepdims=True)\n    weights = np.exp(scores)\n    weights /= weights.sum(axis=1, keepdims=True)\n    return weights @ V\n\nnp.random.seed(0)\nN, d, B = 8, 4, 4\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.random.randn(N, d)\nexpected = standard_attention(Q, K, V)\ngot = flash_attention(Q, K, V, B)\nassert np.allclose(got, expected, atol=1e-9), f'Max diff: {np.abs(got - expected).max()}'"
+    },
+    {
+      "name": "matches_standard_attention_larger",
+      "code": "import numpy as np\n\ndef standard_attention(Q, K, V):\n    d = Q.shape[1]\n    scores = Q @ K.T / np.sqrt(d)\n    scores -= scores.max(axis=1, keepdims=True)\n    weights = np.exp(scores)\n    weights /= weights.sum(axis=1, keepdims=True)\n    return weights @ V\n\nnp.random.seed(42)\nN, d, B = 16, 8, 4\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.random.randn(N, d)\nexpected = standard_attention(Q, K, V)\ngot = flash_attention(Q, K, V, B)\nassert np.allclose(got, expected, atol=1e-9), f'Max diff: {np.abs(got - expected).max()}'"
+    },
+    {
+      "name": "output_shape_correct",
+      "code": "import numpy as np\nnp.random.seed(1)\nN, d, B = 8, 6, 4\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.random.randn(N, d)\nout = flash_attention(Q, K, V, B)\nassert out.shape == (N, d), f'Expected ({N},{d}), got {out.shape}'"
+    },
+    {
+      "name": "block_size_equals_N",
+      "code": "import numpy as np\n\ndef standard_attention(Q, K, V):\n    d = Q.shape[1]\n    scores = Q @ K.T / np.sqrt(d)\n    scores -= scores.max(axis=1, keepdims=True)\n    weights = np.exp(scores)\n    weights /= weights.sum(axis=1, keepdims=True)\n    return weights @ V\n\nnp.random.seed(7)\nN, d = 4, 4\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.random.randn(N, d)\nexpected = standard_attention(Q, K, V)\ngot = flash_attention(Q, K, V, N)\nassert np.allclose(got, expected, atol=1e-9)"
+    },
+    {
+      "name": "block_size_one",
+      "code": "import numpy as np\n\ndef standard_attention(Q, K, V):\n    d = Q.shape[1]\n    scores = Q @ K.T / np.sqrt(d)\n    scores -= scores.max(axis=1, keepdims=True)\n    weights = np.exp(scores)\n    weights /= weights.sum(axis=1, keepdims=True)\n    return weights @ V\n\nnp.random.seed(3)\nN, d = 4, 4\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.random.randn(N, d)\nexpected = standard_attention(Q, K, V)\ngot = flash_attention(Q, K, V, 1)\nassert np.allclose(got, expected, atol=1e-9)"
+    }
+  ],
+  "hints": [
+    "The core trick is maintaining a running (m, l, O) triple per row and updating them each time a new column tile is processed.",
+    "When you encounter a new tile max m_tile, rescale the existing accumulation by exp(m_old - m_new) before adding the new tile's contribution.",
+    "Think of l as the running partition function Z in softmax. The final output is O / l.",
+    "Process row tiles in the outer loop and column tiles in the inner loop — this matches the HBM tiling strategy from the original Flash Attention paper."
+  ],
+  "related_problems": ["10.1", "10.2", "10.14"]
+}

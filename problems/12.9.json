@@ -1,0 +1,46 @@
+{
+  "id": "12.9",
+  "title": "Cross-Encoder Reranker",
+  "difficulty": "Medium",
+  "category": "Information Retrieval",
+  "tags": ["numpy", "from-scratch", "retrieval", "nlp"],
+  "description": "A bi-encoder retrieves candidates quickly by encoding query and document independently. A cross-encoder reranker scores (query, document) pairs jointly, allowing richer interaction at the cost of speed.\n\nIn this simplified version, implement a cross-encoder that:\n1. Concatenates query and document feature vectors: x = [query; doc] (dimension 2d)\n2. Passes through a single hidden layer: h = relu(x @ W1 + b1)\n3. Projects to a scalar score: s = h @ W2 + b2\n\nImplement `cross_encoder_score(query_vecs, doc_vecs, W1, b1, W2, b2)` where:\n- query_vecs: shape (P, d) — P query-doc pairs, query side\n- doc_vecs:   shape (P, d) — P query-doc pairs, document side\n- W1: shape (2d, hidden), b1: shape (hidden,)\n- W2: shape (hidden, 1), b2: shape (1,) or scalar\n\nReturn a score array of shape (P,).",
+  "constraints": [
+    "All arrays are float64 numpy arrays",
+    "d >= 1, hidden >= 1, P >= 1",
+    "No external libraries beyond numpy",
+    "Output shape must be (P,)"
+  ],
+  "starter_code": "import numpy as np\n\ndef cross_encoder_score(query_vecs, doc_vecs, W1, b1, W2, b2):\n    \"\"\"\n    Score query-document pairs with a simple cross-encoder MLP.\n\n    Args:\n        query_vecs: np.ndarray of shape (P, d)\n        doc_vecs:   np.ndarray of shape (P, d)\n        W1: np.ndarray of shape (2d, hidden)\n        b1: np.ndarray of shape (hidden,)\n        W2: np.ndarray of shape (hidden, 1)\n        b2: np.ndarray or float, shape (1,) or scalar\n\n    Returns:\n        scores: np.ndarray of shape (P,)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef cross_encoder_score(query_vecs, doc_vecs, W1, b1, W2, b2):\n    # concatenate query and doc features\n    x = np.concatenate([query_vecs, doc_vecs], axis=1)  # (P, 2d)\n\n    # hidden layer with ReLU\n    h = np.maximum(0, x @ W1 + b1)  # (P, hidden)\n\n    # output projection\n    s = h @ W2 + b2  # (P, 1)\n\n    return s.ravel()  # (P,)\n",
+  "explanation": "Cross-encoders differ from bi-encoders in that the query and document interact directly inside the model rather than only at the final dot-product step.\n\nArchitecture:\n- Input: concatenated [query; doc] vector of dimension 2d\n- Hidden layer: linear + ReLU activation\n- Output: scalar relevance score\n\nIn practice, cross-encoders are BERT-based models that take the concatenated token sequence [CLS] query [SEP] doc [SEP] and output a relevance logit from the [CLS] representation.\n\nThe simplified MLP version here captures the key structural difference: joint encoding enables cross-attention between query and document features inside the network.\n\nCross-encoders are used in the reranking stage: a fast bi-encoder retrieves top-k candidates, then the cross-encoder reranks them for final presentation.",
+  "test_cases": [
+    {
+      "name": "output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nP, d, h = 5, 4, 8\nW1 = np.random.randn(2*d, h)\nb1 = np.random.randn(h)\nW2 = np.random.randn(h, 1)\nb2 = np.random.randn(1)\nq = np.random.randn(P, d)\ndoc = np.random.randn(P, d)\nout = cross_encoder_score(q, doc, W1, b1, W2, b2)\nassert out.shape == (P,), f'Expected ({P},), got {out.shape}'"
+    },
+    {
+      "name": "identical_query_doc_consistent_score",
+      "code": "import numpy as np\nnp.random.seed(1)\nd, h = 4, 6\nW1 = np.random.randn(2*d, h)\nb1 = np.zeros(h)\nW2 = np.random.randn(h, 1)\nb2 = np.zeros(1)\nvec = np.random.randn(d)\nq = np.tile(vec, (3, 1))\ndoc = np.tile(vec, (3, 1))\nscores = cross_encoder_score(q, doc, W1, b1, W2, b2)\n# all pairs are identical so scores should be equal\nassert np.allclose(scores, scores[0], atol=1e-9), 'Identical pairs should give same score'"
+    },
+    {
+      "name": "relu_nonlinearity_used",
+      "code": "import numpy as np\nnp.random.seed(2)\nP, d, h = 4, 3, 10\nW1 = np.random.randn(2*d, h)\nb1 = np.random.randn(h)\nW2 = np.ones((h, 1))\nb2 = np.zeros(1)\nq = np.random.randn(P, d)\ndoc = np.random.randn(P, d)\nscores = cross_encoder_score(q, doc, W1, b1, W2, b2)\n# linear scores without relu\nx = np.concatenate([q, doc], axis=1)\nlinear_scores = (x @ W1 + b1) @ W2\n# they should differ (relu makes negative pre-activations 0)\nassert not np.allclose(scores, linear_scores.ravel(), atol=1e-9), 'ReLU should produce different output than linear'"
+    },
+    {
+      "name": "zero_weights_gives_bias",
+      "code": "import numpy as np\nnp.random.seed(3)\nP, d, h = 3, 4, 5\nW1 = np.zeros((2*d, h))\nb1 = np.ones(h)  # relu(0+1)=1 for all hidden units\nW2 = np.ones((h, 1))\nb2 = np.array([2.0])\nq = np.random.randn(P, d)\ndoc = np.random.randn(P, d)\nscores = cross_encoder_score(q, doc, W1, b1, W2, b2)\n# h * 1 + 2 = h + 2 for all pairs\nexpected = np.full(P, h + 2.0)\nassert np.allclose(scores, expected, atol=1e-9), f'Expected {expected}, got {scores}'"
+    },
+    {
+      "name": "single_pair",
+      "code": "import numpy as np\nnp.random.seed(4)\nd, h = 6, 8\nW1 = np.random.randn(2*d, h)\nb1 = np.random.randn(h)\nW2 = np.random.randn(h, 1)\nb2 = 0.5\nq = np.random.randn(1, d)\ndoc = np.random.randn(1, d)\nscores = cross_encoder_score(q, doc, W1, b1, W2, b2)\nassert scores.shape == (1,)"
+    }
+  ],
+  "hints": [
+    "Use np.concatenate([query_vecs, doc_vecs], axis=1) to get the (P, 2d) combined input.",
+    "ReLU is np.maximum(0, pre_activation).",
+    "The output W2 has shape (hidden, 1); use .ravel() or [:, 0] to get shape (P,).",
+    "This is simply a 2-layer MLP — the cross-encoder property comes from the concatenation step."
+  ],
+  "related_problems": ["12.7", "12.8", "12.11"]
+}

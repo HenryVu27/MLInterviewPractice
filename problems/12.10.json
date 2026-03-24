@@ -1,0 +1,46 @@
+{
+  "id": "12.10",
+  "title": "Sliding Window Chunking",
+  "difficulty": "Easy",
+  "category": "Information Retrieval",
+  "tags": ["from-scratch", "retrieval", "nlp"],
+  "description": "Long documents must be split into smaller chunks before indexing in a retrieval system. A sliding window chunker splits a list of tokens into overlapping chunks of a fixed size, allowing adjacent chunks to share context.\n\nImplement `sliding_window_chunks(tokens, chunk_size, overlap)` where:\n- tokens: a list of strings (words/tokens)\n- chunk_size: N, the number of tokens per chunk\n- overlap: M, the number of tokens shared between consecutive chunks (M < N)\n\nReturn a list of chunks, where each chunk is a list of strings.\n\nChunking rules:\n- First chunk: tokens[0 : chunk_size]\n- Step size: chunk_size - overlap\n- Continue until the start index >= len(tokens)\n- Include the final partial chunk if start < len(tokens) (even if it has fewer than chunk_size tokens)\n- If len(tokens) <= chunk_size, return a single chunk with all tokens",
+  "constraints": [
+    "0 <= overlap < chunk_size",
+    "chunk_size >= 1",
+    "tokens may be empty (return empty list)",
+    "No external libraries required"
+  ],
+  "starter_code": "def sliding_window_chunks(tokens, chunk_size, overlap):\n    \"\"\"\n    Split tokens into overlapping chunks.\n\n    Args:\n        tokens: list of str\n        chunk_size: int N, tokens per chunk\n        overlap: int M, tokens shared between consecutive chunks\n\n    Returns:\n        chunks: list of list of str\n    \"\"\"\n    pass\n",
+  "solution_code": "def sliding_window_chunks(tokens, chunk_size, overlap):\n    if not tokens:\n        return []\n\n    step = chunk_size - overlap\n    chunks = []\n    start = 0\n\n    while start < len(tokens):\n        chunk = tokens[start: start + chunk_size]\n        chunks.append(chunk)\n        start += step\n\n    return chunks\n",
+  "explanation": "Sliding window chunking is a preprocessing step for retrieval-augmented generation (RAG) and document indexing.\n\nKey parameters:\n- chunk_size (N): controls how much context each chunk provides\n- overlap (M): controls how much neighboring chunks share; higher overlap reduces context loss at chunk boundaries\n- step = N - M: the number of tokens to advance between chunks\n\nExample: tokens = [a,b,c,d,e,f,g], chunk_size=4, overlap=1 -> step=3\n- Chunk 1: [a,b,c,d] (start=0)\n- Chunk 2: [d,e,f,g] (start=3)\n- Chunk 3: [g] (start=6, partial)\n\nIn RAG pipelines, each chunk is then embedded and stored in a vector database. The overlap prevents relevant information from being split across non-retrievable boundaries.",
+  "test_cases": [
+    {
+      "name": "basic_no_overlap",
+      "code": "tokens = ['a','b','c','d','e','f']\nchunks = sliding_window_chunks(tokens, chunk_size=3, overlap=0)\nassert chunks == [['a','b','c'], ['d','e','f']], f'Got {chunks}'"
+    },
+    {
+      "name": "with_overlap",
+      "code": "tokens = ['a','b','c','d','e']\nchunks = sliding_window_chunks(tokens, chunk_size=3, overlap=1)\nassert chunks == [['a','b','c'], ['c','d','e']], f'Got {chunks}'"
+    },
+    {
+      "name": "partial_final_chunk",
+      "code": "tokens = ['a','b','c','d','e','f','g']\nchunks = sliding_window_chunks(tokens, chunk_size=4, overlap=1)\nassert chunks[-1] == ['g'], f'Last chunk should be [g], got {chunks[-1]}'\nassert len(chunks) == 3, f'Expected 3 chunks, got {len(chunks)}'"
+    },
+    {
+      "name": "empty_tokens",
+      "code": "chunks = sliding_window_chunks([], chunk_size=4, overlap=1)\nassert chunks == [], f'Expected [], got {chunks}'"
+    },
+    {
+      "name": "tokens_shorter_than_chunk_size",
+      "code": "tokens = ['hello', 'world']\nchunks = sliding_window_chunks(tokens, chunk_size=5, overlap=2)\nassert chunks == [['hello', 'world']], f'Got {chunks}'"
+    }
+  ],
+  "hints": [
+    "step = chunk_size - overlap; advance start by step each iteration.",
+    "Use a while loop: while start < len(tokens), append tokens[start:start+chunk_size].",
+    "Python list slicing handles the final partial chunk automatically — tokens[start:start+chunk_size] will just return fewer elements.",
+    "An empty token list should return an empty list, not a list with one empty list."
+  ],
+  "related_problems": ["12.7", "12.11", "12.12"]
+}

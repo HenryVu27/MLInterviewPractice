@@ -1,0 +1,48 @@
+{
+  "id": "12.11",
+  "title": "Hierarchical Retrieval",
+  "difficulty": "Medium",
+  "category": "Information Retrieval",
+  "tags": ["hierarchical retrieval", "parent-child chunking", "rag", "multi-level retrieval"],
+  "description": "Implement hierarchical retrieval — a two-level retrieval strategy for RAG where small child chunks are retrieved but large parent chunks are returned for context.\n\nThe approach:\n1. Split each document into large 'parent' chunks and smaller 'child' chunks.\n2. Index child chunks for retrieval (better semantic granularity).\n3. At query time, retrieve top-k child chunks, then return their parent chunks.\n\nImplement:\n```python\nclass HierarchicalChunker:\n```\n- `__init__(self, parent_size, child_size, overlap=0)`: chunk sizes in tokens.\n- `chunk_document(self, doc_tokens, doc_id)`: Returns `(parent_chunks, child_chunks)` where each child chunk has a `parent_id` reference.\n- `retrieve(self, query_embed, top_k)`: Retrieve top-k parent chunks based on child chunk similarity.\n\nEach chunk is a dict: `{'id': ..., 'tokens': [...], 'parent_id': ...}` (parent chunks have `parent_id=None`).",
+  "constraints": [
+    "parent_size > child_size.",
+    "Child chunks are sub-chunks of parent chunks (each child belongs to exactly one parent).",
+    "Child chunks are indexed using embedding vectors (precomputed, stored at index time).",
+    "retrieve deduplicates parent chunks (return each parent at most once).",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\nclass HierarchicalChunker:\n    def __init__(self, parent_size: int, child_size: int, overlap: int = 0):\n        self.parent_size = parent_size\n        self.child_size = child_size\n        self.overlap = overlap\n        self.child_index = []   # list of {'id', 'tokens', 'parent_id', 'embed'}\n        self.parent_store = {}  # parent_id -> chunk dict\n\n    def chunk_document(self, doc_tokens: list, doc_id: str) -> tuple:\n        pass\n\n    def add_document(self, doc_tokens: list, doc_id: str, doc_embeds: np.ndarray) -> None:\n        \"\"\"doc_embeds: one embedding per child chunk, shape (n_children, d).\"\"\"\n        pass\n\n    def retrieve(self, query_embed: np.ndarray, top_k: int = 3) -> list:\n        pass\n",
+  "solution_code": "import numpy as np\n\nclass HierarchicalChunker:\n    def __init__(self, parent_size: int, child_size: int, overlap: int = 0):\n        self.parent_size = parent_size\n        self.child_size = child_size\n        self.overlap = overlap\n        self.child_index = []   # list of {'id', 'tokens', 'parent_id', 'embed'}\n        self.parent_store = {}  # parent_id -> chunk dict\n\n    def _make_chunks(self, tokens, chunk_size, overlap):\n        if len(tokens) == 0:\n            return []\n        if len(tokens) <= chunk_size:\n            return [tokens[:]]\n        stride = chunk_size - overlap\n        chunks = []\n        start = 0\n        while start < len(tokens):\n            chunks.append(tokens[start:start + chunk_size])\n            if start + chunk_size >= len(tokens):\n                break\n            start += stride\n        return chunks\n\n    def chunk_document(self, doc_tokens: list, doc_id: str) -> tuple:\n        parent_chunks = []\n        child_chunks = []\n        parent_token_chunks = self._make_chunks(doc_tokens, self.parent_size, 0)\n        for p_idx, p_tokens in enumerate(parent_token_chunks):\n            parent_id = f\"{doc_id}_p{p_idx}\"\n            parent = {'id': parent_id, 'tokens': p_tokens, 'parent_id': None}\n            parent_chunks.append(parent)\n            child_token_chunks = self._make_chunks(p_tokens, self.child_size, self.overlap)\n            for c_idx, c_tokens in enumerate(child_token_chunks):\n                child_id = f\"{parent_id}_c{c_idx}\"\n                child = {'id': child_id, 'tokens': c_tokens, 'parent_id': parent_id}\n                child_chunks.append(child)\n        return parent_chunks, child_chunks\n\n    def add_document(self, doc_tokens: list, doc_id: str, doc_embeds: np.ndarray) -> None:\n        parents, children = self.chunk_document(doc_tokens, doc_id)\n        for p in parents:\n            self.parent_store[p['id']] = p\n        for i, child in enumerate(children):\n            if i < len(doc_embeds):\n                child['embed'] = doc_embeds[i]\n                self.child_index.append(child)\n\n    def retrieve(self, query_embed: np.ndarray, top_k: int = 3) -> list:\n        if not self.child_index:\n            return []\n        q_norm = query_embed / (np.linalg.norm(query_embed) + 1e-10)\n        embeds = np.stack([c['embed'] for c in self.child_index])\n        norms = np.linalg.norm(embeds, axis=1, keepdims=True)\n        embeds_norm = embeds / (norms + 1e-10)\n        sims = embeds_norm @ q_norm\n        sorted_indices = np.argsort(-sims)\n        seen_parents = set()\n        result = []\n        for idx in sorted_indices:\n            child = self.child_index[int(idx)]\n            parent_id = child['parent_id']\n            if parent_id not in seen_parents:\n                seen_parents.add(parent_id)\n                result.append(self.parent_store[parent_id])\n                if len(result) >= top_k:\n                    break\n        return result\n",
+  "explanation": "Hierarchical retrieval solves a fundamental tension in RAG: small chunks give better retrieval precision (more focused embeddings) but less context for the LLM. Large chunks give more context but dilute the embedding signal. The solution: index small child chunks for retrieval but return large parent chunks to the LLM. This is also called 'parent document retrieval' or 'small-to-big retrieval'. The key implementation detail: deduplicate parent chunks so if multiple children from the same parent are retrieved, we only return that parent once (choosing based on the best child match).",
+  "test_cases": [
+    {
+      "name": "test_chunk_structure",
+      "code": "chunker = HierarchicalChunker(parent_size=8, child_size=4, overlap=0)\ntokens = list(range(16))\nparents, children = chunker.chunk_document(tokens, 'doc1')\nassert len(parents) == 2, f\"Expected 2 parents, got {len(parents)}\"\nassert all(p['parent_id'] is None for p in parents)\nassert all(c['parent_id'] is not None for c in children)"
+    },
+    {
+      "name": "test_child_parent_reference",
+      "code": "chunker = HierarchicalChunker(parent_size=6, child_size=2)\ntokens = list(range(6))\nparents, children = chunker.chunk_document(tokens, 'doc')\nparent_ids = {p['id'] for p in parents}\nfor child in children:\n    assert child['parent_id'] in parent_ids, f\"Child's parent_id {child['parent_id']} not in parents\""
+    },
+    {
+      "name": "test_retrieve_returns_parents",
+      "code": "import numpy as np\nnp.random.seed(0)\nchunker = HierarchicalChunker(parent_size=8, child_size=4)\ntokens = list(range(24))\nparents, children = chunker.chunk_document(tokens, 'doc1')\n# 3 parents, each with 2 children = 6 children\nchild_embeds = np.random.randn(len(children), 4)\nchunker.add_document(tokens, 'doc1', child_embeds)\nquery = np.random.randn(4)\nresult = chunker.retrieve(query, top_k=2)\nassert len(result) == 2\nassert all(r['parent_id'] is None for r in result)"
+    },
+    {
+      "name": "test_no_duplicate_parents",
+      "code": "import numpy as np\nnp.random.seed(1)\nchunker = HierarchicalChunker(parent_size=10, child_size=3)\ntokens = list(range(10))\nparents, children = chunker.chunk_document(tokens, 'doc')\nchild_embeds = np.random.randn(len(children), 4)\nchunker.add_document(tokens, 'doc', child_embeds)\nresult = chunker.retrieve(np.random.randn(4), top_k=5)\nparent_ids = [r['id'] for r in result]\nassert len(parent_ids) == len(set(parent_ids)), \"No duplicate parents in result\""
+    },
+    {
+      "name": "test_children_tokens_within_parent",
+      "code": "chunker = HierarchicalChunker(parent_size=8, child_size=3)\ntokens = list(range(8))\nparents, children = chunker.chunk_document(tokens, 'doc')\n# All child tokens should be a subset of their parent's tokens\nparent_map = {p['id']: p['tokens'] for p in parents}\nfor child in children:\n    parent_tokens = parent_map[child['parent_id']]\n    for tok in child['tokens']:\n        assert tok in parent_tokens, f\"Child token {tok} not in parent {parent_tokens}\""
+    }
+  ],
+  "hints": [
+    "Build parent chunks first (non-overlapping), then build child chunks within each parent.",
+    "Parent IDs are doc_id + parent index; child IDs are parent_id + child index.",
+    "add_document stores parents in a dict and children in a list with their embeddings.",
+    "retrieve: score all children, sort by similarity, deduplicate by parent_id.",
+    "A set of 'seen_parents' lets you deduplicate while preserving rank order."
+  ],
+  "related_problems": ["12.10", "12.7", "11.1"]
+}

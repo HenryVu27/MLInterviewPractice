@@ -1,0 +1,48 @@
+{
+  "id": "10.17",
+  "title": "GPT Decoder-Only (numpy)",
+  "difficulty": "Hard",
+  "category": "Attention & Transformers",
+  "tags": ["GPT", "decoder-only", "autoregressive", "language model", "numpy"],
+  "description": "Implement a minimal GPT-style decoder-only Transformer language model in numpy.\n\nGPT architecture:\n- Token embedding lookup: (vocab_size, d_model)\n- Positional embedding lookup: (max_len, d_model)\n- N decoder-only blocks: causal MHA + FFN (Pre-LN)\n- Final LayerNorm\n- LM head: linear projection to vocab logits\n\nDecoder-only means:\n- No encoder\n- Only causal (masked) self-attention\n- No cross-attention\n\nImplement `GPT` class with:\n- `__init__`: initialize all parameters\n- `forward(token_ids)`: returns logits (seq_len, vocab_size)\n- `generate(token_ids, max_new_tokens, temperature)`: greedy/sampled generation\n\nFor simplicity, use N=2 decoder blocks.",
+  "constraints": [
+    "Use numpy only",
+    "Token embedding: lookup table (vocab_size, d_model)",
+    "Positional embedding: lookup table (max_len, d_model)",
+    "N decoder blocks with causal MHA + FFN + Pre-LN",
+    "generate: append new token, return token_ids + generated tokens",
+    "Use temperature-scaled sampling in generate"
+  ],
+  "starter_code": "import numpy as np\n\nclass GPT:\n    \"\"\"Minimal GPT decoder-only Transformer.\"\"\"\n\n    def __init__(self, vocab_size, d_model, num_heads, d_ff, num_layers, max_len, rng=None):\n        \"\"\"Initialize GPT parameters.\n\n        Args:\n            vocab_size: Vocabulary size\n            d_model: Model dimension\n            num_heads: Number of attention heads\n            d_ff: FFN intermediate dimension\n            num_layers: Number of decoder blocks\n            max_len: Maximum sequence length\n            rng: numpy random generator\n        \"\"\"\n        pass\n\n    def forward(self, token_ids):\n        \"\"\"Forward pass.\n\n        Args:\n            token_ids: (seq_len,) integer token indices\n\n        Returns:\n            logits: (seq_len, vocab_size)\n        \"\"\"\n        pass\n\n    def generate(self, token_ids, max_new_tokens, temperature=1.0):\n        \"\"\"Autoregressive generation.\n\n        Args:\n            token_ids: Starting token sequence (list or 1D array)\n            max_new_tokens: Number of tokens to generate\n            temperature: Sampling temperature\n\n        Returns:\n            token_ids: Extended sequence with generated tokens\n        \"\"\"\n        pass\n",
+  "solution_code": "import numpy as np\n\nclass GPT:\n    def __init__(self, vocab_size, d_model, num_heads, d_ff, num_layers, max_len, rng=None):\n        if rng is None:\n            rng = np.random.default_rng()\n        self.vocab_size = vocab_size\n        self.d_model = d_model\n        self.num_heads = num_heads\n        self.num_layers = num_layers\n        std = 0.02\n\n        self.tok_emb = rng.normal(0, std, (vocab_size, d_model))\n        self.pos_emb = rng.normal(0, std, (max_len, d_model))\n\n        self.blocks = []\n        for _ in range(num_layers):\n            b = {\n                'WQ': rng.normal(0, std, (d_model, d_model)),\n                'WK': rng.normal(0, std, (d_model, d_model)),\n                'WV': rng.normal(0, std, (d_model, d_model)),\n                'WO': rng.normal(0, std, (d_model, d_model)),\n                'g1': np.ones(d_model), 'b1': np.zeros(d_model),\n                'W1': rng.normal(0, std, (d_ff, d_model)),\n                'bf1': np.zeros(d_ff),\n                'W2': rng.normal(0, std, (d_model, d_ff)),\n                'bf2': np.zeros(d_model),\n                'g2': np.ones(d_model), 'b2': np.zeros(d_model),\n            }\n            self.blocks.append(b)\n\n        self.final_gamma = np.ones(d_model)\n        self.final_beta = np.zeros(d_model)\n        self.lm_head = rng.normal(0, std, (vocab_size, d_model))\n\n    def _ln(self, x, g, b):\n        m = x.mean(axis=-1, keepdims=True)\n        v = x.var(axis=-1, keepdims=True)\n        return g * (x - m) / np.sqrt(v + 1e-5) + b\n\n    def _gelu(self, x):\n        return 0.5 * x * (1 + np.tanh(np.sqrt(2/np.pi) * (x + 0.044715*x**3)))\n\n    def _mha(self, x, mask=None):\n        seq, d = x.shape\n        d_k = d // self.num_heads\n        Q = x @ self.blocks[self._cur_block]['WQ'].T\n        K = x @ self.blocks[self._cur_block]['WK'].T\n        V = x @ self.blocks[self._cur_block]['WV'].T\n        Q_h = Q.reshape(seq, self.num_heads, d_k).transpose(1, 0, 2)\n        K_h = K.reshape(seq, self.num_heads, d_k).transpose(1, 0, 2)\n        V_h = V.reshape(seq, self.num_heads, d_k).transpose(1, 0, 2)\n        scores = Q_h @ K_h.transpose(0, 2, 1) / np.sqrt(d_k)\n        if mask is not None:\n            scores = np.where(mask[None], -1e9, scores)\n        exp_s = np.exp(scores - scores.max(axis=-1, keepdims=True))\n        w = exp_s / exp_s.sum(axis=-1, keepdims=True)\n        out = (w @ V_h).transpose(1, 0, 2).reshape(seq, d)\n        return out @ self.blocks[self._cur_block]['WO'].T\n\n    def forward(self, token_ids):\n        token_ids = np.asarray(token_ids)\n        seq = len(token_ids)\n        positions = np.arange(seq)\n        x = self.tok_emb[token_ids] + self.pos_emb[positions]\n\n        causal = np.triu(np.ones((seq, seq), dtype=bool), k=1)\n\n        for i, b in enumerate(self.blocks):\n            self._cur_block = i\n            x_n = self._ln(x, b['g1'], b['b1'])\n            x = x + self._mha(x_n, mask=causal)\n            x_n = self._ln(x, b['g2'], b['b2'])\n            x = x + self._gelu(x_n @ b['W1'].T + b['bf1']) @ b['W2'].T + b['bf2']\n\n        x = self._ln(x, self.final_gamma, self.final_beta)\n        return x @ self.lm_head.T\n\n    def generate(self, token_ids, max_new_tokens, temperature=1.0, rng=None):\n        if rng is None:\n            rng = np.random.default_rng()\n        ids = list(token_ids)\n        for _ in range(max_new_tokens):\n            logits = self.forward(ids)  # (seq, vocab)\n            last_logits = logits[-1] / temperature\n            last_logits -= last_logits.max()\n            probs = np.exp(last_logits)\n            probs /= probs.sum()\n            next_id = rng.choice(self.vocab_size, p=probs)\n            ids.append(int(next_id))\n        return ids\n",
+  "explanation": "GPT is a decoder-only Transformer that models the probability of each token given all previous tokens:\nP(x_t | x_1, ..., x_{t-1})\n\nKey differences from encoder-decoder Transformer:\n- No encoder stack\n- No cross-attention\n- Only causal (masked) self-attention\n- Single stack of N identical blocks\n\nTraining: given a sequence, predict the next token at each position (teacher-forced, all positions in parallel via causal masking).\n\nGeneration: append predicted token, run forward again, repeat. This is autoregressive decoding.\n\nWeight tying: in many GPT models, the LM head matrix equals the token embedding matrix transposed (reduces parameters, often improves quality). This implementation keeps them separate for clarity.\n\nThe generate method uses temperature-scaled sampling. Set temperature=0 for greedy (argmax), temperature=1 for unscaled, temperature>1 for more random output.",
+  "test_cases": [
+    {
+      "name": "test_forward_shape",
+      "code": "import numpy as np\ngpt = GPT(vocab_size=50, d_model=16, num_heads=2, d_ff=64, num_layers=2, max_len=32, rng=np.random.default_rng(0))\ntoken_ids = [1, 5, 10, 3]\nlogits = gpt.forward(token_ids)\nassert logits.shape == (4, 50), f'Expected (4, 50), got {logits.shape}'"
+    },
+    {
+      "name": "test_generate_length",
+      "code": "import numpy as np\ngpt = GPT(vocab_size=20, d_model=8, num_heads=2, d_ff=32, num_layers=1, max_len=50, rng=np.random.default_rng(1))\ntoken_ids = [0, 1, 2]\nnew_ids = gpt.generate(token_ids, max_new_tokens=5, rng=np.random.default_rng(1))\nassert len(new_ids) == len(token_ids) + 5"
+    },
+    {
+      "name": "test_generated_tokens_valid",
+      "code": "import numpy as np\nvocab_size = 15\ngpt = GPT(vocab_size=vocab_size, d_model=8, num_heads=2, d_ff=32, num_layers=1, max_len=50, rng=np.random.default_rng(2))\nnew_ids = gpt.generate([0, 1], max_new_tokens=10, rng=np.random.default_rng(2))\nassert all(0 <= t < vocab_size for t in new_ids)"
+    },
+    {
+      "name": "test_different_inputs_different_logits",
+      "code": "import numpy as np\ngpt = GPT(vocab_size=10, d_model=8, num_heads=2, d_ff=32, num_layers=2, max_len=20, rng=np.random.default_rng(3))\nlogits1 = gpt.forward([0, 1, 2])\nlogits2 = gpt.forward([3, 4, 5])\nassert not np.allclose(logits1, logits2)"
+    },
+    {
+      "name": "test_logits_finite",
+      "code": "import numpy as np\ngpt = GPT(vocab_size=30, d_model=16, num_heads=4, d_ff=64, num_layers=2, max_len=100, rng=np.random.default_rng(4))\nlogits = gpt.forward([0, 5, 10, 15, 20])\nassert np.all(np.isfinite(logits))"
+    }
+  ],
+  "hints": [
+    "Lookup embeddings: x = tok_emb[token_ids] + pos_emb[arange(seq_len)]",
+    "Build causal mask once: np.triu(np.ones((seq,seq), dtype=bool), k=1)",
+    "Each block: x = x + mha(ln(x), causal_mask); x = x + ffn(ln(x))",
+    "generate: run forward, take logits[-1], apply temperature, softmax, sample, append, repeat"
+  ],
+  "related_problems": ["10.8", "10.10", "10.16", "10.18"]
+}

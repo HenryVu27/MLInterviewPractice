@@ -1,0 +1,46 @@
+{
+  "id": "10.14",
+  "title": "Sliding Window Attention",
+  "difficulty": "Medium",
+  "category": "Attention & Transformers",
+  "tags": ["numpy", "from-scratch", "optimization"],
+  "description": "In standard self-attention every token attends to every other token (O(N^2) cost). Sliding Window Attention restricts each token i to attend only to tokens in the window [i-w, i+w], reducing the effective receptive field and cost.\n\nImplement `sliding_window_attention(Q, K, V, window_size)` where:\n- Q, K, V have shape (N, d)\n- window_size w means token i attends to indices max(0, i-w) through min(N-1, i+w) inclusive\n- Positions outside the window receive attention weight 0 (masked out with -inf before softmax)\n\nReturn the output of shape (N, d).\n\nYou may implement this with a masked full attention matrix for clarity — build the N x N boolean mask, set out-of-window positions to -inf, then apply softmax.",
+  "constraints": [
+    "Q, K, V are numpy arrays of shape (N, d) with float64",
+    "window_size w >= 0; w=0 means self-only attention",
+    "No external libraries beyond numpy",
+    "Output shape must be (N, d)"
+  ],
+  "starter_code": "import numpy as np\n\ndef sliding_window_attention(Q, K, V, window_size):\n    \"\"\"\n    Self-attention where each token attends only within a local window.\n\n    Args:\n        Q: np.ndarray of shape (N, d)\n        K: np.ndarray of shape (N, d)\n        V: np.ndarray of shape (N, d)\n        window_size: int w; token i attends to [i-w, i+w]\n\n    Returns:\n        O: np.ndarray of shape (N, d)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef sliding_window_attention(Q, K, V, window_size):\n    N, d = Q.shape\n    scale = 1.0 / np.sqrt(d)\n\n    # compute raw scores\n    scores = (Q @ K.T) * scale  # (N, N)\n\n    # build mask: True where |i - j| > window_size\n    rows = np.arange(N)[:, None]  # (N, 1)\n    cols = np.arange(N)[None, :]  # (1, N)\n    mask = np.abs(rows - cols) > window_size\n\n    scores[mask] = -np.inf\n\n    # numerically stable softmax\n    scores -= scores.max(axis=1, keepdims=True)\n    weights = np.exp(scores)\n    weights /= weights.sum(axis=1, keepdims=True)\n\n    return weights @ V\n",
+  "explanation": "Sliding window attention limits the attention span of each token to a local neighborhood of radius w.\n\nImplementation steps:\n1. Compute full score matrix S = QK^T / sqrt(d).\n2. Create a mask where |i - j| > w and set those positions to -inf.\n3. Apply row-wise softmax — the -inf positions become 0 after exp.\n4. Multiply by V.\n\nThis is equivalent to Longformer's local attention pattern. In practice the mask is never materialized for large N; instead a band-diagonal multiply is used. But for correctness verification the masked dense approach is equivalent.\n\nEdge tokens near the sequence boundary naturally attend to fewer tokens since the window is clipped to [0, N-1].",
+  "test_cases": [
+    {
+      "name": "self_only_window_is_diagonal",
+      "code": "import numpy as np\nnp.random.seed(0)\nN, d = 5, 4\nQ = np.eye(N, d)\nK = np.eye(N, d)\nV = np.random.randn(N, d)\n# w=0: each token attends only to itself\nout = sliding_window_attention(Q, K, V, 0)\nassert np.allclose(out, V, atol=1e-9), 'w=0 should be identity attention'"
+    },
+    {
+      "name": "full_window_matches_standard_attention",
+      "code": "import numpy as np\nnp.random.seed(1)\nN, d = 6, 4\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.random.randn(N, d)\n\ndef std_attn(Q, K, V):\n    d = Q.shape[1]\n    s = Q @ K.T / np.sqrt(d)\n    s -= s.max(axis=1, keepdims=True)\n    w = np.exp(s)\n    w /= w.sum(axis=1, keepdims=True)\n    return w @ V\n\nexpected = std_attn(Q, K, V)\ngot = sliding_window_attention(Q, K, V, N)  # window >= N covers everything\nassert np.allclose(got, expected, atol=1e-9)"
+    },
+    {
+      "name": "output_shape",
+      "code": "import numpy as np\nnp.random.seed(2)\nN, d = 8, 6\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.random.randn(N, d)\nout = sliding_window_attention(Q, K, V, 2)\nassert out.shape == (N, d)"
+    },
+    {
+      "name": "window_limits_attention_span",
+      "code": "import numpy as np\nnp.random.seed(3)\nN, d = 7, 4\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.zeros((N, d))\n# V: each row is its own index repeated\nfor i in range(N):\n    V[i] = i\n# w=1: token 0 only attends to 0,1 so output[0] should be between 0 and 1\nout = sliding_window_attention(Q, K, V, 1)\nassert out[0, 0] >= 0 and out[0, 0] <= 1.0 + 1e-9, f'Got {out[0,0]}'"
+    },
+    {
+      "name": "weights_sum_to_one",
+      "code": "import numpy as np\nnp.random.seed(4)\nN, d = 6, 4\nQ = np.random.randn(N, d)\nK = np.random.randn(N, d)\nV = np.ones((N, d))\n# If all V rows are 1, output rows should all be 1\nout = sliding_window_attention(Q, K, V, 2)\nassert np.allclose(out, np.ones((N, d)), atol=1e-9)"
+    }
+  ],
+  "hints": [
+    "Build a boolean mask with np.abs(rows - cols) > window_size and apply it before softmax.",
+    "Setting masked positions to -np.inf makes np.exp give exactly 0 for those positions.",
+    "A window of size N or larger is equivalent to full attention — useful for testing.",
+    "Token at position 0 only has right-side neighbors; the window is clipped to valid indices automatically when -inf masking is used."
+  ],
+  "related_problems": ["10.1", "10.13", "10.15"]
+}

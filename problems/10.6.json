@@ -1,0 +1,48 @@
+{
+  "id": "10.6",
+  "title": "Rotary Positional Embedding (RoPE)",
+  "difficulty": "Hard",
+  "category": "Attention & Transformers",
+  "tags": ["RoPE", "rotary embeddings", "positional encoding", "LLaMA", "numpy"],
+  "description": "Implement Rotary Positional Embeddings (RoPE), used in LLaMA, Mistral, and other modern LLMs.\n\nRoPE encodes position by rotating query and key vectors rather than adding a fixed positional signal. For a vector of dimension d, it groups dimensions into pairs and applies a 2D rotation to each pair based on the position:\n\nFor each pair (x_{2i}, x_{2i+1}) at position m:\n```\nx'_{2i}   = x_{2i}   * cos(m * theta_i) - x_{2i+1} * sin(m * theta_i)\nx'_{2i+1} = x_{2i}   * sin(m * theta_i) + x_{2i+1} * cos(m * theta_i)\n```\n\nWhere theta_i = 1 / (10000^(2i / d)).\n\nKey property: the dot product Q_rotated[m] @ K_rotated[n].T depends only on the relative position (m - n), making RoPE naturally encode relative positions.\n\nImplement `apply_rope(x, positions)` where x has shape (seq_len, num_heads, head_dim) and positions is an array of position indices.",
+  "constraints": [
+    "Use numpy only",
+    "x shape: (seq_len, num_heads, head_dim)",
+    "head_dim must be even",
+    "positions: (seq_len,) array of integer position indices",
+    "theta_i = 1 / 10000^(2i / head_dim) for i in range(head_dim // 2)",
+    "Return same shape as input"
+  ],
+  "starter_code": "import numpy as np\n\ndef apply_rope(x, positions, theta_base=10000.0):\n    \"\"\"Apply Rotary Positional Embeddings to input tensor.\n\n    Args:\n        x: Input tensor (seq_len, num_heads, head_dim)\n        positions: Position indices (seq_len,)\n        theta_base: Base for frequency computation (default 10000)\n\n    Returns:\n        x_rotated: Same shape as x with RoPE applied\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef apply_rope(x, positions, theta_base=10000.0):\n    seq_len, num_heads, head_dim = x.shape\n    assert head_dim % 2 == 0\n    half_dim = head_dim // 2\n\n    # Compute theta for each dimension pair\n    i = np.arange(half_dim)  # 0, 1, ..., half_dim-1\n    theta = 1.0 / (theta_base ** (2.0 * i / head_dim))  # (half_dim,)\n\n    # Compute angles: (seq_len, half_dim)\n    angles = positions[:, None] * theta[None, :]  # (seq_len, half_dim)\n\n    cos_vals = np.cos(angles)  # (seq_len, half_dim)\n    sin_vals = np.sin(angles)  # (seq_len, half_dim)\n\n    # Split x into even and odd dimensions\n    x_even = x[:, :, 0::2]  # (seq_len, num_heads, half_dim)\n    x_odd  = x[:, :, 1::2]  # (seq_len, num_heads, half_dim)\n\n    # Expand cos/sin for heads: (seq_len, 1, half_dim)\n    cos_vals = cos_vals[:, None, :]  # broadcast over heads\n    sin_vals = sin_vals[:, None, :]\n\n    # Apply rotation\n    x_rotated = np.zeros_like(x)\n    x_rotated[:, :, 0::2] = x_even * cos_vals - x_odd * sin_vals\n    x_rotated[:, :, 1::2] = x_even * sin_vals + x_odd * cos_vals\n\n    return x_rotated\n",
+  "explanation": "RoPE (Su et al., 2021) applies position-dependent rotations to Q and K vectors before computing attention scores. The key insight is that the inner product of two rotated vectors depends only on their relative position:\n\nRotated(q, m) @ Rotated(k, n) = f(q, k, m-n)\n\nThis gives RoPE the benefits of relative positional encoding while being simple to implement.\n\nImplementation details:\n1. Compute frequency theta_i = 1/10000^(2i/d) for each dimension pair\n2. For each position m, compute rotation angles m * theta_i\n3. Apply 2D rotation: (x_{2i}, x_{2i+1}) rotated by angle m*theta_i\n4. The rotation preserves the vector norm\n\nRoPE has been adopted by LLaMA, Mistral, Falcon, and most modern open-source LLMs. It handles long context well, especially when combined with extended context techniques like YaRN.",
+  "test_cases": [
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nseq, heads, head_dim = 8, 4, 32\nx = np.random.randn(seq, heads, head_dim)\npositions = np.arange(seq)\nout = apply_rope(x, positions)\nassert out.shape == (seq, heads, head_dim)"
+    },
+    {
+      "name": "test_zero_position_identity",
+      "code": "import numpy as np\n# At position 0, angles are all 0, so rotation is identity\nnp.random.seed(1)\nseq, heads, head_dim = 4, 2, 8\nx = np.random.randn(seq, heads, head_dim)\npositions = np.zeros(seq, dtype=int)\nout = apply_rope(x, positions)\nassert np.allclose(out, x, atol=1e-6), 'At position 0, rotation should be identity'"
+    },
+    {
+      "name": "test_norm_preserved",
+      "code": "import numpy as np\nnp.random.seed(2)\nseq, heads, head_dim = 6, 3, 16\nx = np.random.randn(seq, heads, head_dim)\npositions = np.arange(seq)\nout = apply_rope(x, positions)\n# Rotation preserves L2 norm\nfor s in range(seq):\n    for h in range(heads):\n        orig_norm = np.linalg.norm(x[s, h])\n        rot_norm = np.linalg.norm(out[s, h])\n        assert abs(orig_norm - rot_norm) < 1e-5, f'Norm not preserved at ({s},{h})'"
+    },
+    {
+      "name": "test_different_positions_differ",
+      "code": "import numpy as np\nnp.random.seed(3)\nseq, heads, head_dim = 5, 2, 8\nx = np.random.randn(seq, heads, head_dim)\npositions = np.arange(seq)\nout = apply_rope(x, positions)\n# Same input at different positions should produce different output\n# (unless x is zero)\nassert not np.allclose(out[0], out[1])"
+    },
+    {
+      "name": "test_relative_position_property",
+      "code": "import numpy as np\nnp.random.seed(4)\nheads, head_dim = 1, 8\n# Two query-key pairs: (pos 0, pos 2) and (pos 1, pos 3) — same relative distance\nq = np.random.randn(1, heads, head_dim)\nk = np.random.randn(1, heads, head_dim)\nq_0 = apply_rope(q, np.array([0]))\nq_1 = apply_rope(q, np.array([1]))\nk_2 = apply_rope(k, np.array([2]))\nk_3 = apply_rope(k, np.array([3]))\n# Dot products should be equal (same relative offset = 2)\ndot_02 = np.sum(q_0[0, 0] * k_2[0, 0])\ndot_13 = np.sum(q_1[0, 0] * k_3[0, 0])\nassert abs(dot_02 - dot_13) < 1e-5, f'RoPE relative property: {dot_02:.6f} vs {dot_13:.6f}'"
+    }
+  ],
+  "hints": [
+    "theta_i = 1 / (10000^(2i/d)) for i in range(head_dim//2)",
+    "angles = positions[:, None] * theta[None, :] — shape (seq_len, half_dim)",
+    "Rotate pairs: x_even * cos - x_odd * sin for even dims, x_even * sin + x_odd * cos for odd dims",
+    "Broadcast cos/sin over heads dimension: cos[:, None, :]"
+  ],
+  "related_problems": ["10.5", "10.7", "10.15"]
+}

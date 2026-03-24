@@ -1,0 +1,20 @@
+{
+  "id": "1.1",
+  "title": "Matrix Multiplication from Scratch",
+  "difficulty": "Easy",
+  "category": "Linear Algebra & Matrix Operations",
+  "tags": ["numpy", "from-scratch"],
+  "description": "Implement matrix multiplication **without using numpy's built-in `@` operator or `np.dot`**.\n\nGiven two 2D lists (matrices), return their matrix product as a 2D list.\n\nYour function should:\n- Validate that the matrices can be multiplied (cols of A == rows of B)\n- Raise a `ValueError` if shapes are incompatible\n- Return the result as a list of lists\n\n**Example:**\n```\nA = [[1, 2], [3, 4]]\nB = [[5, 6], [7, 8]]\nmatmul(A, B) = [[19, 22], [43, 50]]\n```\n\n**Why this matters in interviews:** Matrix multiplication is the fundamental operation behind every neural network layer. Understanding the O(n^3) naive algorithm helps you appreciate why GPUs and optimized BLAS libraries exist.",
+  "constraints": ["Do NOT use numpy, np.dot, np.matmul, or the @ operator", "Use only Python built-in lists and loops", "Must validate shape compatibility", "Return a list of lists (not numpy array)"],
+  "starter_code": "def matmul(A: list[list[float]], B: list[list[float]]) -> list[list[float]]:\n    \"\"\"Multiply two matrices A and B.\n    \n    Args:\n        A: Matrix of shape (m, n) as list of lists\n        B: Matrix of shape (n, p) as list of lists\n    \n    Returns:\n        Result matrix of shape (m, p) as list of lists\n    \n    Raises:\n        ValueError: If inner dimensions don't match\n    \"\"\"\n    pass",
+  "solution_code": "def matmul(A: list[list[float]], B: list[list[float]]) -> list[list[float]]:\n    m = len(A)\n    n = len(A[0])\n    n2 = len(B)\n    p = len(B[0])\n    \n    if n != n2:\n        raise ValueError(f\"Cannot multiply: A has {n} cols but B has {n2} rows\")\n    \n    C = [[0.0] * p for _ in range(m)]\n    \n    for i in range(m):\n        for j in range(p):\n            for k in range(n):\n                C[i][j] += A[i][k] * B[k][j]\n    \n    return C",
+  "explanation": "**Key concepts:**\n\n1. **Shape rule:** For A (m x n) and B (n x p), the result is (m x p). The inner dimensions must match.\n\n2. **Triple loop:** Each element C[i][j] is the dot product of row i of A with column j of B: `C[i][j] = sum(A[i][k] * B[k][j] for k in range(n))`.\n\n3. **Complexity:** O(m * n * p). For square matrices, this is O(n^3).\n\n4. **Why not use numpy?** In interviews, this tests whether you understand the operation at a fundamental level.",
+  "test_cases": [
+    {"name": "2x2 multiplication", "code": "result = matmul([[1, 2], [3, 4]], [[5, 6], [7, 8]])\nassert result == [[19, 22], [43, 50]], f'Expected [[19, 22], [43, 50]], got {result}'"},
+    {"name": "Non-square matrices (2x3 @ 3x2)", "code": "A = [[1, 2, 3], [4, 5, 6]]\nB = [[7, 8], [9, 10], [11, 12]]\nresult = matmul(A, B)\nassert result == [[58, 64], [139, 154]], f'Expected [[58, 64], [139, 154]], got {result}'"},
+    {"name": "Shape mismatch raises ValueError", "code": "try:\n    matmul([[1, 2]], [[3, 4]])\n    assert False, 'Should have raised ValueError'\nexcept ValueError:\n    pass"},
+    {"name": "Identity matrix multiplication", "code": "I = [[1, 0], [0, 1]]\nA = [[3, 7], [2, 5]]\nresult = matmul(A, I)\nassert result == [[3, 7], [2, 5]], f'A @ I should equal A, got {result}'"}
+  ],
+  "hints": ["The result matrix has dimensions (rows of A) x (cols of B)", "Each element C[i][j] = sum of A[i][k] * B[k][j] for all k"],
+  "related_problems": ["1.2", "1.7", "1.12"]
+}

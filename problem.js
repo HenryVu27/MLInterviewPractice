@@ -233,37 +233,84 @@ function renderResults(results, problemId) {
   container.innerHTML = '';
   if (header) container.appendChild(header);
 
+  // Find matching test code from the problem
+  const testCases = window._currentProblem ? window._currentProblem.test_cases : [];
+
   let passCount = 0;
 
-  for (const result of results) {
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
     if (result.passed) passCount++;
+
+    const testCode = testCases[i] ? testCases[i].code : '';
 
     const item = document.createElement('div');
     item.className = `test-result ${result.passed ? 'pass' : 'fail'}`;
 
-    const nameRow = document.createElement('div');
-    nameRow.className = 'test-result-name';
-    nameRow.textContent = `${result.passed ? 'PASS' : 'FAIL'} — ${result.name}`;
-    item.appendChild(nameRow);
+    // Header row (clickable to expand)
+    const headerRow = document.createElement('div');
+    headerRow.className = 'test-result-header';
+    headerRow.innerHTML = `
+      <span class="test-result-icon">${result.passed ? '\u2713' : '\u2717'}</span>
+      <span class="test-result-name">${escapeHtml(result.name)}</span>
+      <span class="test-time">${result.timeMs.toFixed(1)}ms</span>
+      <span class="test-expand-arrow">\u25B6</span>
+    `;
+    item.appendChild(headerRow);
 
+    // Expandable details
+    const details = document.createElement('div');
+    details.className = 'test-result-details';
+
+    // Test code
+    if (testCode) {
+      details.innerHTML += `
+        <div class="test-detail-section">
+          <span class="test-detail-label">Test Code</span>
+          <pre class="test-detail-code">${escapeHtml(testCode)}</pre>
+        </div>
+      `;
+    }
+
+    // Stdout output
     if (result.output && result.output.trim()) {
-      const outputEl = document.createElement('pre');
-      outputEl.className = 'test-output';
-      outputEl.textContent = result.output;
-      item.appendChild(outputEl);
+      details.innerHTML += `
+        <div class="test-detail-section">
+          <span class="test-detail-label">Output</span>
+          <pre class="test-detail-code">${escapeHtml(result.output)}</pre>
+        </div>
+      `;
     }
 
+    // Error (for failed tests)
     if (!result.passed && result.error) {
-      const errorEl = document.createElement('pre');
-      errorEl.className = 'test-error';
-      errorEl.textContent = result.error;
-      item.appendChild(errorEl);
+      details.innerHTML += `
+        <div class="test-detail-section">
+          <span class="test-detail-label">Error</span>
+          <pre class="test-detail-code test-detail-error">${escapeHtml(result.error)}</pre>
+        </div>
+      `;
     }
 
-    const timeEl = document.createElement('span');
-    timeEl.className = 'test-time';
-    timeEl.textContent = `${result.timeMs.toFixed(1)}ms`;
-    item.appendChild(timeEl);
+    // Status summary
+    details.innerHTML += `
+      <div class="test-detail-section">
+        <span class="test-detail-label">Result</span>
+        <span class="test-detail-status ${result.passed ? 'pass' : 'fail'}">${result.passed ? 'PASSED' : 'FAILED'}</span>
+      </div>
+    `;
+
+    item.appendChild(details);
+
+    // Toggle expand on click
+    headerRow.addEventListener('click', () => {
+      item.classList.toggle('expanded');
+    });
+
+    // Auto-expand failed tests
+    if (!result.passed) {
+      item.classList.add('expanded');
+    }
 
     container.appendChild(item);
   }
@@ -416,6 +463,9 @@ async function init() {
     showError(`Failed to fetch problem: ${err.message}`);
     return;
   }
+
+  // Store problem for test result rendering
+  window._currentProblem = problem;
 
   // Render problem description
   renderProblem(problem, manifest);

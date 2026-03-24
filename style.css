@@ -808,8 +808,6 @@ select, input {
 }
 
 .test-result {
-  position: relative;
-  padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--border-dim);
   font-size: 0.83rem;
 }
@@ -819,45 +817,113 @@ select, input {
 }
 
 .test-result.pass {
-  background: var(--pass-bg);
   border-left: 3px solid var(--pass-border);
 }
 
 .test-result.fail {
-  background: var(--fail-bg);
   border-left: 3px solid var(--fail-border);
 }
 
-.test-result .result-icon {
-  font-size: 0.9rem;
-  flex-shrink: 0;
-  margin-top: 0.05rem;
+/* Clickable header row */
+.test-result-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  user-select: none;
 }
 
-.test-result .result-name,
+.test-result-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.test-result-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  width: 1.2rem;
+  text-align: center;
+}
+
+.test-result.pass .test-result-icon { color: var(--pass-border); }
+.test-result.fail .test-result-icon { color: var(--fail-border); }
+
 .test-result .test-result-name {
   font-weight: 600;
   color: var(--text);
   flex: 1;
-}
-
-.test-result .result-detail,
-.test-result .test-output,
-.test-result .test-error {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin-top: 0.25rem;
+  font-size: 0.83rem;
 }
 
 .test-result .test-time {
   font-size: 0.72rem;
   color: var(--text-muted);
   flex-shrink: 0;
-  margin-left: auto;
 }
+
+.test-expand-arrow {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+.test-result.expanded .test-expand-arrow {
+  transform: rotate(90deg);
+}
+
+/* Expandable details (hidden by default) */
+.test-result-details {
+  display: none;
+  padding: 0 1rem 0.75rem 2.7rem;
+}
+
+.test-result.expanded .test-result-details {
+  display: block;
+}
+
+.test-detail-section {
+  margin-bottom: 0.5rem;
+}
+
+.test-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.test-detail-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.test-detail-code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.test-detail-error {
+  color: var(--fail-border);
+}
+
+.test-detail-status {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.test-detail-status.pass { color: var(--pass-border); }
+.test-detail-status.fail { color: var(--fail-border); }
 
 /* ==========================================================================
    Solution Panel

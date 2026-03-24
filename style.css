@@ -196,9 +196,29 @@ select, input {
   letter-spacing: 0.06em;
 }
 
-/* Progress ring */
-.progress-ring {
-  transform: rotate(-90deg);
+/* Progress rings */
+.stat-rings {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+  align-items: center;
+}
+.stat-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  --ring-bg: var(--border);
+  --ring-fg: var(--accent);
+}
+.ring-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  max-width: 50px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .progress-ring circle {
@@ -373,9 +393,15 @@ select, input {
   font-weight: 600;
 }
 
-.badge.easy   { color: var(--easy);   background: rgba(76, 175, 80, 0.12); }
-.badge.medium { color: var(--medium); background: rgba(255, 152, 0, 0.12); }
-.badge.hard   { color: var(--hard);   background: rgba(244, 67, 54, 0.12); }
+.badge.easy,   .diff-easy   { color: var(--easy);   }
+.badge.medium, .diff-medium { color: var(--medium); }
+.badge.hard,   .diff-hard   { color: var(--hard);   }
+.badge.easy   { background: rgba(76, 175, 80, 0.12); }
+.badge.medium { background: rgba(255, 152, 0, 0.12); }
+.badge.hard   { background: rgba(244, 67, 54, 0.12); }
+.difficulty-badge.diff-easy   { color: var(--easy);   background: rgba(76, 175, 80, 0.12); }
+.difficulty-badge.diff-medium { color: var(--medium); background: rgba(255, 152, 0, 0.12); }
+.difficulty-badge.diff-hard   { color: var(--hard);   background: rgba(244, 67, 54, 0.12); }
 
 /* Status indicator */
 .status-dot {
@@ -449,8 +475,21 @@ select, input {
   color: var(--text-muted);
 }
 
-.problem-meta .badge {
+.problem-meta .badge,
+.problem-meta .difficulty-badge {
   font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: var(--bg);
+}
+
+.problem-meta .tag {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text-muted);
 }
 
 .problem-meta .meta-sep {
@@ -769,9 +808,7 @@ select, input {
 }
 
 .test-result {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  position: relative;
   padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--border-dim);
   font-size: 0.83rem;
@@ -797,19 +834,29 @@ select, input {
   margin-top: 0.05rem;
 }
 
-.test-result .result-name {
+.test-result .result-name,
+.test-result .test-result-name {
   font-weight: 600;
   color: var(--text);
-  flex-shrink: 0;
-  min-width: 7rem;
+  flex: 1;
 }
 
-.test-result .result-detail {
+.test-result .result-detail,
+.test-result .test-output,
+.test-result .test-error {
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.78rem;
   white-space: pre-wrap;
   word-break: break-all;
+  margin-top: 0.25rem;
+}
+
+.test-result .test-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* ==========================================================================

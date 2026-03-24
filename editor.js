@@ -6,7 +6,7 @@ import { EditorState } from 'https://esm.sh/@codemirror/state@6';
 import { python } from 'https://esm.sh/@codemirror/lang-python@6';
 import { oneDark } from 'https://esm.sh/@codemirror/theme-one-dark@6';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from 'https://esm.sh/@codemirror/commands@6';
-import { syntaxHighlighting, defaultHighlightStyle, indentOnInput, bracketMatching, foldGutter, foldKeymap } from 'https://esm.sh/@codemirror/language@6';
+import { syntaxHighlighting, defaultHighlightStyle, indentOnInput, indentUnit, bracketMatching, foldGutter, foldKeymap } from 'https://esm.sh/@codemirror/language@6';
 import { closeBrackets, closeBracketsKeymap } from 'https://esm.sh/@codemirror/autocomplete@6';
 import { searchKeymap, highlightSelectionMatches } from 'https://esm.sh/@codemirror/search@6';
 
@@ -57,6 +57,8 @@ export function createEditor(parent, initialCode, onChange) {
         basicSetup,
         python(),
         oneDark,
+        indentUnit.of("    "),
+        EditorState.tabSize.of(4),
         updateListener,
         EditorView.theme({
           '&': { height: '100%' },

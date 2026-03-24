@@ -1,0 +1,48 @@
+{
+  "id": "11.7",
+  "title": "Word2Vec Skip-Gram with Negative Sampling",
+  "difficulty": "Medium",
+  "category": "Embeddings & Similarity Search",
+  "tags": ["word2vec", "skip-gram", "negative sampling", "word embeddings"],
+  "description": "Implement the Word2Vec Skip-Gram model with Negative Sampling (SGNS) training step.\n\nIn Skip-Gram, for a center word, we predict the surrounding context words. With negative sampling, instead of a full softmax, we train a binary classifier: positive pairs (center, context) and negative pairs (center, random_word).\n\nThe SGNS objective for one (center, context) pair with k negatives is:\n  loss = -log(sigmoid(v_center . v_context)) - sum_i log(sigmoid(-v_center . v_neg_i))\n\nImplement:\n```python\ndef sgns_update(center_embed, context_embed, neg_embeds, lr) -> tuple:\n```\nReturns updated (center_embed, context_embed, neg_embeds) after one gradient step.\n\nAlso implement:\n```python\ndef sgns_loss(center_embed, context_embed, neg_embeds) -> float:\n```",
+  "constraints": [
+    "center_embed, context_embed: shape (d,) numpy arrays.",
+    "neg_embeds: shape (k, d) — k negative sample embeddings.",
+    "Use the sigmoid function: sigmoid(x) = 1 / (1 + exp(-x)).",
+    "Compute gradients analytically and update with gradient descent.",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\ndef sigmoid(x: np.ndarray) -> np.ndarray:\n    pass\n\ndef sgns_loss(center_embed: np.ndarray, context_embed: np.ndarray, neg_embeds: np.ndarray) -> float:\n    pass\n\ndef sgns_update(\n    center_embed: np.ndarray,\n    context_embed: np.ndarray,\n    neg_embeds: np.ndarray,\n    lr: float = 0.01\n) -> tuple:\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef sigmoid(x: np.ndarray) -> np.ndarray:\n    return 1.0 / (1.0 + np.exp(-np.clip(x, -30, 30)))\n\ndef sgns_loss(center_embed: np.ndarray, context_embed: np.ndarray, neg_embeds: np.ndarray) -> float:\n    pos_score = center_embed @ context_embed\n    neg_scores = neg_embeds @ center_embed  # (k,)\n    loss = -np.log(sigmoid(pos_score) + 1e-10) - np.sum(np.log(sigmoid(-neg_scores) + 1e-10))\n    return float(loss)\n\ndef sgns_update(\n    center_embed: np.ndarray,\n    context_embed: np.ndarray,\n    neg_embeds: np.ndarray,\n    lr: float = 0.01\n) -> tuple:\n    pos_score = center_embed @ context_embed\n    neg_scores = neg_embeds @ center_embed  # (k,)\n\n    # Gradients\n    # d_loss/d_pos_score = sigmoid(pos_score) - 1\n    pos_grad = sigmoid(pos_score) - 1.0   # scalar\n    # d_loss/d_neg_scores_i = sigmoid(neg_score_i) (from -log(sigmoid(-neg_score_i)))\n    neg_grads = sigmoid(neg_scores)        # (k,)\n\n    # Gradient w.r.t. context_embed: pos_grad * center_embed\n    grad_context = pos_grad * center_embed\n    # Gradient w.r.t. each neg_embed: neg_grads[i] * center_embed\n    grad_negs = neg_grads[:, None] * center_embed[None, :]  # (k, d)\n    # Gradient w.r.t. center_embed: pos_grad * context_embed + sum_i neg_grads[i] * neg_embeds[i]\n    grad_center = pos_grad * context_embed + neg_grads @ neg_embeds  # (d,)\n\n    center_new = center_embed - lr * grad_center\n    context_new = context_embed - lr * grad_context\n    neg_new = neg_embeds - lr * grad_negs\n\n    return center_new, context_new, neg_new\n",
+  "explanation": "Skip-Gram with Negative Sampling replaces the expensive softmax over the full vocabulary with a binary logistic loss. For a positive (center, context) pair: maximize sigmoid(v_c . v_o). For k negative samples: maximize sigmoid(-v_c . v_neg_i) for each. Combined loss: -log(sigmoid(v_c.v_o)) - sum_i log(sigmoid(-v_c.v_neg_i)).\n\nGradients: d_loss/d(v_c.v_o) = sigmoid(v_c.v_o) - 1; d_loss/d(v_c.v_neg_i) = sigmoid(v_c.v_neg_i). Applying chain rule: grad_center = (sig(pos)-1)*v_o + sum_i sig(neg_i)*v_neg_i. This makes training O(k*d) instead of O(V*d) per step, enabling training on large vocabularies.",
+  "test_cases": [
+    {
+      "name": "test_sigmoid_values",
+      "code": "import numpy as np\nassert abs(float(sigmoid(np.array([0.0]))) - 0.5) < 1e-6\nassert float(sigmoid(np.array([100.0]))) > 0.99\nassert float(sigmoid(np.array([-100.0]))) < 0.01"
+    },
+    {
+      "name": "test_loss_positive_pair_decreases",
+      "code": "import numpy as np\nnp.random.seed(0)\nd = 4\ncenter = np.random.randn(d)\ncontext = center.copy()  # perfect alignment\nneg = np.random.randn(3, d)\nloss = sgns_loss(center, context, neg)\n# Loss with perfect positive pair should be small\nassert loss >= 0, f\"Loss must be non-negative, got {loss}\""
+    },
+    {
+      "name": "test_update_reduces_loss",
+      "code": "import numpy as np\nnp.random.seed(1)\nd = 8\ncenter = np.random.randn(d)\ncontext = np.random.randn(d)\nneg = np.random.randn(5, d)\nloss_before = sgns_loss(center, context, neg)\ncenter2, ctx2, neg2 = sgns_update(center, context, neg, lr=0.1)\nloss_after = sgns_loss(center2, ctx2, neg2)\nassert loss_after < loss_before, f\"Loss should decrease after update: {loss_before:.4f} -> {loss_after:.4f}\""
+    },
+    {
+      "name": "test_shapes_preserved",
+      "code": "import numpy as np\nnp.random.seed(42)\nd = 16\ncenter = np.random.randn(d)\ncontext = np.random.randn(d)\nneg = np.random.randn(10, d)\nc_new, ctx_new, neg_new = sgns_update(center, context, neg, lr=0.01)\nassert c_new.shape == (d,), f\"center shape: {c_new.shape}\"\nassert ctx_new.shape == (d,), f\"context shape: {ctx_new.shape}\"\nassert neg_new.shape == (10, d), f\"neg shape: {neg_new.shape}\""
+    },
+    {
+      "name": "test_loss_identical_negatives_high",
+      "code": "import numpy as np\nnp.random.seed(3)\nd = 4\ncenter = np.array([1.0, 0.0, 0.0, 0.0])\ncontext = np.array([1.0, 0.0, 0.0, 0.0])   # same direction -> low pos loss\nneg_same = np.tile(center, (5, 1))          # negatives same as center -> high neg loss\nneg_ortho = np.array([[0.0, 1.0, 0.0, 0.0]]*5)  # orthogonal -> near-zero neg score\nloss_bad = sgns_loss(center, context, neg_same)\nloss_good = sgns_loss(center, context, neg_ortho)\nassert loss_good < loss_bad, f\"Orthogonal negatives should give lower loss: {loss_good:.4f} vs {loss_bad:.4f}\""
+    }
+  ],
+  "hints": [
+    "Clip the input to sigmoid to [-30, 30] to prevent numerical overflow.",
+    "The positive term gradient: d(-log(sigma(s)))/ds = sigma(s) - 1.",
+    "The negative term gradient: d(-log(sigma(-s)))/ds = sigma(s).",
+    "grad_center accumulates from both positive context and all negative samples.",
+    "Adding a small epsilon (1e-10) inside the log prevents log(0)."
+  ],
+  "related_problems": ["11.8", "11.9", "11.12"]
+}

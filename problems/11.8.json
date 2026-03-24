@@ -1,0 +1,49 @@
+{
+  "id": "11.8",
+  "title": "Word2Vec CBOW",
+  "difficulty": "Medium",
+  "category": "Embeddings & Similarity Search",
+  "tags": ["word2vec", "cbow", "word embeddings", "language model"],
+  "description": "Implement the Continuous Bag of Words (CBOW) model — the sister architecture to Skip-Gram.\n\nIn CBOW, we predict the center word from its surrounding context words. The context vector is the mean of the context word embeddings.\n\nImplement:\n```python\ndef cbow_forward(context_ids, center_id, W_in, W_out) -> tuple:\n```\nReturns `(loss, probs)` where:\n- `context_ids`: list of integer word indices for context words.\n- `center_id`: integer index of the center word to predict.\n- `W_in`: shape (V, d) — input embedding matrix.\n- `W_out`: shape (V, d) — output embedding matrix.\n- loss: scalar cross-entropy loss.\n- probs: shape (V,) softmax probability distribution over vocabulary.\n\nAlso implement:\n```python\ndef cbow_backward(context_ids, center_id, W_in, W_out, probs, lr) -> tuple:\n```\nReturns updated (W_in, W_out).",
+  "constraints": [
+    "Context vector = mean of W_in[context_ids].",
+    "Output scores = W_out @ context_vector, shape (V,).",
+    "Use numerically stable softmax.",
+    "Loss = cross-entropy: -log(probs[center_id]).",
+    "Gradients flow through W_out and back to W_in for each context word.",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\ndef cbow_forward(context_ids: list, center_id: int, W_in: np.ndarray, W_out: np.ndarray) -> tuple:\n    pass\n\ndef cbow_backward(\n    context_ids: list,\n    center_id: int,\n    W_in: np.ndarray,\n    W_out: np.ndarray,\n    probs: np.ndarray,\n    lr: float\n) -> tuple:\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef cbow_forward(context_ids: list, center_id: int, W_in: np.ndarray, W_out: np.ndarray) -> tuple:\n    # Context vector: mean of context embeddings\n    context_embeds = W_in[context_ids]      # (C, d)\n    h = context_embeds.mean(axis=0)         # (d,)\n    # Scores and softmax\n    scores = W_out @ h                       # (V,)\n    scores -= scores.max()                   # numerical stability\n    exp_scores = np.exp(scores)\n    probs = exp_scores / exp_scores.sum()    # (V,)\n    # Cross-entropy loss\n    loss = -np.log(probs[center_id] + 1e-10)\n    return float(loss), probs\n\ndef cbow_backward(\n    context_ids: list,\n    center_id: int,\n    W_in: np.ndarray,\n    W_out: np.ndarray,\n    probs: np.ndarray,\n    lr: float\n) -> tuple:\n    context_embeds = W_in[context_ids]      # (C, d)\n    h = context_embeds.mean(axis=0)         # (d,)\n    C = len(context_ids)\n\n    # Gradient of loss w.r.t. scores: probs - one_hot\n    dscores = probs.copy()                   # (V,)\n    dscores[center_id] -= 1.0\n\n    # Gradient w.r.t. W_out: dscores outer h\n    dW_out = np.outer(dscores, h)            # (V, d)\n    # Gradient w.r.t. h: W_out.T @ dscores\n    dh = W_out.T @ dscores                   # (d,)\n    # Gradient flows equally to each context word\n    dW_in = np.zeros_like(W_in)\n    grad_per_context = dh / C               # (d,)\n    for idx in context_ids:\n        dW_in[idx] += grad_per_context\n\n    W_in_new = W_in - lr * dW_in\n    W_out_new = W_out - lr * dW_out\n    return W_in_new, W_out_new\n",
+  "explanation": "CBOW predicts the center word from context. Forward pass: (1) context vector h = mean(W_in[context_ids]); (2) output scores = W_out @ h; (3) softmax over scores gives probability distribution; (4) loss = -log(prob[center]). Backward pass: gradient of cross-entropy + softmax = probs - one_hot(center). dW_out = outer(dscores, h). dh = W_out.T @ dscores. Since h = mean(context_embeds), the gradient flows equally (1/C each) to each context word's row in W_in. CBOW trains faster than Skip-Gram for frequent words and tends to work better for smaller datasets.",
+  "test_cases": [
+    {
+      "name": "test_probs_sum_to_one",
+      "code": "import numpy as np\nnp.random.seed(0)\nV, d = 10, 4\nW_in = np.random.randn(V, d) * 0.1\nW_out = np.random.randn(V, d) * 0.1\nloss, probs = cbow_forward([1, 3, 5], center_id=2, W_in=W_in, W_out=W_out)\nassert abs(probs.sum() - 1.0) < 1e-6, f\"Probs should sum to 1, got {probs.sum()}\"\nassert (probs >= 0).all(), \"Probs should be non-negative\""
+    },
+    {
+      "name": "test_loss_nonneg",
+      "code": "import numpy as np\nnp.random.seed(1)\nV, d = 20, 8\nW_in = np.random.randn(V, d) * 0.1\nW_out = np.random.randn(V, d) * 0.1\nloss, probs = cbow_forward([0, 2, 4, 6], center_id=10, W_in=W_in, W_out=W_out)\nassert loss >= 0, f\"Loss should be >= 0, got {loss}\"\nassert loss < 20, f\"Loss should be reasonable, got {loss}\""
+    },
+    {
+      "name": "test_backward_reduces_loss",
+      "code": "import numpy as np\nnp.random.seed(42)\nV, d = 15, 6\nW_in = np.random.randn(V, d) * 0.1\nW_out = np.random.randn(V, d) * 0.1\ncontext_ids = [1, 4, 7]\ncenter_id = 9\nloss1, probs = cbow_forward(context_ids, center_id, W_in, W_out)\nW_in2, W_out2 = cbow_backward(context_ids, center_id, W_in, W_out, probs, lr=0.1)\nloss2, _ = cbow_forward(context_ids, center_id, W_in2, W_out2)\nassert loss2 < loss1, f\"Loss should decrease: {loss1:.4f} -> {loss2:.4f}\""
+    },
+    {
+      "name": "test_correct_word_has_highest_prob",
+      "code": "import numpy as np\n# Set up so that center word has high score\nV, d = 5, 3\nW_in = np.zeros((V, d))\nW_in[0] = [1.0, 0.0, 0.0]\nW_in[2] = [1.0, 0.0, 0.0]\nW_out = np.zeros((V, d))\nW_out[1] = [2.0, 0.0, 0.0]  # word 1 has high dot product with context mean\nloss, probs = cbow_forward([0, 2], center_id=1, W_in=W_in, W_out=W_out)\nassert probs.argmax() == 1, f\"Word 1 should have highest prob, got {probs.argmax()}\""
+    },
+    {
+      "name": "test_shapes_unchanged_after_backward",
+      "code": "import numpy as np\nnp.random.seed(5)\nV, d = 12, 4\nW_in = np.random.randn(V, d)\nW_out = np.random.randn(V, d)\n_, probs = cbow_forward([0, 3], 6, W_in, W_out)\nW_in2, W_out2 = cbow_backward([0, 3], 6, W_in, W_out, probs, lr=0.01)\nassert W_in2.shape == (V, d), f\"W_in shape mismatch: {W_in2.shape}\"\nassert W_out2.shape == (V, d), f\"W_out shape mismatch: {W_out2.shape}\""
+    }
+  ],
+  "hints": [
+    "Context vector h = W_in[context_ids].mean(axis=0), shape (d,).",
+    "Numerically stable softmax: subtract max before exp.",
+    "Gradient of cross-entropy + softmax = probs - one_hot(target).",
+    "dW_out = outer(dscores, h) — each row of W_out is updated proportionally to the context vector.",
+    "The gradient distributes equally to each of the C context word embeddings: dh / C."
+  ],
+  "related_problems": ["11.7", "11.9", "11.12"]
+}

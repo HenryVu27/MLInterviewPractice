@@ -1,0 +1,47 @@
+{
+  "id": "10.2",
+  "title": "Multi-Head Attention",
+  "difficulty": "Medium",
+  "category": "Attention & Transformers",
+  "tags": ["multi-head attention", "transformers", "attention", "numpy"],
+  "description": "Implement Multi-Head Attention (MHA) from the Transformer paper.\n\nMHA splits the queries, keys, and values into `num_heads` heads, applies scaled dot-product attention independently on each head, then concatenates and projects the results:\n\n```\nfor each head h:\n    Q_h = Q @ W_Q_h     # (seq, d_k)\n    K_h = K @ W_K_h     # (seq, d_k)\n    V_h = V @ W_V_h     # (seq, d_v)\n    head_h = softmax(Q_h @ K_h.T / sqrt(d_k)) @ V_h\n\nMultiHead = concat(head_1, ..., head_H) @ W_O\n```\n\nWhere d_k = d_model // num_heads.\n\nImplement using weight matrices W_Q (d_model, d_model), W_K (d_model, d_model), W_V (d_model, d_model), W_O (d_model, d_model).\n\nInput shape: (seq_len, d_model). Output shape: (seq_len, d_model).",
+  "constraints": [
+    "Use numpy only",
+    "d_model must be divisible by num_heads",
+    "d_k = d_v = d_model // num_heads",
+    "Support optional causal mask",
+    "Return output of shape (seq_len, d_model)"
+  ],
+  "starter_code": "import numpy as np\n\ndef multi_head_attention(Q, K, V, W_Q, W_K, W_V, W_O, num_heads, mask=None):\n    \"\"\"Multi-Head Attention.\n\n    Args:\n        Q: Queries (seq_q, d_model)\n        K: Keys (seq_k, d_model)\n        V: Values (seq_k, d_model)\n        W_Q: Query weight (d_model, d_model)\n        W_K: Key weight (d_model, d_model)\n        W_V: Value weight (d_model, d_model)\n        W_O: Output projection (d_model, d_model)\n        num_heads: Number of attention heads\n        mask: Optional boolean mask (seq_q, seq_k), True=mask out\n\n    Returns:\n        output: (seq_q, d_model)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef multi_head_attention(Q, K, V, W_Q, W_K, W_V, W_O, num_heads, mask=None):\n    seq_q, d_model = Q.shape\n    seq_k = K.shape[0]\n    d_k = d_model // num_heads\n\n    # Project Q, K, V\n    Q_proj = Q @ W_Q.T  # (seq_q, d_model)\n    K_proj = K @ W_K.T  # (seq_k, d_model)\n    V_proj = V @ W_V.T  # (seq_k, d_model)\n\n    # Reshape to (num_heads, seq, d_k)\n    Q_heads = Q_proj.reshape(seq_q, num_heads, d_k).transpose(1, 0, 2)  # (H, seq_q, d_k)\n    K_heads = K_proj.reshape(seq_k, num_heads, d_k).transpose(1, 0, 2)  # (H, seq_k, d_k)\n    V_heads = V_proj.reshape(seq_k, num_heads, d_k).transpose(1, 0, 2)  # (H, seq_k, d_k)\n\n    # Scaled dot-product attention per head\n    # scores: (H, seq_q, seq_k)\n    scores = Q_heads @ K_heads.transpose(0, 2, 1) / np.sqrt(d_k)\n\n    if mask is not None:\n        scores = np.where(mask[None, :, :], -1e9, scores)\n\n    # Softmax\n    scores_max = scores.max(axis=-1, keepdims=True)\n    exp_scores = np.exp(scores - scores_max)\n    weights = exp_scores / exp_scores.sum(axis=-1, keepdims=True)  # (H, seq_q, seq_k)\n\n    # Attended values: (H, seq_q, d_k)\n    head_outputs = weights @ V_heads\n\n    # Concatenate heads: (seq_q, d_model)\n    concat = head_outputs.transpose(1, 0, 2).reshape(seq_q, d_model)\n\n    # Output projection\n    output = concat @ W_O.T\n    return output\n",
+  "explanation": "Multi-Head Attention allows the model to jointly attend to information from different representation subspaces at different positions.\n\nKey steps:\n1. Project Q, K, V using learned weight matrices (d_model -> d_model each)\n2. Split into H heads by reshaping: (seq, d_model) -> (H, seq, d_k) where d_k = d_model/H\n3. Apply scaled dot-product attention independently for each head\n4. Concatenate head outputs back to (seq, d_model)\n5. Apply output projection W_O\n\nThe reshape + transpose pattern is the key implementation trick: instead of H separate matmuls, we do one large matmul and then reshape, which is more efficient.\n\nWith H heads of dimension d_k = d_model/H, the total computation is similar to single-head attention at full dimension, but with H different learned projections.",
+  "test_cases": [
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nseq, d_model, num_heads = 8, 64, 8\nQ = np.random.randn(seq, d_model)\nK = np.random.randn(seq, d_model)\nV = np.random.randn(seq, d_model)\nW_Q = np.random.randn(d_model, d_model) * 0.1\nW_K = np.random.randn(d_model, d_model) * 0.1\nW_V = np.random.randn(d_model, d_model) * 0.1\nW_O = np.random.randn(d_model, d_model) * 0.1\nout = multi_head_attention(Q, K, V, W_Q, W_K, W_V, W_O, num_heads)\nassert out.shape == (seq, d_model), f'Expected ({seq}, {d_model}), got {out.shape}'"
+    },
+    {
+      "name": "test_causal_mask",
+      "code": "import numpy as np\nnp.random.seed(1)\nseq, d_model, num_heads = 6, 32, 4\nQ = np.random.randn(seq, d_model)\nK = np.random.randn(seq, d_model)\nV = np.random.randn(seq, d_model)\nW_Q = np.eye(d_model)\nW_K = np.eye(d_model)\nW_V = np.eye(d_model)\nW_O = np.eye(d_model)\n# With identity weights, verify output shape with causal mask\nmask = np.triu(np.ones((seq, seq), dtype=bool), k=1)\nout = multi_head_attention(Q, K, V, W_Q, W_K, W_V, W_O, num_heads, mask=mask)\nassert out.shape == (seq, d_model)"
+    },
+    {
+      "name": "test_different_seq_qk",
+      "code": "import numpy as np\nnp.random.seed(2)\nseq_q, seq_k, d_model, num_heads = 4, 10, 32, 4\nQ = np.random.randn(seq_q, d_model)\nK = np.random.randn(seq_k, d_model)\nV = np.random.randn(seq_k, d_model)\nW_Q = np.random.randn(d_model, d_model) * 0.1\nW_K = np.random.randn(d_model, d_model) * 0.1\nW_V = np.random.randn(d_model, d_model) * 0.1\nW_O = np.random.randn(d_model, d_model) * 0.1\nout = multi_head_attention(Q, K, V, W_Q, W_K, W_V, W_O, num_heads)\nassert out.shape == (seq_q, d_model)"
+    },
+    {
+      "name": "test_zero_weights_output",
+      "code": "import numpy as np\nseq, d_model, num_heads = 4, 8, 2\nQ = np.random.randn(seq, d_model)\nK = np.random.randn(seq, d_model)\nV = np.random.randn(seq, d_model)\nW_Q = np.zeros((d_model, d_model))\nW_K = np.zeros((d_model, d_model))\nW_V = np.zeros((d_model, d_model))\nW_O = np.zeros((d_model, d_model))\nout = multi_head_attention(Q, K, V, W_Q, W_K, W_V, W_O, num_heads)\nassert np.allclose(out, 0)"
+    },
+    {
+      "name": "test_single_head_matches_sdpa",
+      "code": "import numpy as np\nnp.random.seed(3)\nseq, d_model = 5, 16\nQ = np.random.randn(seq, d_model)\nK = np.random.randn(seq, d_model)\nV = np.random.randn(seq, d_model)\n# With identity projections and single head, MHA == SDPA\nW_Q = np.eye(d_model); W_K = np.eye(d_model); W_V = np.eye(d_model); W_O = np.eye(d_model)\nout_mha = multi_head_attention(Q, K, V, W_Q, W_K, W_V, W_O, num_heads=1)\n# Reference SDPA\nd_k = d_model\nscores = Q @ K.T / np.sqrt(d_k)\nscores -= scores.max(axis=-1, keepdims=True)\nweights = np.exp(scores) / np.exp(scores).sum(axis=-1, keepdims=True)\nout_sdpa = weights @ V\nassert np.allclose(out_mha, out_sdpa, atol=1e-6)"
+    }
+  ],
+  "hints": [
+    "Project Q/K/V first, then reshape to (num_heads, seq, d_k) using reshape + transpose",
+    "Compute scores as Q_heads @ K_heads.transpose(0,2,1) / sqrt(d_k)",
+    "After attention, transpose back: (H, seq_q, d_k) -> (seq_q, H, d_k) then reshape to (seq_q, d_model)",
+    "Apply W_O projection last"
+  ],
+  "related_problems": ["10.1", "10.3", "10.4"]
+}

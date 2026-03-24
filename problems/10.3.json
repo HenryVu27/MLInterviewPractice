@@ -1,0 +1,46 @@
+{
+  "id": "10.3",
+  "title": "Causal Masking",
+  "difficulty": "Medium",
+  "category": "Attention & Transformers",
+  "tags": ["causal mask", "autoregressive", "upper triangular", "transformers", "numpy"],
+  "description": "Implement causal (autoregressive) masking for attention in decoder models.\n\nIn a decoder-only Transformer (e.g., GPT), position i should only attend to positions 0..i (not future positions). This is enforced by an upper-triangular mask filled with -infinity before the softmax.\n\nImplement:\n1. `make_causal_mask(seq_len)` — returns boolean mask of shape (seq_len, seq_len) where True means \"mask out\" (upper triangle, k=1)\n2. `causal_attention(Q, K, V)` — applies scaled dot-product attention with built-in causal mask\n\nThe causal mask ensures that attention weights for future positions are zero after softmax.",
+  "constraints": [
+    "Use numpy only",
+    "Mask is upper triangular: position i cannot attend to position j > i",
+    "Apply mask by setting masked scores to -1e9 (or -inf) before softmax",
+    "causal_attention should work for any seq_len",
+    "Q, K, V all have the same seq_len (self-attention)"
+  ],
+  "starter_code": "import numpy as np\n\ndef make_causal_mask(seq_len):\n    \"\"\"Create a causal attention mask.\n\n    Args:\n        seq_len: Sequence length\n\n    Returns:\n        mask: (seq_len, seq_len) boolean array.\n              mask[i, j] = True means position i should NOT attend to position j.\n    \"\"\"\n    pass\n\n\ndef causal_attention(Q, K, V):\n    \"\"\"Scaled dot-product attention with causal mask.\n\n    Args:\n        Q: (seq_len, d_k)\n        K: (seq_len, d_k)\n        V: (seq_len, d_v)\n\n    Returns:\n        output: (seq_len, d_v)\n        weights: (seq_len, seq_len)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef make_causal_mask(seq_len):\n    # True in upper triangle (excluding diagonal): i cannot see j > i\n    return np.triu(np.ones((seq_len, seq_len), dtype=bool), k=1)\n\n\ndef causal_attention(Q, K, V):\n    seq_len, d_k = Q.shape\n    mask = make_causal_mask(seq_len)\n    scores = Q @ K.T / np.sqrt(d_k)  # (seq_len, seq_len)\n    scores = np.where(mask, -1e9, scores)\n    scores_max = scores.max(axis=-1, keepdims=True)\n    exp_scores = np.exp(scores - scores_max)\n    weights = exp_scores / exp_scores.sum(axis=-1, keepdims=True)\n    output = weights @ V\n    return output, weights\n",
+  "explanation": "Causal masking is what makes a Transformer autoregressive — each position can only attend to itself and earlier positions, preventing information leakage from the future.\n\nImplementation:\n- `np.triu(..., k=1)` creates an upper-triangular boolean matrix where True means \"this position should be masked\"\n- Before softmax, set masked positions to -1e9 (approximately -inf), so exp(-1e9) ≈ 0\n- After softmax, masked positions have weight ≈ 0\n\nThe mask matrix M[i,j] = True when j > i (future position). Position 0 attends only to itself. Position T-1 attends to all positions.\n\nThis is the key difference between encoder (bidirectional, no mask) and decoder (unidirectional, causal mask).",
+  "test_cases": [
+    {
+      "name": "test_mask_shape_and_values",
+      "code": "import numpy as np\nmask = make_causal_mask(4)\nassert mask.shape == (4, 4)\n# Diagonal and below should be False (allowed)\nassert not mask[0, 0]\nassert not mask[1, 0]\nassert not mask[3, 3]\n# Upper triangle should be True (masked)\nassert mask[0, 1]\nassert mask[0, 3]\nassert mask[2, 3]"
+    },
+    {
+      "name": "test_future_weights_zero",
+      "code": "import numpy as np\nnp.random.seed(0)\nseq, d_k = 6, 16\nQ = np.random.randn(seq, d_k)\nK = np.random.randn(seq, d_k)\nV = np.random.randn(seq, d_k)\n_, weights = causal_attention(Q, K, V)\n# For row i, all j > i should have weight ~ 0\nfor i in range(seq):\n    for j in range(i+1, seq):\n        assert weights[i, j] < 1e-6, f'weights[{i},{j}] = {weights[i,j]} should be ~0'"
+    },
+    {
+      "name": "test_weights_sum_to_one",
+      "code": "import numpy as np\nnp.random.seed(1)\nseq, d_k = 5, 8\nQ = np.random.randn(seq, d_k)\nK = np.random.randn(seq, d_k)\nV = np.random.randn(seq, d_k)\n_, weights = causal_attention(Q, K, V)\nassert np.allclose(weights.sum(axis=-1), 1.0, atol=1e-6)"
+    },
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nseq, d_k, d_v = 7, 16, 32\nQ = np.random.randn(seq, d_k)\nK = np.random.randn(seq, d_k)\nV = np.random.randn(seq, d_v)\noutput, weights = causal_attention(Q, K, V)\nassert output.shape == (seq, d_v)\nassert weights.shape == (seq, seq)"
+    },
+    {
+      "name": "test_first_position_self_attention_only",
+      "code": "import numpy as np\nnp.random.seed(2)\nseq, d_k = 4, 8\nQ = np.random.randn(seq, d_k)\nK = np.random.randn(seq, d_k)\nV = np.random.randn(seq, d_k)\n_, weights = causal_attention(Q, K, V)\n# Position 0 can only attend to position 0\nassert abs(weights[0, 0] - 1.0) < 1e-6, 'Position 0 weight[0,0] should be 1.0'\nassert weights[0, 1:].sum() < 1e-6"
+    }
+  ],
+  "hints": [
+    "Use np.triu(np.ones((n, n), dtype=bool), k=1) for the upper-triangle mask",
+    "Apply mask: scores = np.where(mask, -1e9, scores)",
+    "Position 0 can only see itself, so its attention weights sum should be 1.0 at index [0,0]"
+  ],
+  "related_problems": ["10.1", "10.2", "10.9"]
+}

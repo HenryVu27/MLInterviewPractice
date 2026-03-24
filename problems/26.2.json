@@ -3,18 +3,45 @@
   "title": "VAE Loss: ELBO (Reconstruction + KL Divergence)",
   "difficulty": "Medium",
   "category": "Generative Models",
-  "tags": ["numpy", "VAE", "ELBO", "KL-divergence", "BCE"],
-  "description": "Implement the VAE loss function — the negative ELBO (Evidence Lower Bound):\n\n```\nLoss = Reconstruction_Loss + KL_Loss\n```\n\n**Reconstruction loss** (Binary Cross-Entropy, assuming Bernoulli decoder):\n```\nBCE = -sum(x * log(x_hat) + (1-x) * log(1-x_hat))\n```\n\n**KL divergence** (closed form for q(z|x) = N(mu, diag(exp(log_var))) vs p(z) = N(0,I)):\n```\nKL = -0.5 * sum(1 + log_var - mu^2 - exp(log_var))\n```\n\nClip `x_hat` to `[1e-7, 1-1e-7]` before taking log.\n\nReturn `(total_loss, bce_loss, kl_loss)` as floats.",
-  "constraints": ["Use numpy", "Clip x_hat to [1e-7, 1-1e-7] before log to avoid -inf", "KL formula: -0.5 * sum(1 + log_var - mu^2 - exp(log_var))", "Return (total, bce, kl) as a tuple of floats"],
-  "starter_code": "import numpy as np\n\ndef vae_loss(\n    x: np.ndarray,\n    x_hat: np.ndarray,\n    mu: np.ndarray,\n    log_var: np.ndarray\n) -> tuple[float, float, float]:\n    \"\"\"Compute VAE loss (negative ELBO).\n\n    Args:\n        x: original input in [0, 1], shape (d,)\n        x_hat: reconstruction from decoder in (0, 1), shape (d,)\n        mu: latent mean, shape (k,)\n        log_var: latent log-variance, shape (k,)\n\n    Returns:\n        (total_loss, bce_loss, kl_loss) as floats\n    \"\"\"\n    pass",
-  "solution_code": "import numpy as np\n\ndef vae_loss(\n    x: np.ndarray,\n    x_hat: np.ndarray,\n    mu: np.ndarray,\n    log_var: np.ndarray\n) -> tuple[float, float, float]:\n    x_hat = np.clip(x_hat, 1e-7, 1 - 1e-7)\n    bce = -np.sum(x * np.log(x_hat) + (1 - x) * np.log(1 - x_hat))\n    kl = -0.5 * np.sum(1 + log_var - mu ** 2 - np.exp(log_var))\n    total = bce + kl\n    return float(total), float(bce), float(kl)",
-  "explanation": "**Key concepts:**\n\n1. **ELBO:** The VAE maximizes ELBO = E_q[log p(x|z)] - KL(q(z|x) || p(z)). Minimizing the loss = maximizing ELBO.\n\n2. **BCE reconstruction:** For Bernoulli-distributed pixels, -E[log p(x|z)] = BCE(x, x_hat). This measures reconstruction quality.\n\n3. **KL divergence closed form:** For N(mu, diag(sigma^2)) vs N(0, I): KL = -0.5 * sum(1 + log_var - mu^2 - exp(log_var)). KL >= 0 always.\n\n4. **Clipping:** log(0) = -inf causes NaN. Clipping x_hat to a small epsilon is standard practice.\n\n5. **Beta-VAE:** A variant uses Beta * KL to control the tradeoff between reconstruction quality and disentanglement of the latent space.",
-  "test_cases": [
-    {"name": "Perfect reconstruction gives low BCE", "code": "import numpy as np\nx = np.array([1.0, 0.0, 1.0, 0.0])\nx_hat = np.array([0.999, 0.001, 0.999, 0.001])\nmu = np.zeros(2)\nlog_var = np.zeros(2)\ntotal, bce, kl = vae_loss(x, x_hat, mu, log_var)\nassert bce < 0.01 * 4, f'BCE should be near 0 for perfect reconstruction, got {bce}'"},
-    {"name": "KL is zero for standard normal", "code": "import numpy as np\nx = np.array([0.5, 0.5])\nx_hat = np.array([0.5, 0.5])\nmu = np.zeros(3)\nlog_var = np.zeros(3)  # log_var=0 => sigma=1 => N(0,1)\ntotal, bce, kl = vae_loss(x, x_hat, mu, log_var)\nassert abs(kl) < 1e-6, f'KL should be 0 for N(0,1), got {kl}'"},
-    {"name": "KL is positive for non-standard q", "code": "import numpy as np\nx = np.ones(4)\nx_hat = np.ones(4) * 0.9\nmu = np.array([2.0, -2.0])\nlog_var = np.array([1.0, 1.0])\ntotal, bce, kl = vae_loss(x, x_hat, mu, log_var)\nassert kl > 0, f'KL should be positive, got {kl}'"},
-    {"name": "Returns tuple of 3 floats", "code": "import numpy as np\nx = np.random.rand(8)\nx_hat = np.random.rand(8)\nmu = np.random.randn(4)\nlog_var = np.random.randn(4)\nresult = vae_loss(x, x_hat, mu, log_var)\nassert isinstance(result, tuple) and len(result) == 3\nassert all(isinstance(v, float) for v in result)"}
+  "tags": ["vae", "elbo", "kl-divergence", "bce", "reconstruction-loss", "generative"],
+  "description": "Implement the VAE loss function, which is the negative ELBO (Evidence Lower Bound):\n\n  Loss = Reconstruction Loss + KL Divergence\n\n- **Reconstruction Loss**: Binary Cross-Entropy between x (targets) and x_recon (predictions), summed over features, averaged over batch:\n  `BCE = -mean_over_batch( sum_over_features( x*log(x_recon) + (1-x)*log(1-x_recon) ) )`\n\n- **KL Divergence** (closed form for N(mu, sigma^2) vs N(0,1)):\n  `KL = -0.5 * mean_over_batch( sum_over_latent( 1 + log_var - mu^2 - exp(log_var) ) )`\n\nImplement:\n- `vae_loss(x, x_recon, mu, log_var, eps=1e-8)`: Return scalar total loss.",
+  "constraints": [
+    "x and x_recon have shape (batch, input_dim), values in [0, 1]",
+    "mu and log_var have shape (batch, latent_dim)",
+    "Add eps to log arguments to prevent log(0)",
+    "numpy and stdlib only"
   ],
-  "hints": ["Clip x_hat: np.clip(x_hat, 1e-7, 1-1e-7)", "BCE: -np.sum(x * np.log(x_hat) + (1-x) * np.log(1-x_hat))", "KL: -0.5 * np.sum(1 + log_var - mu**2 - np.exp(log_var))"],
-  "related_problems": ["26.1", "26.3", "26.5"]
+  "starter_code": "import numpy as np\n\ndef vae_loss(x, x_recon, mu, log_var, eps=1e-8):\n    \"\"\"\n    Compute VAE loss = BCE reconstruction loss + KL divergence.\n    Both terms averaged over batch.\n    Returns scalar.\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef vae_loss(x, x_recon, mu, log_var, eps=1e-8):\n    # Reconstruction loss: BCE summed over features, averaged over batch\n    bce = -np.mean(\n        np.sum(\n            x * np.log(x_recon + eps) + (1 - x) * np.log(1 - x_recon + eps),\n            axis=1\n        )\n    )\n    # KL divergence: closed form for N(mu, sigma^2) || N(0,1)\n    kl = -0.5 * np.mean(\n        np.sum(1 + log_var - mu**2 - np.exp(log_var), axis=1)\n    )\n    return bce + kl\n",
+  "explanation": "**Reconstruction Loss (BCE)**: The decoder outputs x_recon as Bernoulli probabilities for each pixel/feature. The log-likelihood of the data under this Bernoulli distribution is the BCE. We negate it (since we minimize) and average over the batch.\n\n**KL Divergence**: For the approximate posterior q(z|x) = N(mu, diag(sigma^2)) against prior p(z) = N(0, I), the KL has a closed form: KL = -0.5 * sum(1 + log_var - mu^2 - exp(log_var)). We negate the ELBO contribution and average over the batch.\n\n**Intuition**: The reconstruction term pushes the model to accurately reconstruct inputs. The KL term regularizes the latent space, forcing the posterior to stay close to the standard normal prior. Together they form the ELBO, a lower bound on log p(x).",
+  "test_cases": [
+    {
+      "name": "perfect_reconstruction_zero_kl",
+      "code": "import numpy as np\nbatch, input_dim, latent_dim = 4, 10, 4\nx = np.random.rand(batch, input_dim) * 0.5 + 0.25  # values in (0.25, 0.75)\nx_recon = x.copy()\nmu = np.zeros((batch, latent_dim))\nlog_var = np.zeros((batch, latent_dim))  # sigma=1, KL=0\nloss = vae_loss(x, x_recon, mu, log_var)\nassert np.isfinite(loss)\nassert loss >= 0"
+    },
+    {
+      "name": "kl_only_nonzero_mu",
+      "code": "import numpy as np\nbatch, input_dim, latent_dim = 3, 5, 3\n# Perfect reconstruction => BCE near 0\nx = np.full((batch, input_dim), 0.5)\nx_recon = np.full((batch, input_dim), 0.5)\n# mu != 0 => KL > 0\nmu = np.ones((batch, latent_dim)) * 2.0\nlog_var = np.zeros((batch, latent_dim))\nloss_nonzero_mu = vae_loss(x, x_recon, mu, log_var)\nmu_zero = np.zeros((batch, latent_dim))\nloss_zero_mu = vae_loss(x, x_recon, mu_zero, log_var)\nassert loss_nonzero_mu > loss_zero_mu"
+    },
+    {
+      "name": "loss_is_scalar",
+      "code": "import numpy as np\nnp.random.seed(42)\nbatch, input_dim, latent_dim = 8, 16, 6\nx = np.random.rand(batch, input_dim)\nx_recon = np.random.rand(batch, input_dim) * 0.8 + 0.1\nmu = np.random.randn(batch, latent_dim)\nlog_var = np.random.randn(batch, latent_dim)\nloss = vae_loss(x, x_recon, mu, log_var)\nassert np.ndim(loss) == 0\nassert np.isfinite(loss)"
+    },
+    {
+      "name": "kl_closed_form_check",
+      "code": "import numpy as np\nnp.random.seed(7)\nbatch, latent_dim = 100, 4\nmu = np.random.randn(batch, latent_dim)\nlog_var = np.random.randn(batch, latent_dim)\n# KL = -0.5 * mean(sum(1 + log_var - mu^2 - exp(log_var)))\nexpected_kl = -0.5 * np.mean(np.sum(1 + log_var - mu**2 - np.exp(log_var), axis=1))\nx = np.full((batch, 1), 0.5)\nx_recon = np.full((batch, 1), 0.5)\nloss = vae_loss(x, x_recon, mu, log_var)\n# Extract KL contribution (BCE with equal probs is constant)\nbce = -np.mean(np.sum(x * np.log(x_recon + 1e-8) + (1-x) * np.log(1-x_recon + 1e-8), axis=1))\nassert abs((loss - bce) - expected_kl) < 1e-6"
+    },
+    {
+      "name": "numerical_stability_extremes",
+      "code": "import numpy as np\nbatch, input_dim, latent_dim = 2, 4, 2\nx = np.array([[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]])\nx_recon = np.clip(x, 1e-7, 1 - 1e-7)\nmu = np.zeros((batch, latent_dim))\nlog_var = np.zeros((batch, latent_dim))\nloss = vae_loss(x, x_recon, mu, log_var)\nassert np.isfinite(loss)"
+    }
+  ],
+  "hints": [
+    "BCE: for each sample, sum x*log(x_recon) + (1-x)*log(1-x_recon) over features, then take negative mean over batch.",
+    "KL closed form: -0.5 * mean(sum(1 + log_var - mu^2 - exp(log_var), axis=1)).",
+    "Always add eps inside log() to avoid log(0).",
+    "Both terms should be non-negative in expectation for a well-initialized network.",
+    "The sum is over the feature/latent dimension (axis=1), and mean is over the batch (axis=0)."
+  ],
+  "related_problems": ["26.1", "26.3", "26.4"]
 }

@@ -1,0 +1,38 @@
+{
+  "id": "9.6",
+  "title": "Seq2Seq with Encoder-Decoder",
+  "difficulty": "Hard",
+  "category": "Recurrent Neural Networks",
+  "tags": ["seq2seq", "encoder-decoder", "context-vector", "translation"],
+  "description": "Implement a simple Seq2Seq (sequence-to-sequence) model using RNN encoder and decoder.\n\n**Encoder:** Processes input sequence x of shape (T_enc, batch, input_size), returns context vector = final hidden state h_enc.\n\n**Decoder:** Takes context vector as initial hidden state and generates output sequence of length T_dec:\n```\nh_0_dec = h_enc  # context vector\nfor t in range(T_dec):\n    h_t = rnn_cell(decoder_input[t], h_t-1, ...)\n    output[t] = h_t @ W_out + b_out\n```\n\nFor teacher forcing: decoder_input is the ground truth shifted sequence.\n\nReturn decoder outputs of shape (T_dec, batch, output_size).",
+  "constraints": [
+    "Use numpy only",
+    "Encoder: vanilla RNN, returns final hidden state as context",
+    "Decoder: vanilla RNN, initialized with encoder's final hidden state",
+    "Apply linear projection W_out on each decoder hidden state",
+    "Support teacher forcing (decoder_input provided)"
+  ],
+  "starter_code": "import numpy as np\n\ndef rnn_cell(x_t, h_prev, W_xh, W_hh, b):\n    return np.tanh(x_t @ W_xh.T + h_prev @ W_hh.T + b)\n\ndef seq2seq(enc_x: np.ndarray, dec_x: np.ndarray,\n            enc_params: dict, dec_params: dict,\n            W_out: np.ndarray, b_out: np.ndarray) -> np.ndarray:\n    \"\"\"Seq2Seq forward pass.\n    \n    Args:\n        enc_x: Encoder input (T_enc, batch, enc_input_size)\n        dec_x: Decoder input for teacher forcing (T_dec, batch, dec_input_size)\n        enc_params: dict with W_xh, W_hh, b for encoder RNN\n        dec_params: dict with W_xh, W_hh, b for decoder RNN\n        W_out: Output projection (output_size, hidden_size)\n        b_out: Output bias (output_size,)\n    \n    Returns:\n        Decoder outputs (T_dec, batch, output_size)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef rnn_cell(x_t, h_prev, W_xh, W_hh, b):\n    return np.tanh(x_t @ W_xh.T + h_prev @ W_hh.T + b)\n\ndef seq2seq(enc_x, dec_x, enc_params, dec_params, W_out, b_out):\n    T_enc, batch, _ = enc_x.shape\n    T_dec = dec_x.shape[0]\n    hidden_size = enc_params['W_hh'].shape[0]\n    output_size = W_out.shape[0]\n    # Encoder: process all T_enc steps, keep final h\n    h = np.zeros((batch, hidden_size))\n    for t in range(T_enc):\n        h = rnn_cell(enc_x[t], h, **enc_params)\n    context = h  # final encoder hidden state\n    # Decoder: initialize with context\n    h = context\n    outputs = np.zeros((T_dec, batch, output_size))\n    for t in range(T_dec):\n        h = rnn_cell(dec_x[t], h, **dec_params)\n        outputs[t] = h @ W_out.T + b_out\n    return outputs",
+  "explanation": "**Key concepts:**\n\n1. **Encoder:** Reads the input sequence and compresses it into a fixed-size context vector (final hidden state).\n\n2. **Context vector bottleneck:** The entire input sequence is compressed into one vector. This is the main limitation (addressed by attention).\n\n3. **Teacher forcing:** During training, feed ground-truth tokens as decoder input. At inference, feed the model's own predictions.\n\n4. **Output projection:** Each decoder hidden state is projected to vocabulary/output size via W_out.\n\n5. **Attention extension:** Modern seq2seq uses attention to let the decoder attend to all encoder hidden states, not just the final one.",
+  "test_cases": [
+    {
+      "name": "Output shape correct",
+      "code": "import numpy as np\nnp.random.seed(0)\nT_enc, T_dec, batch = 6, 4, 2\nenc_input, dec_input, hidden, output_size = 8, 8, 16, 10\nenc_x = np.random.randn(T_enc, batch, enc_input)\ndec_x = np.random.randn(T_dec, batch, dec_input)\nep = {'W_xh': np.random.randn(hidden, enc_input)*0.1, 'W_hh': np.random.randn(hidden, hidden)*0.1, 'b': np.zeros(hidden)}\ndp = {'W_xh': np.random.randn(hidden, dec_input)*0.1, 'W_hh': np.random.randn(hidden, hidden)*0.1, 'b': np.zeros(hidden)}\nW_out = np.random.randn(output_size, hidden)*0.1\nb_out = np.zeros(output_size)\nouts = seq2seq(enc_x, dec_x, ep, dp, W_out, b_out)\nassert outs.shape == (T_dec, batch, output_size)"
+    },
+    {
+      "name": "Longer encoder input changes output",
+      "code": "import numpy as np\nnp.random.seed(1)\nT_enc, T_dec, batch = 5, 3, 2\nenc_input = dec_input = hidden = output_size = 4\nep = {'W_xh': np.random.randn(hidden, enc_input)*0.1, 'W_hh': np.random.randn(hidden, hidden)*0.1, 'b': np.zeros(hidden)}\ndp = {'W_xh': np.random.randn(hidden, dec_input)*0.1, 'W_hh': np.random.randn(hidden, hidden)*0.1, 'b': np.zeros(hidden)}\nW_out = np.random.randn(output_size, hidden)*0.1\nb_out = np.zeros(output_size)\ndec_x = np.random.randn(T_dec, batch, dec_input)\nenc_x1 = np.random.randn(T_enc, batch, enc_input)\nenc_x2 = np.random.randn(T_enc, batch, enc_input)\nout1 = seq2seq(enc_x1, dec_x, ep, dp, W_out, b_out)\nout2 = seq2seq(enc_x2, dec_x, ep, dp, W_out, b_out)\nassert not np.allclose(out1, out2)"
+    },
+    {
+      "name": "Zero encoder input -> symmetric context",
+      "code": "import numpy as np\nnp.random.seed(2)\nT_enc, T_dec, batch = 3, 2, 4\nhidden = 8; enc_input = dec_input = output_size = 4\nenc_x = np.zeros((T_enc, batch, enc_input))\ndec_x = np.zeros((T_dec, batch, dec_input))\nep = {'W_xh': np.zeros((hidden, enc_input)), 'W_hh': np.zeros((hidden, hidden)), 'b': np.zeros(hidden)}\ndp = {'W_xh': np.random.randn(hidden, dec_input)*0.1, 'W_hh': np.random.randn(hidden, hidden)*0.1, 'b': np.zeros(hidden)}\nW_out = np.ones((output_size, hidden))*0.1\nb_out = np.zeros(output_size)\nouts = seq2seq(enc_x, dec_x, ep, dp, W_out, b_out)\nassert outs.shape == (T_dec, batch, output_size)"
+    }
+  ],
+  "hints": [
+    "Encoder: loop T_enc steps, keep final h as context",
+    "Decoder: init h=context, loop T_dec steps, project each h to output size",
+    "outputs[t] = h @ W_out.T + b_out"
+  ],
+  "related_problems": ["9.2", "9.5", "9.7"]
+}

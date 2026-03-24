@@ -1,0 +1,28 @@
+{
+  "id": "4.6",
+  "title": "Xavier/Glorot Initialization",
+  "difficulty": "Easy",
+  "category": "Neural Network Fundamentals",
+  "tags": ["numpy", "from-scratch", "initialization", "weight-init"],
+  "description": "Implement **Xavier (Glorot) initialization** for neural network weights — both uniform and normal variants.\n\n**Motivation:** If weights are too large, activations explode. Too small, they vanish. Xavier initialization keeps the variance of activations (approximately) constant across layers, assuming linear activations.\n\n**Xavier Uniform:**\n```\nW ~ Uniform(-limit, +limit)\nlimit = sqrt(6 / (fan_in + fan_out))\n```\n\n**Xavier Normal:**\n```\nW ~ Normal(0, std)\nstd = sqrt(2 / (fan_in + fan_out))\n```\n\n**fan_in:** number of input units to the layer  \n**fan_out:** number of output units from the layer\n\nAlso implement a function that initializes all layers of an MLP given a list of layer sizes.",
+  "constraints": [
+    "Use only numpy",
+    "Biases initialized to zero",
+    "fan_in = number of inputs (rows fed into the weight matrix)",
+    "fan_out = number of outputs"
+  ],
+  "starter_code": "import numpy as np\n\ndef xavier_uniform(fan_in: int, fan_out: int) -> np.ndarray:\n    \"\"\"Xavier uniform initialization.\n\n    Returns:\n        Weight matrix of shape (fan_in, fan_out)\n    \"\"\"\n    pass\n\ndef xavier_normal(fan_in: int, fan_out: int) -> np.ndarray:\n    \"\"\"Xavier normal initialization.\n\n    Returns:\n        Weight matrix of shape (fan_in, fan_out)\n    \"\"\"\n    pass\n\ndef init_mlp_xavier(layer_sizes: list[int], mode: str = 'uniform') -> list[tuple]:\n    \"\"\"Initialize all weight matrices and biases for an MLP.\n\n    Args:\n        layer_sizes: [input_dim, h1, h2, ..., output_dim]\n        mode: 'uniform' or 'normal'\n\n    Returns:\n        List of (W, b) tuples for each layer\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef xavier_uniform(fan_in: int, fan_out: int) -> np.ndarray:\n    limit = np.sqrt(6 / (fan_in + fan_out))\n    return np.random.uniform(-limit, limit, size=(fan_in, fan_out))\n\ndef xavier_normal(fan_in: int, fan_out: int) -> np.ndarray:\n    std = np.sqrt(2 / (fan_in + fan_out))\n    return np.random.randn(fan_in, fan_out) * std\n\ndef init_mlp_xavier(layer_sizes: list[int], mode: str = 'uniform') -> list[tuple]:\n    params = []\n    for i in range(len(layer_sizes) - 1):\n        fan_in = layer_sizes[i]\n        fan_out = layer_sizes[i + 1]\n        if mode == 'uniform':\n            W = xavier_uniform(fan_in, fan_out)\n        elif mode == 'normal':\n            W = xavier_normal(fan_in, fan_out)\n        else:\n            raise ValueError(f\"Unknown mode '{mode}'. Use 'uniform' or 'normal'.\")\n        b = np.zeros(fan_out)\n        params.append((W, b))\n    return params",
+  "explanation": "**Key concepts:**\n\n1. **Variance preservation:** Xavier initialization ensures that the variance of the signal (forward) and gradient (backward) stays approximately constant across layers. Derived by setting Var(output) = Var(input) for a linear layer.\n\n2. **Derivation:** For a layer with fan_in inputs, if W ~ Uniform(-a, a), then Var(W) = a^2/3. For the layer output variance to equal input variance: fan_in * Var(W) = 1, so a = sqrt(3/fan_in). The Glorot formula averages fan_in and fan_out.\n\n3. **Uniform vs Normal:** Uniform is slightly more commonly used in practice. Normal can have heavy tails but is sometimes preferred for specific architectures.\n\n4. **When to use Xavier:** For sigmoid or tanh activations. For ReLU, use He initialization (problem 4.7) which adjusts for the fact that ReLU kills half the neurons.\n\n5. **Biases to zero:** Biases don't affect the initial signal variance, and zero-initializing them is standard.\n\n**Interview angle:** Derive the formula. Explain why the factor is 2/(fan_in+fan_out) rather than 1/fan_in.",
+  "test_cases": [
+    {"name": "Xavier uniform shape and bounds", "code": "import numpy as np\nnp.random.seed(0)\nW = xavier_uniform(100, 200)\nassert W.shape == (100, 200)\nlimit = np.sqrt(6 / (100 + 200))\nassert np.all(W >= -limit) and np.all(W <= limit), 'Values should be within [-limit, limit]'"},
+    {"name": "Xavier normal shape and variance", "code": "import numpy as np\nnp.random.seed(1)\nW = xavier_normal(256, 256)\nassert W.shape == (256, 256)\nexpected_std = np.sqrt(2 / (256 + 256))\nassert abs(W.std() - expected_std) < 0.005, f'Std {W.std():.4f} far from expected {expected_std:.4f}'"},
+    {"name": "init_mlp_xavier returns correct shapes", "code": "import numpy as np\nnp.random.seed(2)\nparams = init_mlp_xavier([4, 8, 16, 3])\nassert len(params) == 3\nassert params[0][0].shape == (4, 8)\nassert params[1][0].shape == (8, 16)\nassert params[2][0].shape == (16, 3)\nfor W, b in params:\n    assert np.all(b == 0), 'Biases should be zero'"},
+    {"name": "Invalid mode raises ValueError", "code": "import numpy as np\ntry:\n    init_mlp_xavier([4, 8, 2], mode='kaiming')\n    assert False, 'Should raise ValueError'\nexcept ValueError:\n    pass"}
+  ],
+  "hints": [
+    "Xavier uniform: limit = sqrt(6 / (fan_in + fan_out)); return np.random.uniform(-limit, limit, (fan_in, fan_out))",
+    "Xavier normal: std = sqrt(2 / (fan_in + fan_out)); return np.random.randn(fan_in, fan_out) * std"
+  ],
+  "related_problems": ["4.7", "4.2", "4.3"]
+}

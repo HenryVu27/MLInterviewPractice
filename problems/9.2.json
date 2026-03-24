@@ -1,0 +1,41 @@
+{
+  "id": "9.2",
+  "title": "RNN Forward Pass (Full Sequence)",
+  "difficulty": "Medium",
+  "category": "Recurrent Neural Networks",
+  "tags": ["rnn", "sequence", "unroll", "numpy"],
+  "description": "Implement a full RNN forward pass over a sequence by unrolling the RNN cell.\n\nGiven input sequence `x` of shape `(T, batch, input_size)`, apply the RNN cell at each time step and collect all hidden states.\n\n```\nfor t in range(T):\n    h_t = tanh(W_xh @ x[t] + W_hh @ h_{t-1} + b)\n```\n\nReturn:\n- `outputs`: all hidden states, shape `(T, batch, hidden_size)`\n- `h_final`: final hidden state, shape `(batch, hidden_size)`\n\nThe initial hidden state `h_0` defaults to zeros if not provided.",
+  "constraints": [
+    "Use numpy only",
+    "Input shape: (T, batch, input_size) - time-first format",
+    "Return (outputs, h_final)",
+    "h_0 defaults to zeros if None"
+  ],
+  "starter_code": "import numpy as np\n\ndef rnn_forward(x: np.ndarray, W_xh: np.ndarray, W_hh: np.ndarray,\n                b: np.ndarray, h0: np.ndarray = None) -> tuple:\n    \"\"\"Full RNN forward pass over a sequence.\n    \n    Args:\n        x: Input sequence (T, batch, input_size)\n        W_xh: Input-to-hidden weights (hidden_size, input_size)\n        W_hh: Hidden-to-hidden weights (hidden_size, hidden_size)\n        b: Bias (hidden_size,)\n        h0: Initial hidden state (batch, hidden_size), or None for zeros\n    \n    Returns:\n        (outputs, h_final)\n        outputs: (T, batch, hidden_size)\n        h_final: (batch, hidden_size)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef rnn_forward(x: np.ndarray, W_xh: np.ndarray, W_hh: np.ndarray,\n                b: np.ndarray, h0: np.ndarray = None) -> tuple:\n    T, batch, input_size = x.shape\n    hidden_size = W_hh.shape[0]\n    if h0 is None:\n        h = np.zeros((batch, hidden_size))\n    else:\n        h = h0.copy()\n    outputs = np.zeros((T, batch, hidden_size))\n    for t in range(T):\n        h = np.tanh(x[t] @ W_xh.T + h @ W_hh.T + b)\n        outputs[t] = h\n    return outputs, h",
+  "explanation": "**Key concepts:**\n\n1. **Unrolling:** The RNN is 'unrolled' through time - we iterate over T time steps, reusing the same weights.\n\n2. **Hidden state propagation:** Each step's output h_t becomes the next step's h_{t-1}.\n\n3. **Parameter sharing:** W_xh, W_hh, b are the same at every time step (this is what keeps parameter count fixed regardless of T).\n\n4. **Time-first format:** (T, batch, input) is the standard for RNNs in most frameworks (use `.permute(1,0,2)` from batch-first).\n\n5. **Output collection:** Storing all hidden states enables attention mechanisms and seq2seq architectures.",
+  "test_cases": [
+    {
+      "name": "Output shapes correct",
+      "code": "import numpy as np\nnp.random.seed(0)\nT, batch, input_size, hidden_size = 10, 4, 8, 16\nx = np.random.randn(T, batch, input_size)\nW_xh = np.random.randn(hidden_size, input_size) * 0.1\nW_hh = np.random.randn(hidden_size, hidden_size) * 0.1\nb = np.zeros(hidden_size)\noutputs, h_final = rnn_forward(x, W_xh, W_hh, b)\nassert outputs.shape == (T, batch, hidden_size)\nassert h_final.shape == (batch, hidden_size)"
+    },
+    {
+      "name": "h_final equals last output",
+      "code": "import numpy as np\nnp.random.seed(1)\nT, batch, input_size, hidden_size = 5, 2, 4, 8\nx = np.random.randn(T, batch, input_size)\nW_xh = np.random.randn(hidden_size, input_size) * 0.1\nW_hh = np.random.randn(hidden_size, hidden_size) * 0.1\nb = np.zeros(hidden_size)\noutputs, h_final = rnn_forward(x, W_xh, W_hh, b)\nassert np.allclose(h_final, outputs[-1])"
+    },
+    {
+      "name": "Custom h0 is used",
+      "code": "import numpy as np\nnp.random.seed(2)\nT, batch, input_size, hidden_size = 3, 2, 4, 8\nx = np.zeros((T, batch, input_size))\nW_xh = np.zeros((hidden_size, input_size))\nW_hh = np.zeros((hidden_size, hidden_size))\nb = np.zeros(hidden_size)\nh0 = np.ones((batch, hidden_size)) * 0.5\noutputs, h_final = rnn_forward(x, W_xh, W_hh, b, h0=h0)\n# With all-zero weights, h_t = tanh(0 + W_hh @ h_{t-1} + 0) = tanh(0) = 0 after first step\nassert outputs.shape == (T, batch, hidden_size)"
+    },
+    {
+      "name": "All outputs bounded in (-1, 1)",
+      "code": "import numpy as np\nnp.random.seed(3)\nT, batch, input_size, hidden_size = 20, 4, 8, 16\nx = np.random.randn(T, batch, input_size) * 5\nW_xh = np.random.randn(hidden_size, input_size)\nW_hh = np.random.randn(hidden_size, hidden_size)\nb = np.random.randn(hidden_size)\noutputs, _ = rnn_forward(x, W_xh, W_hh, b)\nassert np.all(outputs > -1) and np.all(outputs < 1)"
+    }
+  ],
+  "hints": [
+    "Loop t from 0 to T-1, applying the RNN cell each step",
+    "Store h_t in outputs[t] after each step",
+    "h_final is just the last h_t, same as outputs[-1]"
+  ],
+  "related_problems": ["9.1", "9.3", "9.5"]
+}

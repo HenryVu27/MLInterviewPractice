@@ -1,0 +1,28 @@
+{
+  "id": "4.13",
+  "title": "Residual Connection",
+  "difficulty": "Easy",
+  "category": "Neural Network Fundamentals",
+  "tags": ["numpy", "from-scratch", "residual", "resnet"],
+  "description": "Implement a **Residual Connection** (skip connection) — the key innovation of ResNet that enables training very deep networks.\n\n**Formula:** `output = x + F(x)`\n\nwhere `F(x)` is a sub-network (e.g., Linear → ReLU → Linear). The residual block adds the input directly to the output of the transformation.\n\nImplement a `ResidualBlock` that:\n1. Applies two linear layers with ReLU activation\n2. Adds a skip connection from input to output\n3. Applies a final ReLU after the addition\n\n**Architecture:**\n```\nx → Linear(d, d) → ReLU → Linear(d, d) → (+x) → ReLU → output\n```\n\n**Shapes:** Input/output: (N, d) — input and output dimensions must match for the identity shortcut",
+  "constraints": [
+    "Use only numpy",
+    "Both linear layers have the same input/output dimension d (to allow identity shortcut)",
+    "Xavier initialization for weights",
+    "Apply ReLU after the residual addition"
+  ],
+  "starter_code": "import numpy as np\n\nclass ResidualBlock:\n    def __init__(self, d: int):\n        \"\"\"Initialize residual block with two linear layers of dimension d.\"\"\"\n        pass\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        \"\"\"Apply residual block: output = relu(x + F(x)).\n\n        Args:\n            x: (N, d) input\n        Returns:\n            (N, d) output\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass ResidualBlock:\n    def __init__(self, d: int):\n        limit = np.sqrt(6 / (d + d))\n        self.W1 = np.random.uniform(-limit, limit, (d, d))\n        self.b1 = np.zeros(d)\n        self.W2 = np.random.uniform(-limit, limit, (d, d))\n        self.b2 = np.zeros(d)\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        # F(x): two linear layers with ReLU\n        h = np.maximum(0, x @ self.W1 + self.b1)   # (N, d) ReLU\n        fx = h @ self.W2 + self.b2                  # (N, d) linear\n        # Residual connection + final ReLU\n        return np.maximum(0, x + fx)",
+  "explanation": "**Key concepts:**\n\n1. **Why residual connections?** Without them, very deep networks suffer from vanishing gradients and degradation — adding more layers can hurt performance. Skip connections let gradients flow directly to earlier layers: `d(loss)/dx = d(loss)/d(output) * (1 + d(F)/dx)`. The +1 term ensures at least some gradient reaches every layer.\n\n2. **Identity shortcut:** When input and output dimensions match, the shortcut is just `x` (identity). When dimensions differ, a projection is needed (1x1 conv/linear). See problem 4.14.\n\n3. **Gradient highway:** Skip connections create a 'gradient highway' that bypasses layers entirely. This is why ResNets can be 100+ layers deep.\n\n4. **Residual interpretation:** F(x) learns the residual (the correction), not the full mapping. If identity is the optimal function, it's easier to push F(x) → 0 than to learn identity from scratch.\n\n5. **Prevalence:** ResNet (2015) introduced skip connections for CNNs. Transformers use them in every block. They're virtually universal in modern deep learning.\n\n**Complexity:** O(N*d^2) — same as two linear layers.\n\n**Interview angle:** Explain the gradient flow benefit with math: `dL/dx = dL/d_out * (I + dF/dx)`.",
+  "test_cases": [
+    {"name": "Output shape preserved", "code": "import numpy as np\nnp.random.seed(0)\nblock = ResidualBlock(d=8)\nx = np.random.randn(4, 8)\nout = block.forward(x)\nassert out.shape == (4, 8)"},
+    {"name": "Output non-negative (final ReLU)", "code": "import numpy as np\nnp.random.seed(1)\nblock = ResidualBlock(d=4)\nx = np.random.randn(10, 4)\nout = block.forward(x)\nassert np.all(out >= 0), 'Final ReLU output should be non-negative'"},
+    {"name": "With F=0, output = relu(x)", "code": "import numpy as np\nblock = ResidualBlock(d=3)\n# Zero out all weights of F(x)\nblock.W1 = np.zeros((3, 3))\nblock.W2 = np.zeros((3, 3))\nx = np.array([[1.0, -2.0, 3.0], [-1.0, 0.5, -0.5]])\nout = block.forward(x)\nexpected = np.maximum(0, x)  # relu(x + 0) = relu(x)\nassert np.allclose(out, expected), f'With F=0, output should be relu(x)'"},
+    {"name": "Different input rows independent", "code": "import numpy as np\nnp.random.seed(2)\nblock = ResidualBlock(d=4)\nx = np.random.randn(5, 4)\nout_full = block.forward(x)\nout_single = block.forward(x[2:3])\nassert np.allclose(out_full[2], out_single[0]), 'Rows should be independently processed'"}
+  ],
+  "hints": [
+    "h = relu(x @ W1 + b1); fx = h @ W2 + b2; return relu(x + fx)",
+    "The skip connection is just + x — no extra parameters needed when input/output dims match"
+  ],
+  "related_problems": ["4.14", "4.2", "4.3"]
+}

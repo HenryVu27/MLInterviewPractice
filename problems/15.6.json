@@ -1,0 +1,28 @@
+{
+  "id": "15.6",
+  "title": "Beam Search Decoding",
+  "difficulty": "Medium",
+  "category": "NLP",
+  "tags": ["nlp", "decoding", "beam-search", "seq2seq"],
+  "description": "Implement beam search decoding for sequence generation.\n\nGiven a function `next_token_logprobs(sequence) -> array of log-probs over vocab`, decode using beam search with width `beam_width` up to `max_len` tokens.\n\nThe algorithm:\n1. Start with beam = [(log_score=0, sequence=[BOS_id])]\n2. For each step: expand each beam with all vocab tokens, keep top-k by cumulative log-prob\n3. Stop when all beams emit EOS or max_len is reached\n\nReturn the best sequence (excluding BOS).",
+  "constraints": [
+    "BOS_id and EOS_id are given",
+    "Once a beam emits EOS, freeze it",
+    "Return list of token ids (excluding BOS)"
+  ],
+  "starter_code": "import numpy as np\n\ndef beam_search(\n    next_token_logprobs,\n    bos_id: int,\n    eos_id: int,\n    beam_width: int = 3,\n    max_len: int = 20\n) -> list[int]:\n    \"\"\"Beam search decoding.\n\n    Args:\n        next_token_logprobs: callable(sequence) -> log-probs array shape (vocab_size,)\n        bos_id: Begin-of-sequence token id\n        eos_id: End-of-sequence token id\n        beam_width: Number of beams to maintain\n        max_len: Maximum sequence length\n\n    Returns:\n        Best decoded sequence (list of token ids, excluding BOS)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef beam_search(\n    next_token_logprobs,\n    bos_id: int,\n    eos_id: int,\n    beam_width: int = 3,\n    max_len: int = 20\n) -> list[int]:\n    # Each beam: (cumulative_log_prob, sequence, done)\n    beams = [(0.0, [bos_id], False)]\n    completed = []\n\n    for _ in range(max_len):\n        if all(done for _, _, done in beams):\n            break\n        candidates = []\n        for score, seq, done in beams:\n            if done:\n                candidates.append((score, seq, True))\n                continue\n            log_probs = next_token_logprobs(seq)\n            for token_id, lp in enumerate(log_probs):\n                new_score = score + lp\n                new_seq = seq + [token_id]\n                is_done = (token_id == eos_id)\n                candidates.append((new_score, new_seq, is_done))\n        # Keep top beam_width\n        candidates.sort(key=lambda x: x[0], reverse=True)\n        beams = candidates[:beam_width]\n\n    # Return best sequence\n    best_score, best_seq, _ = max(beams, key=lambda x: x[0])\n    # Remove BOS, remove EOS if present\n    result = best_seq[1:]\n    if result and result[-1] == eos_id:\n        result = result[:-1]\n    return result",
+  "explanation": "Beam search is a best-first search that maintains the top-k most probable partial sequences at each step. Unlike greedy decoding (beam_width=1), it explores multiple hypotheses and often finds better solutions. The trade-off is computational cost: O(beam_width * vocab_size) per step. It is standard for neural machine translation and summarization.",
+  "test_cases": [
+    {"name": "Greedy equivalent with beam=1", "code": "import numpy as np\nimport math\nlogprobs = [math.log(0.1), math.log(0.7), math.log(0.2)]\ndef lm(seq):\n    return logprobs\nresult = beam_search(lm, bos_id=0, eos_id=2, beam_width=1, max_len=3)\nassert result[0] == 1"},
+    {"name": "Returns list", "code": "import numpy as np\nimport math\ndef lm(seq): return [math.log(0.5), math.log(0.5)]\nresult = beam_search(lm, bos_id=0, eos_id=1, beam_width=2, max_len=5)\nassert isinstance(result, list)"},
+    {"name": "Stops at EOS", "code": "import numpy as np\nimport math\n# EOS is token 1 (very high prob)\ndef lm(seq): return [math.log(0.01), math.log(0.99)]\nresult = beam_search(lm, bos_id=0, eos_id=1, beam_width=2, max_len=10)\nassert 1 not in result  # EOS stripped"},
+    {"name": "Length limited", "code": "import numpy as np\nimport math\n# Never emits EOS (token 2)\ndef lm(seq): return [math.log(0.5), math.log(0.5), math.log(1e-9)]\nresult = beam_search(lm, bos_id=0, eos_id=2, beam_width=2, max_len=4)\nassert len(result) <= 4"}
+  ],
+  "hints": [
+    "Maintain list of (score, sequence, done) beams",
+    "Expand all non-done beams, sort by score, keep top-k",
+    "Freeze a beam when it produces EOS"
+  ],
+  "related_problems": ["15.7", "15.8", "15.9"]
+}

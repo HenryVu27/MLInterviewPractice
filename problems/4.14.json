@@ -1,0 +1,28 @@
+{
+  "id": "4.14",
+  "title": "Skip Connection with Projection",
+  "difficulty": "Medium",
+  "category": "Neural Network Fundamentals",
+  "tags": ["numpy", "from-scratch", "residual", "projection", "resnet"],
+  "description": "Implement a **Residual Block with Projection Shortcut** for when input and output dimensions differ.\n\nWhen `d_in != d_out`, the identity shortcut can't be used directly. Instead, use a **1×1 linear projection** (a learnable linear layer) on the shortcut path to match dimensions.\n\n**Architecture:**\n```\nMain path:      x → Linear(d_in, d_out) → ReLU → Linear(d_out, d_out)\nShortcut path:  x → Linear(d_in, d_out)   [projection, if d_in != d_out]\n                                             or identity [if d_in == d_out]\nOutput:         relu(main_path + shortcut)\n```\n\n**Shapes:**\n- Input: (N, d_in)\n- Output: (N, d_out)",
+  "constraints": [
+    "Use only numpy",
+    "Use projection shortcut when d_in != d_out",
+    "Use identity shortcut when d_in == d_out",
+    "Xavier initialization for all weight matrices"
+  ],
+  "starter_code": "import numpy as np\n\nclass ResidualBlockProjection:\n    def __init__(self, d_in: int, d_out: int):\n        \"\"\"Initialize residual block with optional projection shortcut.\n\n        Args:\n            d_in: input dimension\n            d_out: output dimension\n        \"\"\"\n        pass\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        \"\"\"Apply residual block with projection if needed.\n\n        Args:\n            x: (N, d_in) input\n        Returns:\n            (N, d_out) output\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass ResidualBlockProjection:\n    def __init__(self, d_in: int, d_out: int):\n        self.need_projection = (d_in != d_out)\n\n        # Main path: Linear(d_in, d_out) → ReLU → Linear(d_out, d_out)\n        def xavier(fi, fo):\n            lim = np.sqrt(6 / (fi + fo))\n            return np.random.uniform(-lim, lim, (fi, fo))\n\n        self.W1 = xavier(d_in, d_out)\n        self.b1 = np.zeros(d_out)\n        self.W2 = xavier(d_out, d_out)\n        self.b2 = np.zeros(d_out)\n\n        # Projection shortcut (only when d_in != d_out)\n        if self.need_projection:\n            self.W_proj = xavier(d_in, d_out)\n            self.b_proj = np.zeros(d_out)\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        # Main path\n        h = np.maximum(0, x @ self.W1 + self.b1)  # (N, d_out) with ReLU\n        fx = h @ self.W2 + self.b2                 # (N, d_out)\n\n        # Shortcut\n        if self.need_projection:\n            shortcut = x @ self.W_proj + self.b_proj  # (N, d_out)\n        else:\n            shortcut = x  # identity (N, d_out)\n\n        return np.maximum(0, fx + shortcut)",
+  "explanation": "**Key concepts:**\n\n1. **Projection shortcut:** When dimensions mismatch, use a 1×1 convolution (or linear layer) on the shortcut path to project to the target dimension. This adds parameters but maintains the skip connection gradient highway.\n\n2. **ResNet options B and C:** ResNet paper Option B uses projection only when dimensions change; Option C uses projection everywhere. Option B is standard.\n\n3. **Computational cost:** The projection layer adds d_in * d_out parameters and O(N * d_in * d_out) computation. Compared to the main path's two layers, this is relatively cheap.\n\n4. **Alternative: zero-padding shortcut:** Option A in the ResNet paper pads zeros to increase dimension. No extra parameters but loses some information.\n\n5. **Connection to Transformer:** Transformers use a similar pattern in the FFN blocks, though they maintain constant dimension throughout (so always identity shortcut).\n\n**Interview angle:** When would you choose projection over zero-padding? (When accuracy matters more than parameter count.)",
+  "test_cases": [
+    {"name": "Dimension change works", "code": "import numpy as np\nnp.random.seed(0)\nblock = ResidualBlockProjection(d_in=4, d_out=8)\nx = np.random.randn(5, 4)\nout = block.forward(x)\nassert out.shape == (5, 8)"},
+    {"name": "Same dimension uses identity shortcut", "code": "import numpy as np\nnp.random.seed(1)\nblock = ResidualBlockProjection(d_in=6, d_out=6)\nassert not block.need_projection, 'Same dimension should not need projection'\nassert not hasattr(block, 'W_proj'), 'Identity path should not have W_proj'"},
+    {"name": "Output non-negative", "code": "import numpy as np\nnp.random.seed(2)\nblock = ResidualBlockProjection(d_in=3, d_out=7)\nx = np.random.randn(8, 3)\nout = block.forward(x)\nassert np.all(out >= 0), 'Final ReLU should give non-negative output'"},
+    {"name": "With F=0 and projection, output = relu(W_proj @ x)", "code": "import numpy as np\nnp.random.seed(3)\nblock = ResidualBlockProjection(d_in=2, d_out=4)\n# Zero main path\nblock.W1 = np.zeros((2, 4))\nblock.W2 = np.zeros((4, 4))\nx = np.array([[1.0, 2.0]])\nout = block.forward(x)\nexpected = np.maximum(0, x @ block.W_proj + block.b_proj)\nassert np.allclose(out, expected)"}
+  ],
+  "hints": [
+    "Only create W_proj when d_in != d_out; otherwise shortcut = x directly",
+    "Main path: h = relu(x @ W1 + b1); fx = h @ W2 + b2; shortcut = x @ W_proj + b_proj if need_projection else x; return relu(fx + shortcut)"
+  ],
+  "related_problems": ["4.13", "4.2", "4.3"]
+}

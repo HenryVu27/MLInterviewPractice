@@ -1,0 +1,28 @@
+{
+  "id": "4.10",
+  "title": "Group Normalization",
+  "difficulty": "Medium",
+  "category": "Neural Network Fundamentals",
+  "tags": ["numpy", "from-scratch", "normalization", "group-norm"],
+  "description": "Implement **Group Normalization** — normalize within groups of channels, independent of batch size.\n\n**Algorithm:**\n1. Split the C channels into G groups of size (C // G)\n2. For each sample and each group, normalize over the channels in that group (and spatial dimensions if present)\n3. Apply learnable gamma and beta\n\n**For 2D input (N, C):**\n```\nReshape to (N, G, C//G)\nmu = mean over axis=2 → (N, G, 1)\nvar = var over axis=2 → (N, G, 1)\nx_norm = (x - mu) / sqrt(var + eps)\nReshape back to (N, C)\nout = gamma * x_norm + beta\n```\n\n**Why Group Norm?** Works well with small batches (even batch size 1). Used in detection/segmentation models where large batches are memory-constrained.\n\n**Shapes:** Input (N, C); gamma, beta: (C,); C must be divisible by G",
+  "constraints": [
+    "Use only numpy",
+    "num_channels must be divisible by num_groups",
+    "Normalize over groups of channels (axis=2 in the reshaped view)",
+    "gamma=ones, beta=zeros of shape (C,)"
+  ],
+  "starter_code": "import numpy as np\n\nclass GroupNorm:\n    def __init__(self, num_groups: int, num_channels: int, eps: float = 1e-5):\n        \"\"\"Initialize Group Normalization.\n\n        Args:\n            num_groups: G, number of groups to divide channels into\n            num_channels: C, total number of channels\n            eps: numerical stability constant\n        \"\"\"\n        pass\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        \"\"\"Apply group normalization.\n\n        Args:\n            x: (N, C) input\n        Returns:\n            (N, C) normalized output\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass GroupNorm:\n    def __init__(self, num_groups: int, num_channels: int, eps: float = 1e-5):\n        assert num_channels % num_groups == 0, \\\n            f'num_channels ({num_channels}) must be divisible by num_groups ({num_groups})'\n        self.G = num_groups\n        self.C = num_channels\n        self.eps = eps\n        self.gamma = np.ones(num_channels)\n        self.beta = np.zeros(num_channels)\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        N, C = x.shape\n        G = self.G\n        group_size = C // G\n\n        # Reshape to (N, G, group_size)\n        x_reshaped = x.reshape(N, G, group_size)\n\n        # Normalize over axis=2 (within each group)\n        mu = x_reshaped.mean(axis=2, keepdims=True)    # (N, G, 1)\n        var = x_reshaped.var(axis=2, keepdims=True)    # (N, G, 1)\n        x_norm = (x_reshaped - mu) / np.sqrt(var + self.eps)  # (N, G, group_size)\n\n        # Reshape back and apply affine\n        x_norm = x_norm.reshape(N, C)  # (N, C)\n        return self.gamma * x_norm + self.beta",
+  "explanation": "**Key concepts:**\n\n1. **Group normalization axis:** Unlike LayerNorm (all channels) or BatchNorm (across batch), GroupNorm normalizes within groups of consecutive channels, independently for each sample.\n\n2. **Batch-size independence:** Since normalization happens within each sample's channel groups, it works identically for any batch size — even batch size 1. Critical for object detection and segmentation.\n\n3. **Special cases:**\n   - G=C (one channel per group): equivalent to Instance Normalization\n   - G=1 (all channels in one group): equivalent to Layer Normalization (for 2D input)\n\n4. **Reshape trick:** x.reshape(N, G, C//G) groups consecutive channels. The mean/var over axis=2 gives per-group statistics.\n\n5. **Why not BatchNorm for small batches?** With N=1 or N=2, batch statistics are noisy and running stats don't converge well. GroupNorm avoids this.\n\n**Interview angle:** Describe the hierarchy: InstanceNorm → GroupNorm → LayerNorm as G decreases from C to 1.",
+  "test_cases": [
+    {"name": "Output shape preserved", "code": "import numpy as np\nnp.random.seed(0)\ngn = GroupNorm(num_groups=4, num_channels=16)\nx = np.random.randn(8, 16)\nout = gn.forward(x)\nassert out.shape == (8, 16)"},
+    {"name": "Each group is approximately normalized", "code": "import numpy as np\nnp.random.seed(1)\ngn = GroupNorm(num_groups=2, num_channels=4)\nx = np.random.randn(5, 4) * 10 + 3\nout = gn.forward(x)\n# Reshape to groups and check mean/var within each group\nout_grouped = out.reshape(5, 2, 2)\nassert np.allclose(out_grouped.mean(axis=2), 0.0, atol=1e-5)\nassert np.allclose(out_grouped.var(axis=2), 1.0, atol=1e-3)"},
+    {"name": "Raises error if C not divisible by G", "code": "import numpy as np\ntry:\n    GroupNorm(num_groups=3, num_channels=10)\n    assert False, 'Should raise AssertionError'\nexcept AssertionError:\n    pass"},
+    {"name": "G=1 behaves like LayerNorm", "code": "import numpy as np\nnp.random.seed(2)\nC = 8\ngn = GroupNorm(num_groups=1, num_channels=C)\nx = np.random.randn(6, C)\nout = gn.forward(x)\n# With G=1, normalizes over all channels per sample (= LayerNorm)\nassert np.allclose(out.mean(axis=1), 0.0, atol=1e-5)\nassert np.allclose(out.std(axis=1), 1.0, atol=1e-3)"}
+  ],
+  "hints": [
+    "Reshape x from (N, C) to (N, G, C//G), compute mean/var over axis=2 with keepdims=True, normalize, then reshape back to (N, C)",
+    "G=1 gives LayerNorm; G=C gives InstanceNorm — both are special cases of GroupNorm"
+  ],
+  "related_problems": ["4.8", "4.9", "4.11"]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "9.3",
+  "title": "LSTM Cell",
+  "difficulty": "Medium",
+  "category": "Recurrent Neural Networks",
+  "tags": ["lstm", "gating", "cell-state", "vanishing-gradient"],
+  "description": "Implement a single LSTM (Long Short-Term Memory) cell.\n\nThe LSTM computes four gates from the concatenation of [x_t, h_{t-1}]:\n```\ni = sigmoid(W_i @ [x_t, h_{t-1}] + b_i)    # input gate\nf = sigmoid(W_f @ [x_t, h_{t-1}] + b_f)    # forget gate\ng = tanh(W_g @ [x_t, h_{t-1}] + b_g)       # cell gate (candidate)\no = sigmoid(W_o @ [x_t, h_{t-1}] + b_o)    # output gate\n\nc_t = f * c_{t-1} + i * g                   # new cell state\nh_t = o * tanh(c_t)                         # new hidden state\n```\n\nWeights can be combined into a single matrix `W` of shape `(4*hidden, input+hidden)`.",
+  "constraints": [
+    "Use numpy only",
+    "Pack all four gate weights into one matrix W (4*hidden, input_size + hidden_size)",
+    "Pack all biases into one vector b (4*hidden,)",
+    "Order: i, f, g, o (input, forget, cell, output gates)",
+    "Return (h_t, c_t)"
+  ],
+  "starter_code": "import numpy as np\n\ndef lstm_cell(x_t: np.ndarray, h_prev: np.ndarray, c_prev: np.ndarray,\n              W: np.ndarray, b: np.ndarray) -> tuple:\n    \"\"\"Single LSTM cell step.\n    \n    Args:\n        x_t: Input (batch, input_size)\n        h_prev: Previous hidden state (batch, hidden_size)\n        c_prev: Previous cell state (batch, hidden_size)\n        W: Combined weight matrix (4*hidden_size, input_size + hidden_size)\n        b: Combined bias (4*hidden_size,)\n    \n    Returns:\n        (h_t, c_t): New hidden and cell states, each (batch, hidden_size)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef lstm_cell(x_t: np.ndarray, h_prev: np.ndarray, c_prev: np.ndarray,\n              W: np.ndarray, b: np.ndarray) -> tuple:\n    combined = np.concatenate([x_t, h_prev], axis=1)  # (batch, input+hidden)\n    gates = combined @ W.T + b  # (batch, 4*hidden)\n    hidden_size = h_prev.shape[1]\n    i = 1 / (1 + np.exp(-gates[:, :hidden_size]))\n    f = 1 / (1 + np.exp(-gates[:, hidden_size:2*hidden_size]))\n    g = np.tanh(gates[:, 2*hidden_size:3*hidden_size])\n    o = 1 / (1 + np.exp(-gates[:, 3*hidden_size:]))\n    c_t = f * c_prev + i * g\n    h_t = o * np.tanh(c_t)\n    return h_t, c_t",
+  "explanation": "**Key concepts:**\n\n1. **Cell state c_t:** The 'memory' of the LSTM. Updated additively (not via tanh), allowing gradients to flow without vanishing.\n\n2. **Forget gate f:** Controls how much of c_{t-1} to keep. f~1 means remember everything; f~0 means forget.\n\n3. **Input gate i:** Controls how much new information (g) to write into c_t.\n\n4. **Output gate o:** Controls how much of the cell state to expose as the hidden state h_t.\n\n5. **Why LSTM solves vanishing gradients:** The additive update `c_t = f*c + i*g` allows gradients to flow through c_t without being repeatedly multiplied by tanh derivatives.\n\n6. **Combined matrix trick:** Concatenate x and h, multiply by combined W - more efficient than four separate matmuls.",
+  "test_cases": [
+    {
+      "name": "Output shapes correct",
+      "code": "import numpy as np\nbatch, input_size, hidden_size = 4, 8, 16\nx_t = np.random.randn(batch, input_size)\nh_prev = np.zeros((batch, hidden_size))\nc_prev = np.zeros((batch, hidden_size))\nW = np.random.randn(4*hidden_size, input_size + hidden_size) * 0.1\nb = np.zeros(4*hidden_size)\nh_t, c_t = lstm_cell(x_t, h_prev, c_prev, W, b)\nassert h_t.shape == (batch, hidden_size)\nassert c_t.shape == (batch, hidden_size)"
+    },
+    {
+      "name": "h_t bounded in (-1, 1)",
+      "code": "import numpy as np\nbatch, input_size, hidden_size = 2, 4, 8\nx_t = np.random.randn(batch, input_size) * 10\nh_prev = np.random.randn(batch, hidden_size)\nc_prev = np.random.randn(batch, hidden_size)\nW = np.random.randn(4*hidden_size, input_size+hidden_size)\nb = np.random.randn(4*hidden_size)\nh_t, c_t = lstm_cell(x_t, h_prev, c_prev, W, b)\nassert np.all(h_t >= -1) and np.all(h_t <= 1)"
+    },
+    {
+      "name": "Forget gate of 0 resets cell state",
+      "code": "import numpy as np\nbatch, input_size, hidden_size = 1, 1, 1\nx_t = np.zeros((batch, input_size))\nh_prev = np.zeros((batch, hidden_size))\nc_prev = np.ones((batch, hidden_size)) * 5.0\n# Set biases: f=-large (forget~0), i=-large (input~0), so c_t ~ 0\nW = np.zeros((4*hidden_size, input_size + hidden_size))\nb = np.array([-100., -100., 0., 0.])  # i_bias, f_bias, g_bias, o_bias\nh_t, c_t = lstm_cell(x_t, h_prev, c_prev, W, b)\nassert c_t[0, 0] < 0.01"
+    },
+    {
+      "name": "c_t depends on c_prev",
+      "code": "import numpy as np\nnp.random.seed(0)\nbatch, input_size, hidden_size = 2, 4, 8\nx_t = np.random.randn(batch, input_size)\nh_prev = np.zeros((batch, hidden_size))\nc_prev_0 = np.zeros((batch, hidden_size))\nc_prev_1 = np.ones((batch, hidden_size))\nW = np.random.randn(4*hidden_size, input_size+hidden_size) * 0.1\nb = np.zeros(4*hidden_size)\n_, c0 = lstm_cell(x_t, h_prev, c_prev_0, W, b)\n_, c1 = lstm_cell(x_t, h_prev, c_prev_1, W, b)\nassert not np.allclose(c0, c1)"
+    }
+  ],
+  "hints": [
+    "Concatenate x_t and h_prev: combined = np.concatenate([x_t, h_prev], axis=1)",
+    "Compute all 4 gates at once: combined @ W.T + b",
+    "Split result into i, f, g, o slices of size hidden_size each",
+    "c_t = sigmoid(f) * c_prev + sigmoid(i) * tanh(g)"
+  ],
+  "related_problems": ["9.1", "9.4", "9.2"]
+}

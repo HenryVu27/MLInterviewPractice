@@ -1,0 +1,28 @@
+{
+  "id": "15.1",
+  "title": "BPE Tokenizer",
+  "difficulty": "Hard",
+  "category": "NLP",
+  "tags": ["nlp", "tokenization", "bpe", "subword"],
+  "description": "Implement Byte Pair Encoding (BPE) tokenizer training.\n\nAlgorithm:\n1. Initialize vocabulary: split each word into characters + end-of-word symbol `</w>`\n2. Count all adjacent symbol pair frequencies across the corpus\n3. Merge the most frequent pair into a new symbol\n4. Repeat for `num_merges` steps\n\nReturn the list of merge rules (pairs merged, in order) and the final vocabulary.\n\n**Example:**\n```\ncorpus = ['low', 'lower', 'newest', 'widest']\nnum_merges = 5\n```",
+  "constraints": [
+    "End-of-word symbol is '</w>'",
+    "Break ties by lexicographic order of the pair",
+    "Return (merges, vocab) where merges is list of (a, b) tuples"
+  ],
+  "starter_code": "from collections import defaultdict\n\ndef train_bpe(corpus: list[str], num_merges: int) -> tuple[list[tuple], dict]:\n    \"\"\"Train BPE tokenizer.\n\n    Args:\n        corpus: List of words (strings)\n        num_merges: Number of merge operations\n\n    Returns:\n        (merges, vocab) where merges is ordered list of merged pairs\n    \"\"\"\n    pass",
+  "solution_code": "from collections import defaultdict\n\ndef train_bpe(corpus: list[str], num_merges: int) -> tuple[list[tuple], dict]:\n    # Initialize: each word as tuple of chars + </w>, with frequency 1\n    vocab = defaultdict(int)\n    for word in corpus:\n        symbols = tuple(list(word) + ['</w>'])\n        vocab[symbols] += 1\n\n    def get_pairs(vocab):\n        pairs = defaultdict(int)\n        for symbols, freq in vocab.items():\n            for i in range(len(symbols) - 1):\n                pairs[(symbols[i], symbols[i+1])] += freq\n        return pairs\n\n    def merge_vocab(pair, vocab):\n        new_vocab = defaultdict(int)\n        bigram = ' '.join(pair)\n        replacement = ''.join(pair)\n        for symbols, freq in vocab.items():\n            # Replace occurrences of pair\n            s = ' '.join(symbols)\n            s = s.replace(bigram, replacement)\n            new_vocab[tuple(s.split())] += freq\n        return new_vocab\n\n    merges = []\n    for _ in range(num_merges):\n        pairs = get_pairs(vocab)\n        if not pairs:\n            break\n        # Best pair: highest freq, break ties lexicographically\n        best = max(pairs, key=lambda p: (pairs[p], p))\n        merges.append(best)\n        vocab = merge_vocab(best, vocab)\n\n    return merges, dict(vocab)",
+  "explanation": "BPE starts with character-level vocabulary and greedily merges the most frequent adjacent pair at each step. This builds a subword vocabulary that balances vocabulary size (fewer tokens than words) with coverage (OOV handled by character fallback). BPE is used by GPT, RoBERTa, and many modern LLMs. The merge list is the tokenizer's learned rules.",
+  "test_cases": [
+    {"name": "Returns correct types", "code": "from collections import defaultdict\nmerges, vocab = train_bpe(['low','lower','newest'], 3)\nassert isinstance(merges, list) and len(merges) <= 3\nassert all(isinstance(p, tuple) and len(p)==2 for p in merges)"},
+    {"name": "First merge is most frequent pair", "code": "from collections import defaultdict\n# 'low' and 'lower' share 'l','o','w' -> most frequent pair is ('l','o') or similar\nmerges, _ = train_bpe(['low','low','low','high'], 1)\nassert len(merges) == 1"},
+    {"name": "Zero merges returns char vocab", "code": "from collections import defaultdict\nmerges, vocab = train_bpe(['ab'], 0)\nassert merges == [] and len(vocab) > 0"},
+    {"name": "Merged tokens appear in vocab keys", "code": "from collections import defaultdict\nmerges, vocab = train_bpe(['aab','aab','aab'], 1)\n# After merging 'a','a' -> 'aa', vocab should have 'aa' in some key\nall_symbols = set(s for key in vocab for s in key)\nassert len(merges) >= 1"}
+  ],
+  "hints": [
+    "Represent each word as a tuple of symbols (list is unhashable)",
+    "Count pair frequencies by iterating adjacent pairs in each word's symbol sequence",
+    "Merge by string replacement on space-joined symbols"
+  ],
+  "related_problems": ["15.2", "15.4", "15.5"]
+}

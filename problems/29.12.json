@@ -1,0 +1,20 @@
+{
+  "id": "29.12",
+  "title": "SwiGLU Activation",
+  "difficulty": "Medium",
+  "category": "Multimodal & Misc",
+  "tags": ["transformer", "swiglu", "activation", "llama", "palm"],
+  "description": "Implement the SwiGLU activation function and the SwiGLU-based FFN used in LLaMA, PaLM, and Mistral.\n\n**Swish activation:** `Swish(x) = x * sigmoid(x)`\n\n**SwiGLU gate:** `SwiGLU(x, W, V) = Swish(x @ W) * (x @ V)`\n\n**SwiGLU FFN:**\n```\nFFN_SwiGLU(x) = (Swish(x @ W_gate) * (x @ W_up)) @ W_down + b_down\n```\nWhere:\n- x: (seq_len, d_model)\n- W_gate, W_up: (d_model, d_ff) — gate and up projections\n- W_down: (d_ff, d_model), b_down: (d_model,) — down projection\n\nNote: SwiGLU FFN typically uses d_ff = (2/3) * 4 * d_model (rounded to nearest multiple of 64) but for this problem use whatever d_ff is provided.\n\nImplement:\n1. `swish(x)` \n2. `swiglu_ffn(x, W_gate, W_up, W_down, b_down)`",
+  "constraints": ["Use numpy only", "sigmoid(x) = 1/(1+exp(-x))", "Return same shape as input: (seq_len, d_model)"],
+  "starter_code": "import numpy as np\n\ndef swish(x: np.ndarray) -> np.ndarray:\n    \"\"\"Swish activation: x * sigmoid(x).\"\"\"\n    pass\n\ndef swiglu_ffn(x: np.ndarray, W_gate: np.ndarray, W_up: np.ndarray, W_down: np.ndarray, b_down: np.ndarray) -> np.ndarray:\n    \"\"\"SwiGLU-based FFN layer.\n    \n    Args:\n        x: (seq_len, d_model)\n        W_gate: (d_model, d_ff)\n        W_up: (d_model, d_ff)\n        W_down: (d_ff, d_model)\n        b_down: (d_model,)\n    \n    Returns:\n        output: (seq_len, d_model)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef swish(x: np.ndarray) -> np.ndarray:\n    return x / (1.0 + np.exp(-x))\n\ndef swiglu_ffn(x: np.ndarray, W_gate: np.ndarray, W_up: np.ndarray, W_down: np.ndarray, b_down: np.ndarray) -> np.ndarray:\n    gate = swish(x @ W_gate)  # (seq_len, d_ff)\n    up = x @ W_up             # (seq_len, d_ff)\n    hidden = gate * up         # element-wise gating\n    return hidden @ W_down + b_down",
+  "explanation": "**Key concepts:**\n\n1. **Swish:** Self-gated activation. Smoother than ReLU; input gates itself via sigmoid. Empirically outperforms GELU in some settings.\n\n2. **GLU (Gated Linear Unit):** GLU(x,W,V) = (xW) * sigmoid(xV). SwiGLU replaces sigmoid with Swish: SwiGLU = Swish(xW) * (xV).\n\n3. **Two projection matrices:** SwiGLU needs W_gate and W_up (vs one W1 in standard FFN). Model quality gain typically justifies the extra parameters.\n\n4. **Used in:** LLaMA 1/2/3, Mistral, PaLM, Gemma — most state-of-the-art open models use SwiGLU instead of standard ReLU/GELU FFN.",
+  "test_cases": [
+    {"name": "Output shape correct", "code": "np.random.seed(0)\nseq_len, d_model, d_ff = 4, 8, 16\nx = np.random.randn(seq_len, d_model)\nW_gate = np.random.randn(d_model, d_ff) * 0.1\nW_up = np.random.randn(d_model, d_ff) * 0.1\nW_down = np.random.randn(d_ff, d_model) * 0.1\nb_down = np.zeros(d_model)\nout = swiglu_ffn(x, W_gate, W_up, W_down, b_down)\nassert out.shape == (seq_len, d_model)"},
+    {"name": "Swish(0) = 0", "code": "assert swish(np.array([0.0]))[0] == 0.0"},
+    {"name": "Swish is positive for positive x", "code": "x = np.array([1.0, 2.0, 5.0])\nassert np.all(swish(x) > 0)"},
+    {"name": "Swish approaches x for large positive x", "code": "x = np.array([10.0])\nassert abs(swish(x)[0] - 10.0) < 0.01, f'Swish(10) should be ~10, got {swish(x)[0]}'"}
+  ],
+  "hints": ["swish(x) = x * sigmoid(x) = x / (1 + exp(-x))", "SwiGLU: element-wise multiply swish(x@W_gate) with (x@W_up)", "Then project down: hidden @ W_down + b_down"],
+  "related_problems": ["29.11", "29.2", "29.4"]
+}

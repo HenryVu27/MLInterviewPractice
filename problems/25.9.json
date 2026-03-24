@@ -1,0 +1,48 @@
+{
+  "id": "25.9",
+  "title": "Disjoint Set (Union-Find)",
+  "difficulty": "Medium",
+  "category": "Data Structures for ML",
+  "tags": ["union-find", "disjoint-set", "path-compression", "union-by-rank", "graph"],
+  "description": "Implement a Disjoint Set (Union-Find) data structure with path compression and union by rank. This structure is used in ML for clustering (e.g., single-linkage), connected components in graphs, and Kruskal's MST algorithm used in hierarchical clustering.\n\nImplement the following:\n- `find(x)`: Return the root representative of the set containing x, with path compression.\n- `union(x, y)`: Merge the sets containing x and y using union by rank. Return True if they were in different sets, False otherwise.\n- `connected(x, y)`: Return True if x and y are in the same set.",
+  "constraints": [
+    "1 <= n <= 10^5 (number of elements)",
+    "Elements are integers in range [0, n-1]",
+    "Path compression must be applied in find()",
+    "Union by rank must be used in union()",
+    "numpy and stdlib only"
+  ],
+  "starter_code": "import numpy as np\n\nclass DisjointSet:\n    def __init__(self, n: int):\n        \"\"\"\n        Initialize n disjoint sets {0}, {1}, ..., {n-1}.\n        \"\"\"\n        pass\n\n    def find(self, x: int) -> int:\n        \"\"\"\n        Return root of the set containing x. Apply path compression.\n        \"\"\"\n        pass\n\n    def union(self, x: int, y: int) -> bool:\n        \"\"\"\n        Merge sets containing x and y. Union by rank.\n        Return True if merged (were different sets), False if already same.\n        \"\"\"\n        pass\n\n    def connected(self, x: int, y: int) -> bool:\n        \"\"\"\n        Return True if x and y are in the same set.\n        \"\"\"\n        pass\n",
+  "solution_code": "import numpy as np\n\nclass DisjointSet:\n    def __init__(self, n: int):\n        self.parent = list(range(n))\n        self.rank = [0] * n\n        self.n_components = n\n\n    def find(self, x: int) -> int:\n        root = x\n        while self.parent[root] != root:\n            root = self.parent[root]\n        # Path compression\n        while self.parent[x] != root:\n            nxt = self.parent[x]\n            self.parent[x] = root\n            x = nxt\n        return root\n\n    def union(self, x: int, y: int) -> bool:\n        rx, ry = self.find(x), self.find(y)\n        if rx == ry:\n            return False\n        # Union by rank: attach smaller rank tree under larger\n        if self.rank[rx] < self.rank[ry]:\n            rx, ry = ry, rx\n        self.parent[ry] = rx\n        if self.rank[rx] == self.rank[ry]:\n            self.rank[rx] += 1\n        self.n_components -= 1\n        return True\n\n    def connected(self, x: int, y: int) -> bool:\n        return self.find(x) == self.find(y)\n",
+  "explanation": "**Path Compression**: In find(), after locating the root by following parent pointers, revisit every node on the path and point it directly to the root. This flattens the tree so future finds are nearly O(1).\n\n**Union by Rank**: The rank approximates tree height. When merging, attach the tree with smaller rank under the root of the taller tree. If ranks are equal, pick one arbitrarily and increment its rank. This keeps trees logarithmically shallow.\n\n**Combined complexity**: O(alpha(n)) amortized per operation, where alpha is the inverse Ackermann function — effectively a constant <= 4 for all practical n.\n\n**ML applications**: Kruskal's MST for single-linkage hierarchical clustering, connected components in graph-based semi-supervised learning, cycle detection during sparse graph construction.",
+  "test_cases": [
+    {
+      "name": "basic_union_and_connectivity",
+      "code": "ds = DisjointSet(5)\nassert not ds.connected(0, 1)\nds.union(0, 1)\nassert ds.connected(0, 1)\nds.union(1, 2)\nassert ds.connected(0, 2)\nassert not ds.connected(0, 3)"
+    },
+    {
+      "name": "union_return_value",
+      "code": "ds = DisjointSet(4)\nassert ds.union(0, 1) == True\nassert ds.union(0, 1) == False\nassert ds.union(2, 3) == True\nassert ds.union(1, 2) == True\nassert ds.union(0, 3) == False"
+    },
+    {
+      "name": "component_count",
+      "code": "ds = DisjointSet(8)\nfor i in range(7):\n    ds.union(i, i + 1)\nassert ds.n_components == 1\nfor i in range(8):\n    assert ds.connected(0, i)"
+    },
+    {
+      "name": "independent_components",
+      "code": "ds = DisjointSet(6)\nds.union(0, 1)\nds.union(2, 3)\nds.union(4, 5)\nassert ds.n_components == 3\nassert not ds.connected(0, 2)\nassert not ds.connected(1, 4)\nassert not ds.connected(3, 5)"
+    },
+    {
+      "name": "single_element_self_connected",
+      "code": "ds = DisjointSet(3)\nassert ds.connected(0, 0)\nassert ds.connected(1, 1)\nassert ds.find(0) == 0"
+    }
+  ],
+  "hints": [
+    "Initialize parent[i] = i (each element is its own root) and rank[i] = 0.",
+    "In find(), use two passes: walk to the root, then walk again pointing all nodes directly to root.",
+    "In union(), swap rx and ry if rank[rx] < rank[ry] so the larger-rank root is always rx.",
+    "Only increment rank[rx] when the two trees had equal rank before merging.",
+    "Maintain n_components by decrementing it on each successful union."
+  ],
+  "related_problems": ["25.10", "25.11", "25.12"]
+}

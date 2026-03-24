@@ -1,0 +1,28 @@
+{
+  "id": "4.8",
+  "title": "Layer Normalization",
+  "difficulty": "Medium",
+  "category": "Neural Network Fundamentals",
+  "tags": ["numpy", "from-scratch", "normalization", "transformer"],
+  "description": "Implement **Layer Normalization** — normalization over the feature dimension for each token/sample independently.\n\n**Formula:**\n```\nmu = mean(x, axis=-1, keepdims=True)      # per-sample mean\nvar = var(x, axis=-1, keepdims=True)      # per-sample variance\nx_norm = (x - mu) / sqrt(var + eps)\nout = gamma * x_norm + beta\n```\n\nwhere `gamma` and `beta` are learnable parameters of shape `(d_model,)`.\n\n**Unlike Batch Normalization:** LayerNorm normalizes across features (axis=-1), not across the batch. This makes it batch-size independent — crucial for Transformers where batch structure varies.\n\n**Shapes:**\n- Input: (N, d_model) or (N, T, d_model) — normalize over the last dimension\n- gamma: (d_model,)\n- beta: (d_model,)\n- Output: same shape as input",
+  "constraints": [
+    "Use only numpy",
+    "Normalize over the last axis",
+    "gamma initialized to ones, beta initialized to zeros",
+    "eps default 1e-5 for numerical stability"
+  ],
+  "starter_code": "import numpy as np\n\nclass LayerNorm:\n    def __init__(self, d_model: int, eps: float = 1e-5):\n        \"\"\"Initialize LayerNorm.\n\n        Args:\n            d_model: size of the feature dimension to normalize over\n            eps: small constant for numerical stability\n        \"\"\"\n        pass\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        \"\"\"Apply layer normalization.\n\n        Args:\n            x: (..., d_model) input tensor\n        Returns:\n            (..., d_model) normalized output\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass LayerNorm:\n    def __init__(self, d_model: int, eps: float = 1e-5):\n        self.d_model = d_model\n        self.eps = eps\n        self.gamma = np.ones(d_model)   # scale\n        self.beta = np.zeros(d_model)   # shift\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        # Normalize over the last dimension\n        mu = x.mean(axis=-1, keepdims=True)             # (..., 1)\n        var = x.var(axis=-1, keepdims=True)              # (..., 1)\n        x_norm = (x - mu) / np.sqrt(var + self.eps)     # (..., d_model)\n        return self.gamma * x_norm + self.beta           # (..., d_model)",
+  "explanation": "**Key concepts:**\n\n1. **Normalization axis:** LayerNorm normalizes over the feature dimension (last axis). Each sample/token gets its own mean and variance — no coupling between batch elements.\n\n2. **Learnable affine transform:** gamma and beta allow the network to learn the optimal scale and shift after normalization. Without them, the normalized output is always zero-mean unit-variance, which may not be optimal.\n\n3. **Why Transformers use LayerNorm:** Batch Normalization requires a large batch for stable statistics. Transformers often process variable-length sequences, making per-batch statistics unstable. LayerNorm has no batch dependency.\n\n4. **Pre-norm vs Post-norm:** Modern Transformers (GPT, LLaMA) use Pre-LN (normalize before the attention/FFN block). Original Transformer used Post-LN. Pre-LN trains more stably.\n\n5. **RMSNorm variant:** Drops the mean subtraction (assumes mean ≈ 0). Used in LLaMA. See problem 4.11.\n\n**Complexity:** O(N * d_model) — very efficient, no learned statistics to maintain at inference.\n\n**Interview angle:** Compare to BatchNorm. Explain why LayerNorm works for variable-length sequences.",
+  "test_cases": [
+    {"name": "Output shape preserved", "code": "import numpy as np\nnp.random.seed(0)\nln = LayerNorm(d_model=8)\nx = np.random.randn(4, 8)\nout = ln.forward(x)\nassert out.shape == (4, 8)"},
+    {"name": "Normalized features (before scale/shift)", "code": "import numpy as np\nnp.random.seed(1)\nln = LayerNorm(d_model=16)\nx = np.random.randn(5, 16) * 10 + 3  # large mean and variance\n# With gamma=1, beta=0, output should be approx zero-mean unit-variance per sample\nout = ln.forward(x)\nassert np.allclose(out.mean(axis=-1), 0.0, atol=1e-5)\nassert np.allclose(out.std(axis=-1), 1.0, atol=1e-3)"},
+    {"name": "3D input (N, T, d_model)", "code": "import numpy as np\nnp.random.seed(2)\nln = LayerNorm(d_model=12)\nx = np.random.randn(3, 10, 12)  # batch=3, seq_len=10, d_model=12\nout = ln.forward(x)\nassert out.shape == (3, 10, 12)"},
+    {"name": "Gamma and beta have correct shapes", "code": "import numpy as np\nln = LayerNorm(d_model=32)\nassert ln.gamma.shape == (32,)\nassert ln.beta.shape == (32,)\nassert np.all(ln.gamma == 1.0)\nassert np.all(ln.beta == 0.0)"}
+  ],
+  "hints": [
+    "mu = x.mean(axis=-1, keepdims=True); var = x.var(axis=-1, keepdims=True); x_norm = (x - mu) / sqrt(var + eps)",
+    "keepdims=True is essential so broadcasting works correctly: x has shape (..., d_model), mu/var have shape (..., 1)"
+  ],
+  "related_problems": ["4.9", "4.10", "4.11"]
+}

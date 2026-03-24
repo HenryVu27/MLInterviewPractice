@@ -3,27 +3,44 @@
   "title": "Gaussian PDF and Log-Likelihood",
   "difficulty": "Easy",
   "category": "Probability & Statistics",
-  "tags": ["numpy", "from-scratch", "statistics", "gaussian", "mle"],
-  "description": "Implement:\n\n1. `gaussian_pdf(x, mu, sigma)` — PDF of a univariate Gaussian:\n   `N(x; mu, sigma) = (1 / (sigma * sqrt(2*pi))) * exp(-(x-mu)^2 / (2*sigma^2))`\n\n2. `log_likelihood(X, mu, sigma)` — total log-likelihood of a dataset X under a Gaussian:\n   `L(mu, sigma; X) = sum_i log N(x_i; mu, sigma)`\n\n**Example:**\n```\ngaussian_pdf(0.0, 0.0, 1.0) ~= 0.3989  # standard normal at 0\nlog_likelihood([0, 1, -1], 0.0, 1.0) ~= -3.338\n```\n\n**Why this matters:** The Gaussian is the most important distribution in ML. Log-likelihood is the objective for MLE. Understanding these is prerequisite for GMMs, Bayesian inference, and probabilistic models.",
+  "tags": ["gaussian", "normal distribution", "pdf", "log-likelihood", "MLE"],
+  "description": "Implement two functions:\n\n1. `gaussian_pdf(x, mu, sigma)` — computes the probability density of a scalar or array `x` under a univariate Gaussian with mean `mu` and standard deviation `sigma`:\n\n```\nf(x) = (1 / (sigma * sqrt(2*pi))) * exp(-0.5 * ((x - mu) / sigma)^2)\n```\n\n2. `log_likelihood(data, mu, sigma)` — computes the **total log-likelihood** of an observed data array under the same Gaussian:\n\n```\nL = sum_i log( f(x_i) )\n```\n\nBoth functions should work element-wise on numpy arrays.",
   "constraints": [
-    "sigma must be positive — raise ValueError otherwise",
-    "gaussian_pdf works element-wise on arrays",
-    "log_likelihood returns the sum of log-probabilities (not mean)",
-    "Use numpy; no explicit loops"
+    "sigma must be strictly positive",
+    "data is a 1D numpy array of floats",
+    "Use numpy only, no scipy",
+    "Return float or numpy array as appropriate"
   ],
-  "starter_code": "import numpy as np\n\ndef gaussian_pdf(x, mu, sigma):\n    \"\"\"Compute the Gaussian (normal) PDF.\n\n    Args:\n        x: scalar or array-like — evaluation point(s)\n        mu: scalar — mean\n        sigma: scalar — standard deviation (> 0)\n\n    Returns:\n        PDF value(s), same shape as x\n\n    Raises:\n        ValueError: if sigma <= 0\n    \"\"\"\n    pass\n\n\ndef log_likelihood(X, mu, sigma):\n    \"\"\"Compute total log-likelihood of data X under Gaussian(mu, sigma).\n\n    Args:\n        X: 1-D array-like of observations\n        mu: scalar mean\n        sigma: scalar std (> 0)\n\n    Returns:\n        Scalar total log-likelihood\n    \"\"\"\n    pass",
-  "solution_code": "import numpy as np\n\ndef gaussian_pdf(x, mu, sigma):\n    if sigma <= 0:\n        raise ValueError(f\"sigma must be positive, got {sigma}\")\n    x = np.asarray(x, dtype=float)\n    coeff = 1.0 / (sigma * np.sqrt(2 * np.pi))\n    exponent = -0.5 * ((x - mu) / sigma) ** 2\n    return coeff * np.exp(exponent)\n\n\ndef log_likelihood(X, mu, sigma):\n    if sigma <= 0:\n        raise ValueError(f\"sigma must be positive, got {sigma}\")\n    X = np.asarray(X, dtype=float)\n    n = len(X)\n    # log N(x; mu, sigma) = -0.5*log(2*pi) - log(sigma) - 0.5*((x-mu)/sigma)^2\n    log_coeff = -0.5 * np.log(2 * np.pi) - np.log(sigma)\n    log_exp = -0.5 * ((X - mu) / sigma) ** 2\n    return float(np.sum(log_coeff + log_exp))",
-  "explanation": "**Key concepts:**\n\n1. **Gaussian PDF:** Characterized by mean mu (location) and std sigma (spread). The normalization constant `1/(sigma * sqrt(2*pi))` ensures the PDF integrates to 1.\n\n2. **Log-likelihood:** Taking the log converts products to sums, avoiding numerical underflow. For n observations: `log L = -n/2 * log(2*pi) - n*log(sigma) - sum((x_i-mu)^2)/(2*sigma^2)`.\n\n3. **MLE:** Maximizing log-likelihood w.r.t. mu gives `mu_hat = mean(X)`. Maximizing w.r.t. sigma gives `sigma_hat = sqrt(mean((x_i - mu_hat)^2))` (population std, not sample std).\n\n4. **Numerical stability:** Always work in log space when multiplying many probabilities. `log_likelihood` is numerically stable; summing `log(pdf)` is far better than taking `log(product(pdf))`.\n\n5. **Standardization:** `z = (x - mu) / sigma` standardizes to a standard normal N(0,1). Appears in every statistical test.",
+  "starter_code": "import numpy as np\n\ndef gaussian_pdf(x: np.ndarray, mu: float, sigma: float) -> np.ndarray:\n    \"\"\"\n    Compute Gaussian PDF values.\n\n    Args:\n        x: Scalar or numpy array of evaluation points.\n        mu: Mean of the distribution.\n        sigma: Standard deviation (must be > 0).\n\n    Returns:\n        PDF value(s) at x.\n    \"\"\"\n    pass\n\n\ndef log_likelihood(data: np.ndarray, mu: float, sigma: float) -> float:\n    \"\"\"\n    Compute total log-likelihood of data under Gaussian(mu, sigma).\n\n    Args:\n        data: 1D numpy array of observations.\n        mu: Mean parameter.\n        sigma: Standard deviation parameter (must be > 0).\n\n    Returns:\n        Sum of log-PDF values (a negative float).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef gaussian_pdf(x: np.ndarray, mu: float, sigma: float) -> np.ndarray:\n    x = np.asarray(x, dtype=float)\n    coefficient = 1.0 / (sigma * np.sqrt(2.0 * np.pi))\n    exponent = -0.5 * ((x - mu) / sigma) ** 2\n    return coefficient * np.exp(exponent)\n\n\ndef log_likelihood(data: np.ndarray, mu: float, sigma: float) -> float:\n    n = len(data)\n    log_ll = -0.5 * n * np.log(2.0 * np.pi) - n * np.log(sigma) - 0.5 * np.sum(((data - mu) / sigma) ** 2)\n    return float(log_ll)\n",
+  "explanation": "1. The Gaussian PDF combines a normalisation coefficient `1/(sigma*sqrt(2*pi))` with an exponential decay from the mean.\n2. For `log_likelihood`, use the log-sum form: `-0.5*n*log(2*pi) - n*log(sigma) - 0.5*sum((x-mu)^2/sigma^2)`. This is numerically more stable than computing `sum(log(pdf(x)))`.\n3. Maximising the log-likelihood over `mu` gives mu_hat = sample mean. Maximising over `sigma` gives sigma_hat = biased sample std.\n4. The log-likelihood is always negative for continuous distributions on real-valued data with sigma around 1.",
   "test_cases": [
-    {"name": "Standard normal at 0", "code": "import numpy as np\nassert abs(gaussian_pdf(0.0, 0.0, 1.0) - 1.0/np.sqrt(2*np.pi)) < 1e-9"},
-    {"name": "PDF sums to ~1 over grid", "code": "import numpy as np\nx = np.linspace(-10, 10, 10000)\ndx = x[1] - x[0]\narea = np.sum(gaussian_pdf(x, 0.0, 1.0)) * dx\nassert abs(area - 1.0) < 1e-3"},
-    {"name": "log_likelihood known value", "code": "import numpy as np\n# log N(0; 0, 1) = -0.5*log(2*pi)\nll = log_likelihood([0.0], 0.0, 1.0)\nassert abs(ll - (-0.5 * np.log(2 * np.pi))) < 1e-9"},
-    {"name": "sigma=0 raises", "code": "import numpy as np\ntry:\n    gaussian_pdf(0.0, 0.0, 0.0)\n    assert False\nexcept ValueError:\n    pass"},
-    {"name": "Vectorized input", "code": "import numpy as np\nx = np.array([0.0, 1.0, -1.0])\nresult = gaussian_pdf(x, 0.0, 1.0)\nassert result.shape == (3,)\nassert abs(result[1] - result[2]) < 1e-9  # symmetric"}
+    {
+      "name": "PDF at mean equals peak value",
+      "code": "import numpy as np\nresult = gaussian_pdf(0.0, mu=0.0, sigma=1.0)\nexpected = 1.0 / np.sqrt(2 * np.pi)\nassert abs(result - expected) < 1e-10, f'Expected {expected}, got {result}'"
+    },
+    {
+      "name": "PDF integrates numerically to 1",
+      "code": "import numpy as np\nmu, sigma = 2.0, 1.5\nx = np.linspace(mu - 10*sigma, mu + 10*sigma, 100000)\ndx = x[1] - x[0]\nintegral = np.sum(gaussian_pdf(x, mu, sigma)) * dx\nassert abs(integral - 1.0) < 1e-4, f'PDF should integrate to 1, got {integral}'"
+    },
+    {
+      "name": "Log-likelihood is higher at true parameters",
+      "code": "import numpy as np\nnp.random.seed(42)\ndata = np.random.normal(loc=3.0, scale=2.0, size=1000)\nll_true = log_likelihood(data, mu=3.0, sigma=2.0)\nll_wrong = log_likelihood(data, mu=5.0, sigma=2.0)\nassert ll_true > ll_wrong, 'LL should be higher at true parameters'"
+    },
+    {
+      "name": "Log-likelihood is negative",
+      "code": "import numpy as np\nnp.random.seed(0)\ndata = np.random.normal(0, 1, 100)\nll = log_likelihood(data, mu=0.0, sigma=1.0)\nassert ll < 0, f'Log-likelihood should be negative, got {ll}'"
+    },
+    {
+      "name": "Vectorised PDF returns correct shape",
+      "code": "import numpy as np\nx = np.array([-1.0, 0.0, 1.0])\nresult = gaussian_pdf(x, mu=0.0, sigma=1.0)\nassert result.shape == (3,), f'Expected shape (3,), got {result.shape}'\nassert result[1] > result[0], 'PDF should be highest at mean'\nassert abs(result[0] - result[2]) < 1e-10, 'PDF should be symmetric'"
+    }
   ],
   "hints": [
-    "gaussian_pdf = (1/(sigma*sqrt(2*pi))) * exp(-0.5*((x-mu)/sigma)^2)",
-    "log_pdf = -0.5*log(2*pi) - log(sigma) - 0.5*((x-mu)/sigma)^2"
+    "The coefficient is `1.0 / (sigma * np.sqrt(2.0 * np.pi))`.",
+    "The exponent is `-0.5 * ((x - mu) / sigma) ** 2`.",
+    "For log-likelihood, it is numerically better to compute the log-PDF analytically rather than calling `log(pdf(x))`.",
+    "The log-PDF formula is: `-0.5*log(2*pi) - log(sigma) - 0.5*((x-mu)/sigma)**2`."
   ],
-  "related_problems": ["2.1", "2.9", "2.10"]
+  "related_problems": ["2.9", "2.10", "2.7"]
 }

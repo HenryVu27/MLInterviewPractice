@@ -1,0 +1,47 @@
+{
+  "id": "8.17",
+  "title": "Feature Map Visualization (Forward Hooks)",
+  "difficulty": "Easy",
+  "category": "Convolutional Neural Networks",
+  "tags": ["visualization", "hooks", "feature-maps", "debugging"],
+  "description": "Implement a numpy-based simulation of PyTorch forward hooks for capturing intermediate feature maps.\n\nIn PyTorch, hooks allow capturing intermediate layer outputs without modifying the model. Here we simulate this pattern using a registry.\n\nImplement:\n1. `HookRegistry` class that stores feature maps by layer name\n2. A `ConvBlock` class with a `register_hook` method\n3. `visualize_feature_map(feature_map)` that returns per-channel stats\n\nThe hook captures the output of each layer during forward pass.\n\n**Use case:** Debugging dead neurons, visualizing receptive fields, understanding what features each layer detects.",
+  "constraints": [
+    "Use numpy only",
+    "HookRegistry stores outputs as numpy arrays keyed by name",
+    "Feature maps in NCHW format",
+    "visualize_feature_map returns dict with 'mean', 'std', 'max', 'min' per channel",
+    "Hooks should not modify the forward pass result"
+  ],
+  "starter_code": "import numpy as np\n\nclass HookRegistry:\n    \"\"\"Registry to capture intermediate layer outputs.\"\"\"\n    \n    def __init__(self):\n        self.features = {}  # name -> numpy array\n    \n    def hook(self, name: str):\n        \"\"\"Return a hook function that stores output under 'name'.\"\"\"\n        pass\n    \n    def clear(self):\n        \"\"\"Clear all stored features.\"\"\"\n        pass\n\nclass ConvBlock:\n    \"\"\"Simple conv block that supports forward hooks.\"\"\"\n    \n    def __init__(self, W: np.ndarray, b: np.ndarray, name: str = 'conv'):\n        self.W = W\n        self.b = b\n        self.name = name\n        self._hooks = []\n    \n    def register_hook(self, hook_fn):\n        \"\"\"Register a hook function to be called after forward.\"\"\"\n        pass\n    \n    def forward(self, x: np.ndarray) -> np.ndarray:\n        \"\"\"Run conv forward pass and call all registered hooks.\"\"\"\n        pass\n\ndef visualize_feature_map(feature_map: np.ndarray) -> dict:\n    \"\"\"Compute per-channel statistics for visualization.\n    \n    Args:\n        feature_map: (N, C, H, W) feature map\n    \n    Returns:\n        dict with 'mean', 'std', 'max', 'min' arrays of shape (C,)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\nclass HookRegistry:\n    def __init__(self):\n        self.features = {}\n    \n    def hook(self, name: str):\n        def _hook(output):\n            self.features[name] = output.copy()\n        return _hook\n    \n    def clear(self):\n        self.features.clear()\n\nclass ConvBlock:\n    def __init__(self, W: np.ndarray, b: np.ndarray, name: str = 'conv'):\n        self.W = W\n        self.b = b\n        self.name = name\n        self._hooks = []\n    \n    def register_hook(self, hook_fn):\n        self._hooks.append(hook_fn)\n    \n    def forward(self, x: np.ndarray) -> np.ndarray:\n        N, C_in, H, W_in = x.shape\n        C_out, _, kH, kW = self.W.shape\n        p = kH // 2\n        if p > 0:\n            x_pad = np.pad(x, ((0,0),(0,0),(p,p),(p,p)))\n        else:\n            x_pad = x\n        H_out = x_pad.shape[2] - kH + 1\n        W_out = x_pad.shape[3] - kW + 1\n        out = np.zeros((N, C_out, H_out, W_out))\n        for n in range(N):\n            for co in range(C_out):\n                for i in range(H_out):\n                    for j in range(W_out):\n                        patch = x_pad[n, :, i:i+kH, j:j+kW]\n                        out[n, co, i, j] = float(np.sum(patch * self.W[co])) + self.b[co]\n        out = np.maximum(0, out)  # ReLU\n        for hook_fn in self._hooks:\n            hook_fn(out)\n        return out\n\ndef visualize_feature_map(feature_map: np.ndarray) -> dict:\n    # Compute stats over (N, H, W) per channel\n    return {\n        'mean': feature_map.mean(axis=(0, 2, 3)),\n        'std': feature_map.std(axis=(0, 2, 3)),\n        'max': feature_map.max(axis=(0, 2, 3)),\n        'min': feature_map.min(axis=(0, 2, 3)),\n    }",
+  "explanation": "**Key concepts:**\n\n1. **Hook pattern:** A hook is a callback that receives the layer's output (and optionally input + grad) without changing the computation graph.\n\n2. **Registry:** Stores captured tensors by layer name for later analysis.\n\n3. **Non-invasive:** Hooks don't modify forward pass output; they just observe it.\n\n4. **Per-channel stats:** Summarize each feature map's activation distribution. Dead channels (mean~0, std~0) indicate vanishing activations.\n\n5. **PyTorch equivalent:** `module.register_forward_hook(lambda m,i,o: registry.features[name] = o.detach())`",
+  "test_cases": [
+    {
+      "name": "Hook captures output",
+      "code": "import numpy as np\nregistry = HookRegistry()\nnp.random.seed(0)\nW = np.random.randn(4, 3, 3, 3) * 0.1\nb = np.zeros(4)\nblock = ConvBlock(W, b, name='conv1')\nblock.register_hook(registry.hook('conv1'))\nx = np.random.randn(1, 3, 8, 8)\nout = block.forward(x)\nassert 'conv1' in registry.features\nassert registry.features['conv1'].shape == out.shape"
+    },
+    {
+      "name": "Hook does not alter output",
+      "code": "import numpy as np\nregistry = HookRegistry()\nW = np.random.randn(2, 1, 3, 3) * 0.1\nb = np.zeros(2)\nblock = ConvBlock(W, b)\nblock.register_hook(registry.hook('test'))\nx = np.random.randn(1, 1, 5, 5)\nout1 = block.forward(x)\nblock._hooks.clear()\nout2 = block.forward(x)\nassert np.allclose(out1, out2)"
+    },
+    {
+      "name": "Registry clear works",
+      "code": "import numpy as np\nregistry = HookRegistry()\nregistry.features['test'] = np.zeros(5)\nregistry.clear()\nassert len(registry.features) == 0"
+    },
+    {
+      "name": "visualize_feature_map returns correct shapes",
+      "code": "import numpy as np\nfm = np.random.randn(4, 8, 14, 14)\nstats = visualize_feature_map(fm)\nassert stats['mean'].shape == (8,)\nassert stats['std'].shape == (8,)\nassert stats['max'].shape == (8,)\nassert stats['min'].shape == (8,)"
+    },
+    {
+      "name": "visualize_feature_map correct values",
+      "code": "import numpy as np\nfm = np.ones((2, 3, 4, 4)) * 5.0\nstats = visualize_feature_map(fm)\nassert np.allclose(stats['mean'], 5.0)\nassert np.allclose(stats['std'], 0.0)\nassert np.allclose(stats['max'], 5.0)\nassert np.allclose(stats['min'], 5.0)"
+    }
+  ],
+  "hints": [
+    "hook() returns a closure that captures the name and stores output in self.features",
+    "register_hook appends the hook function to self._hooks list",
+    "After forward pass, call each hook with the output",
+    "visualize_feature_map: use axis=(0,2,3) for per-channel stats"
+  ],
+  "related_problems": ["8.16", "8.10"]
+}

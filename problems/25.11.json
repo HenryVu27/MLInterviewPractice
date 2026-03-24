@@ -1,0 +1,48 @@
+{
+  "id": "25.11",
+  "title": "Reservoir Sampling",
+  "difficulty": "Medium",
+  "category": "Data Structures for ML",
+  "tags": ["reservoir-sampling", "streaming", "random-sampling", "probability"],
+  "description": "Implement reservoir sampling (Algorithm R) to draw a uniform random sample of size k from a data stream of unknown length, using O(k) memory.\n\nThis algorithm is essential in ML for creating mini-batches from streaming data, sampling large datasets that do not fit in memory, and online learning scenarios.\n\nImplement:\n- `reservoir_sample(stream, k, seed=None)`: Given an iterable `stream` and integer `k`, return a list of k elements sampled uniformly at random without replacement. If the stream has fewer than k elements, return all elements.",
+  "constraints": [
+    "k >= 1",
+    "Stream may have any length >= 0",
+    "Each element must have exactly equal probability of being in the final sample",
+    "O(k) memory — do not store the entire stream",
+    "numpy and stdlib only"
+  ],
+  "starter_code": "import numpy as np\nfrom typing import Iterable, Any, List, Optional\n\ndef reservoir_sample(stream: Iterable[Any], k: int, seed: Optional[int] = None) -> List[Any]:\n    \"\"\"\n    Return a uniform random sample of size k from stream.\n    Uses O(k) memory (Algorithm R).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\nfrom typing import Iterable, Any, List, Optional\nimport random\n\ndef reservoir_sample(stream: Iterable[Any], k: int, seed: Optional[int] = None) -> List[Any]:\n    rng = random.Random(seed)\n    reservoir = []\n    for i, item in enumerate(stream):\n        if i < k:\n            reservoir.append(item)\n        else:\n            # Replace a random element with probability k / (i+1)\n            j = rng.randint(0, i)\n            if j < k:\n                reservoir[j] = item\n    return reservoir\n",
+  "explanation": "**Algorithm R (Vitter 1985)**: Process each element one at a time.\n\n1. Fill the reservoir with the first k elements.\n2. For element i (0-indexed, i >= k): generate a random integer j in [0, i]. If j < k, replace reservoir[j] with the current element.\n\n**Correctness**: By induction, after processing i+1 elements each element is in the reservoir with probability k/(i+1). The replacement step ensures this invariant is maintained — every new element gets probability k/(i+1) of inclusion, and each existing element has probability (1 - k/((i+1)*k)) = i/(i+1) of surviving, giving k/(i+1) * i/(i+1-1)... which simplifies to k/(i+1) for all elements.\n\n**Complexity**: O(n) time, O(k) space.\n\n**ML use**: Streaming mini-batch construction, importance-weighted sampling, experience replay buffers in RL.",
+  "test_cases": [
+    {
+      "name": "sample_size_k",
+      "code": "result = reservoir_sample(range(100), k=10, seed=42)\nassert len(result) == 10\nassert len(set(result)) == 10  # all distinct\nassert all(0 <= x < 100 for x in result)"
+    },
+    {
+      "name": "stream_smaller_than_k",
+      "code": "result = reservoir_sample(range(5), k=10, seed=0)\nassert len(result) == 5\nassert set(result) == {0, 1, 2, 3, 4}"
+    },
+    {
+      "name": "stream_equal_to_k",
+      "code": "result = reservoir_sample(range(7), k=7, seed=1)\nassert len(result) == 7\nassert set(result) == set(range(7))"
+    },
+    {
+      "name": "approximate_uniformity",
+      "code": "import numpy as np\ncounts = np.zeros(20)\nfor seed in range(2000):\n    sample = reservoir_sample(range(20), k=5, seed=seed)\n    for x in sample:\n        counts[x] += 1\nfreqs = counts / counts.sum()\n# Each element should appear ~5/20=0.25 of the time\nassert np.all(np.abs(freqs - 0.25) < 0.05), f\"Frequencies not uniform: {freqs}\""
+    },
+    {
+      "name": "empty_stream",
+      "code": "result = reservoir_sample([], k=5, seed=0)\nassert result == []"
+    }
+  ],
+  "hints": [
+    "Fill the first k elements of the stream directly into the reservoir.",
+    "For element at index i >= k, generate random integer j in [0, i] inclusive.",
+    "If j < k, replace reservoir[j] with the current element.",
+    "This gives each element seen so far exactly probability k/(i+1) of being in the reservoir.",
+    "Use random.Random(seed) for reproducibility without affecting global state."
+  ],
+  "related_problems": ["25.9", "25.10", "25.12"]
+}

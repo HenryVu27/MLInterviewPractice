@@ -1,0 +1,28 @@
+{
+  "id": "15.2",
+  "title": "WordPiece Tokenizer",
+  "difficulty": "Hard",
+  "category": "NLP",
+  "tags": ["nlp", "tokenization", "wordpiece", "subword", "bert"],
+  "description": "Implement WordPiece tokenizer training (as used in BERT).\n\nUnlike BPE (which merges most frequent pair), WordPiece merges the pair that **maximizes the likelihood gain**:\n\n`score(a, b) = freq(ab) / (freq(a) * freq(b))`\n\nAlgorithm:\n1. Initialize vocabulary with characters (prefix `##` for non-initial characters)\n2. Count individual symbol and pair frequencies\n3. Merge the pair with highest score\n4. Repeat for `num_merges` steps\n\nReturn the list of merge rules and final vocabulary.",
+  "constraints": [
+    "Non-initial characters are prefixed with '##'",
+    "score = freq(ab) / (freq(a) * freq(b))",
+    "Return (merges, vocab)"
+  ],
+  "starter_code": "from collections import defaultdict\n\ndef train_wordpiece(corpus: list[str], num_merges: int) -> tuple[list[tuple], dict]:\n    \"\"\"Train WordPiece tokenizer.\n\n    Args:\n        corpus: List of words\n        num_merges: Number of merge operations\n\n    Returns:\n        (merges, vocab) where merges is list of merged pairs\n    \"\"\"\n    pass",
+  "solution_code": "from collections import defaultdict\n\ndef train_wordpiece(corpus: list[str], num_merges: int) -> tuple[list[tuple], dict]:\n    # Initialize: first char as-is, rest prefixed with ##\n    vocab = defaultdict(int)\n    for word in corpus:\n        if not word:\n            continue\n        symbols = [word[0]] + ['##' + c for c in word[1:]]\n        vocab[tuple(symbols)] += 1\n\n    def get_symbol_freqs(vocab):\n        freqs = defaultdict(int)\n        for symbols, cnt in vocab.items():\n            for s in symbols:\n                freqs[s] += cnt\n        return freqs\n\n    def get_pair_freqs(vocab):\n        pairs = defaultdict(int)\n        for symbols, cnt in vocab.items():\n            for i in range(len(symbols)-1):\n                pairs[(symbols[i], symbols[i+1])] += cnt\n        return pairs\n\n    def merge_pair(pair, vocab):\n        new_vocab = defaultdict(int)\n        a, b = pair\n        merged = a + b.lstrip('#') if b.startswith('##') else a + b\n        for symbols, cnt in vocab.items():\n            new_syms = []\n            i = 0\n            while i < len(symbols):\n                if i < len(symbols)-1 and symbols[i]==a and symbols[i+1]==b:\n                    new_syms.append(merged)\n                    i += 2\n                else:\n                    new_syms.append(symbols[i])\n                    i += 1\n            new_vocab[tuple(new_syms)] += cnt\n        return new_vocab\n\n    merges = []\n    for _ in range(num_merges):\n        sym_freqs = get_symbol_freqs(vocab)\n        pair_freqs = get_pair_freqs(vocab)\n        if not pair_freqs:\n            break\n        best_pair = max(\n            pair_freqs,\n            key=lambda p: pair_freqs[p] / (sym_freqs[p[0]] * sym_freqs[p[1]] + 1e-12)\n        )\n        merges.append(best_pair)\n        vocab = merge_pair(best_pair, vocab)\n    return merges, dict(vocab)",
+  "explanation": "WordPiece differs from BPE by using a likelihood-based score instead of raw frequency. This tends to merge pairs where co-occurrence is surprising given individual frequencies, resulting in more semantically meaningful subword units. BERT uses WordPiece with a 30K vocabulary. The ## prefix distinguishes continuation pieces from word-initial ones.",
+  "test_cases": [
+    {"name": "Returns correct structure", "code": "from collections import defaultdict\nmerges, vocab = train_wordpiece(['hello','world'], 2)\nassert isinstance(merges, list) and isinstance(vocab, dict)"},
+    {"name": "Zero merges", "code": "from collections import defaultdict\nmerges, vocab = train_wordpiece(['ab','cd'], 0)\nassert merges == []"},
+    {"name": "Merge reduces unique token types", "code": "from collections import defaultdict\nmerges, vocab = train_wordpiece(['aab','aab','aab'], 1)\nassert len(merges) >= 1"},
+    {"name": "All merges are tuples of length 2", "code": "from collections import defaultdict\nmerges, _ = train_wordpiece(['low','lower','new'], 3)\nassert all(isinstance(m, tuple) and len(m)==2 for m in merges)"}
+  ],
+  "hints": [
+    "score(a,b) = freq(a,b) / (freq(a) * freq(b))",
+    "Track individual symbol frequencies separately from pair frequencies",
+    "When merging ##X with Y, the result loses the ## prefix from X"
+  ],
+  "related_problems": ["15.1", "15.4", "15.5"]
+}

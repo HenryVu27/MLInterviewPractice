@@ -1,0 +1,49 @@
+{
+  "id": "11.3",
+  "title": "Locality Sensitive Hashing (LSH) with Random Projections",
+  "difficulty": "Hard",
+  "category": "Embeddings & Similarity Search",
+  "tags": ["lsh", "approximate nearest neighbors", "random projections", "hashing"],
+  "description": "Implement Locality Sensitive Hashing (LSH) for approximate nearest neighbor search using random projections (also known as random hyperplane LSH or SimHash).\n\nThe idea: project each vector onto L random hyperplanes and assign a binary hash bit based on the sign of each projection. Vectors with high cosine similarity will have similar hash codes with high probability.\n\nImplement an `LSHIndex` class:\n- `__init__(self, num_hyperplanes, dim, num_tables, seed=0)`: Initialize with `num_hyperplanes` hash bits per table, embedding `dim`, and `num_tables` independent hash tables.\n- `add(self, vector, doc_id)`: Hash the vector and add to all tables.\n- `search(self, query, top_k=1)`: Find candidates from all tables with at least one matching hash bit bucket, then re-rank by exact cosine similarity and return top_k doc_ids.",
+  "constraints": [
+    "Use random Gaussian hyperplanes for projections.",
+    "Each hash table uses a different random set of hyperplanes.",
+    "Hash code for a vector is a tuple of bits: bit_i = 1 if dot(vector, hyperplane_i) >= 0 else 0.",
+    "Candidate set = union of all doc_ids sharing the same bucket hash in any table.",
+    "Re-rank candidates by exact cosine similarity.",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\nfrom collections import defaultdict\n\nclass LSHIndex:\n    def __init__(self, num_hyperplanes: int, dim: int, num_tables: int, seed: int = 0):\n        pass\n\n    def add(self, vector: np.ndarray, doc_id) -> None:\n        pass\n\n    def search(self, query: np.ndarray, top_k: int = 1) -> list:\n        pass\n",
+  "solution_code": "import numpy as np\nfrom collections import defaultdict\n\nclass LSHIndex:\n    def __init__(self, num_hyperplanes: int, dim: int, num_tables: int, seed: int = 0):\n        self.num_hyperplanes = num_hyperplanes\n        self.dim = dim\n        self.num_tables = num_tables\n        rng = np.random.RandomState(seed)\n        # Random hyperplanes: (num_tables, num_hyperplanes, dim)\n        self.hyperplanes = rng.randn(num_tables, num_hyperplanes, dim)\n        # Each table maps hash_code (tuple of bits) -> list of (vector, doc_id)\n        self.tables = [defaultdict(list) for _ in range(num_tables)]\n        self.all_vectors = []  # store all (vector, doc_id) for re-ranking\n\n    def _hash(self, vector: np.ndarray, table_idx: int) -> tuple:\n        projections = self.hyperplanes[table_idx] @ vector  # (num_hyperplanes,)\n        bits = tuple((projections >= 0).astype(int).tolist())\n        return bits\n\n    def add(self, vector: np.ndarray, doc_id) -> None:\n        norm_vec = vector / np.linalg.norm(vector)\n        self.all_vectors.append((norm_vec, doc_id))\n        for t in range(self.num_tables):\n            code = self._hash(norm_vec, t)\n            self.tables[t][code].append((norm_vec, doc_id))\n\n    def search(self, query: np.ndarray, top_k: int = 1) -> list:\n        query_norm = query / np.linalg.norm(query)\n        candidates = {}\n        for t in range(self.num_tables):\n            code = self._hash(query_norm, t)\n            for vec, doc_id in self.tables[t].get(code, []):\n                if doc_id not in candidates:\n                    candidates[doc_id] = vec\n        # If not enough candidates, fall back to full scan\n        if len(candidates) < top_k:\n            candidates = {doc_id: vec for vec, doc_id in self.all_vectors}\n        # Re-rank by cosine similarity\n        scored = [(float(query_norm @ vec), doc_id) for doc_id, vec in candidates.items()]\n        scored.sort(key=lambda x: -x[0])\n        return [doc_id for _, doc_id in scored[:top_k]]\n",
+  "explanation": "Random projection LSH works by the angular locality-sensitive property: the probability that two vectors hash to the same bucket equals 1 - (angle between them / pi). We use L independent tables each with b hyperplanes, giving 2^b possible buckets per table. Adding a vector: normalize it, compute sign(H @ v) for each table's hyperplane matrix H, store in the matching bucket. Searching: hash the query in each table, collect candidates from matching buckets (union across tables), then re-rank by exact cosine. Multiple tables increase recall by giving more chances to find true neighbors. The fallback to full scan ensures correctness when too few candidates are found.",
+  "test_cases": [
+    {
+      "name": "test_finds_identical_vector",
+      "code": "import numpy as np\nindex = LSHIndex(num_hyperplanes=8, dim=16, num_tables=5, seed=42)\nnp.random.seed(10)\nfor i in range(20):\n    index.add(np.random.randn(16), f'doc_{i}')\ntarget_vec = np.random.randn(16)\nindex.add(target_vec, 'target')\nresult = index.search(target_vec, top_k=1)\nassert result[0] == 'target', f\"Should find identical vector, got {result}\""
+    },
+    {
+      "name": "test_recall_high_similarity",
+      "code": "import numpy as np\nnp.random.seed(0)\nindex = LSHIndex(num_hyperplanes=6, dim=32, num_tables=10, seed=1)\nbase = np.random.randn(32)\nbase = base / np.linalg.norm(base)\n# Add very similar vector and many dissimilar ones\nindex.add(base + 0.01 * np.random.randn(32), 'similar')\nfor i in range(50):\n    index.add(np.random.randn(32), f'noise_{i}')\nresult = index.search(base, top_k=1)\nassert result[0] == 'similar', f\"Should find similar vector, got {result}\""
+    },
+    {
+      "name": "test_returns_top_k",
+      "code": "import numpy as np\nindex = LSHIndex(num_hyperplanes=4, dim=8, num_tables=3, seed=99)\nnp.random.seed(5)\nfor i in range(10):\n    index.add(np.random.randn(8), i)\nresult = index.search(np.random.randn(8), top_k=3)\nassert len(result) == 3, f\"Expected 3 results, got {len(result)}\"\nassert len(set(result)) == 3, \"Results should be unique\""
+    },
+    {
+      "name": "test_hash_deterministic",
+      "code": "import numpy as np\nindex = LSHIndex(num_hyperplanes=5, dim=4, num_tables=2, seed=0)\nv = np.array([1.0, 2.0, 3.0, 4.0])\nh1 = index._hash(v / np.linalg.norm(v), 0)\nh2 = index._hash(v / np.linalg.norm(v), 0)\nassert h1 == h2, \"Same vector should produce same hash\"\nassert len(h1) == 5, f\"Hash length should equal num_hyperplanes (5), got {len(h1)}\"\nassert all(b in (0, 1) for b in h1), \"Hash bits should be 0 or 1\""
+    },
+    {
+      "name": "test_fallback_no_candidates",
+      "code": "import numpy as np\nnp.random.seed(42)\nindex = LSHIndex(num_hyperplanes=16, dim=4, num_tables=2, seed=7)\nindex.add(np.array([1.0, 0.0, 0.0, 0.0]), 'only_one')\n# Query in very different direction - may not match bucket, but fallback ensures result\nresult = index.search(np.array([-1.0, 0.0, 0.0, 0.0]), top_k=1)\nassert result == ['only_one'], f\"Fallback should return only available doc, got {result}\""
+    }
+  ],
+  "hints": [
+    "Generate hyperplane matrices with shape (num_tables, num_hyperplanes, dim) at init time using a seeded RNG.",
+    "Hash code = tuple(int(proj >= 0) for proj in hyperplanes @ vector).",
+    "Use a dict per table mapping hash tuple to list of (vector, doc_id) pairs.",
+    "Collect candidate set as union across all tables, then do exact cosine re-ranking.",
+    "Include a fallback to full scan if candidate set is smaller than top_k."
+  ],
+  "related_problems": ["11.1", "11.2", "11.4", "11.13"]
+}

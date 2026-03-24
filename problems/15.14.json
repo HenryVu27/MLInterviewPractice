@@ -1,0 +1,29 @@
+{
+  "id": "15.14",
+  "title": "Intent Detection (numpy)",
+  "difficulty": "Medium",
+  "category": "NLP",
+  "tags": ["nlp", "intent-detection", "text-classification"],
+  "description": "Implement a simple intent detection system using numpy.\n\nGiven a set of intent templates (averaged word embeddings per intent class) and a query, classify the query's intent using cosine similarity.\n\n**Algorithm:**\n1. Compute query embedding = mean of token embeddings\n2. Compute cosine similarity between query embedding and each intent prototype\n3. Return the intent with highest cosine similarity\n\nThis is a nearest-prototype classifier in embedding space.",
+  "constraints": [
+    "Use numpy only",
+    "Embeddings shape: (vocab_size, embed_dim)",
+    "Intent prototypes: dict mapping intent_name -> list of example token_ids",
+    "Return string (intent name)"
+  ],
+  "starter_code": "import numpy as np\n\ndef detect_intent(\n    query_tokens: list[int],\n    intent_examples: dict[str, list[list[int]]],\n    embeddings: np.ndarray\n) -> str:\n    \"\"\"Detect intent of a query using prototype matching.\n\n    Args:\n        query_tokens: Token ids of the query\n        intent_examples: Dict mapping intent name to list of example token id lists\n        embeddings: Word embedding matrix, shape (vocab_size, embed_dim)\n\n    Returns:\n        Predicted intent name\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef detect_intent(\n    query_tokens: list[int],\n    intent_examples: dict[str, list[list[int]]],\n    embeddings: np.ndarray\n) -> str:\n    def mean_embed(token_ids):\n        vecs = embeddings[token_ids]\n        return vecs.mean(axis=0)\n\n    def cosine_sim(a, b):\n        return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-12)\n\n    # Compute query embedding\n    query_emb = mean_embed(query_tokens)\n\n    # Compute prototype per intent\n    best_intent = None\n    best_score = -np.inf\n    for intent, examples in intent_examples.items():\n        # Average of example embeddings\n        proto = np.mean([mean_embed(ex) for ex in examples], axis=0)\n        score = cosine_sim(query_emb, proto)\n        if score > best_score:\n            best_score = score\n            best_intent = intent\n    return best_intent",
+  "explanation": "Intent detection is a text classification task common in conversational AI. Prototype-based matching (nearest centroid) is a simple but effective approach when training data is limited. Each intent is represented by the centroid of its example embeddings in embedding space. Cosine similarity normalizes for embedding magnitude, focusing on direction (semantic meaning). This approach requires no training beyond computing centroids.",
+  "test_cases": [
+    {"name": "Returns a string", "code": "import numpy as np\nnp.random.seed(0)\nemb = np.random.randn(10, 4)\nintents = {'greet': [[0,1]], 'bye': [[2,3]]}\nresult = detect_intent([0,1], intents, emb)\nassert isinstance(result, str) and result in ['greet', 'bye']"},
+    {"name": "Exact match query", "code": "import numpy as np\n# Make intent prototypes clearly separated\nemb = np.zeros((10, 4))\nemb[0] = [1.0, 0, 0, 0]\nemb[1] = [0.0, 1, 0, 0]\nintents = {'A': [[0]], 'B': [[1]]}\nresult = detect_intent([0], intents, emb)\nassert result == 'A'"},
+    {"name": "Closest intent selected", "code": "import numpy as np\nemb = np.zeros((10, 4))\nemb[0] = [1.0, 0, 0, 0]\nemb[1] = [0.9, 0.1, 0, 0]  # similar to 0\nemb[2] = [0.0, 0, 1, 0]   # different\nintents = {'A': [[0]], 'B': [[2]]}\nresult = detect_intent([1], intents, emb)\nassert result == 'A'"},
+    {"name": "Multiple examples per intent", "code": "import numpy as np\nnp.random.seed(1)\nemb = np.random.randn(20, 8)\nintents = {'X': [[0,1,2],[3,4]], 'Y': [[5,6],[7,8,9]]}\nresult = detect_intent([0,1], intents, emb)\nassert result in ['X', 'Y']"}
+  ],
+  "hints": [
+    "Mean embedding of a sequence = mean of its token embeddings",
+    "Intent prototype = mean of all example embeddings for that intent",
+    "Cosine similarity = dot(a,b) / (||a|| * ||b||)"
+  ],
+  "related_problems": ["15.12", "15.13", "15.5"]
+}

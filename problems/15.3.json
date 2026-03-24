@@ -1,0 +1,28 @@
+{
+  "id": "15.3",
+  "title": "N-gram Language Model",
+  "difficulty": "Medium",
+  "category": "NLP",
+  "tags": ["nlp", "language-model", "ngram", "laplace-smoothing"],
+  "description": "Implement a bigram language model with Laplace (add-1) smoothing.\n\n**Training:** Count bigram and unigram frequencies from a tokenized corpus.\n\n**Probability:** `P(w | context) = (count(context, w) + 1) / (count(context) + V)`\n\nwhere V = vocabulary size.\n\n**Implement two methods:**\n- `train(corpus)`: fit on list of token lists\n- `prob(word, context)`: return P(word | last word of context)",
+  "constraints": [
+    "Laplace smoothing with alpha=1",
+    "Use bigram (context = previous 1 word)",
+    "Return probability as float",
+    "Unknown words treated as part of vocabulary"
+  ],
+  "starter_code": "from collections import defaultdict\n\nclass BigramLM:\n    \"\"\"Bigram language model with Laplace smoothing.\"\"\"\n\n    def __init__(self):\n        pass\n\n    def train(self, corpus: list[list[str]]) -> None:\n        \"\"\"Train on a list of tokenized sentences.\"\"\"\n        pass\n\n    def prob(self, word: str, context: str) -> float:\n        \"\"\"Return P(word | context) with Laplace smoothing.\n\n        Args:\n            word: Target word\n            context: Previous word\n\n        Returns:\n            Smoothed probability\n        \"\"\"\n        pass",
+  "solution_code": "from collections import defaultdict\n\nclass BigramLM:\n    def __init__(self):\n        self.bigram_counts = defaultdict(lambda: defaultdict(int))\n        self.unigram_counts = defaultdict(int)\n        self.vocab = set()\n\n    def train(self, corpus: list[list[str]]) -> None:\n        for sentence in corpus:\n            for i in range(len(sentence)):\n                self.unigram_counts[sentence[i]] += 1\n                self.vocab.add(sentence[i])\n                if i > 0:\n                    self.bigram_counts[sentence[i-1]][sentence[i]] += 1\n\n    def prob(self, word: str, context: str) -> float:\n        V = len(self.vocab)\n        num = self.bigram_counts[context][word] + 1\n        denom = self.unigram_counts[context] + V\n        return num / denom",
+  "explanation": "The bigram LM estimates the probability of each word given the preceding word. Laplace smoothing adds 1 to every bigram count and V to the denominator, ensuring unseen bigrams receive non-zero probability. Without smoothing, a single unseen word makes the sentence probability zero. This simple model forms the basis of more sophisticated n-gram LMs.",
+  "test_cases": [
+    {"name": "Seen bigram has high prob", "code": "from collections import defaultdict\nlm = BigramLM()\nlm.train([['the','cat','sat'],['the','cat','ran']])\np = lm.prob('cat', 'the')\nassert p > 0.5"},
+    {"name": "Unseen bigram has smoothed prob", "code": "from collections import defaultdict\nlm = BigramLM()\nlm.train([['a','b','c']])\np = lm.prob('z', 'a')\nassert p > 0 and p < 1"},
+    {"name": "Probabilities sum to 1 over vocab", "code": "from collections import defaultdict\nlm = BigramLM()\nlm.train([['a','b','a','c']])\ntotal = sum(lm.prob(w, 'a') for w in lm.vocab)\nassert abs(total - 1.0) < 0.01"},
+    {"name": "More frequent word has higher prob", "code": "from collections import defaultdict\nlm = BigramLM()\nlm.train([['the','cat']]*10 + [['the','dog']])\nassert lm.prob('cat','the') > lm.prob('dog','the')"}
+  ],
+  "hints": [
+    "Count bigrams as bigram_counts[prev_word][current_word]",
+    "Laplace: P(w|ctx) = (count(ctx,w)+1) / (count(ctx)+V)"
+  ],
+  "related_problems": ["15.4", "15.6", "13.14"]
+}

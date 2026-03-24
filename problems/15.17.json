@@ -1,0 +1,28 @@
+{
+  "id": "15.17",
+  "title": "Edit Distance (Levenshtein)",
+  "difficulty": "Medium",
+  "category": "NLP",
+  "tags": ["nlp", "edit-distance", "dynamic-programming", "string-matching"],
+  "description": "Implement Levenshtein edit distance between two strings using dynamic programming.\n\nThe edit distance is the minimum number of single-character operations (insert, delete, substitute) to transform string `s` into string `t`.\n\n**Recurrence:**\n```\ndp[i][j] = min(\n    dp[i-1][j] + 1,       # delete from s\n    dp[i][j-1] + 1,       # insert into s\n    dp[i-1][j-1] + (0 if s[i-1]==t[j-1] else 1)  # substitute\n)\n```\n\n**Example:**\n```\nedit_distance('kitten', 'sitting') = 3\n```",
+  "constraints": [
+    "Handle empty strings",
+    "Return integer",
+    "O(m*n) time and space"
+  ],
+  "starter_code": "def edit_distance(s: str, t: str) -> int:\n    \"\"\"Compute Levenshtein edit distance between s and t.\n\n    Args:\n        s: Source string\n        t: Target string\n\n    Returns:\n        Minimum edit distance as integer\n    \"\"\"\n    pass",
+  "solution_code": "def edit_distance(s: str, t: str) -> int:\n    m, n = len(s), len(t)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        dp[i][0] = i\n    for j in range(n + 1):\n        dp[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            cost = 0 if s[i-1] == t[j-1] else 1\n            dp[i][j] = min(\n                dp[i-1][j] + 1,\n                dp[i][j-1] + 1,\n                dp[i-1][j-1] + cost\n            )\n    return dp[m][n]",
+  "explanation": "Edit distance is fundamental in spell checking, DNA sequencing, and fuzzy string matching. The DP table builds up from base cases: transforming empty string to any string requires len insertions. Each cell dp[i][j] represents the minimum cost to transform s[:i] to t[:j]. The three options correspond to deletion, insertion, and substitution/match.",
+  "test_cases": [
+    {"name": "Classic kitten/sitting", "code": "assert edit_distance('kitten', 'sitting') == 3"},
+    {"name": "Identical strings distance=0", "code": "assert edit_distance('hello', 'hello') == 0"},
+    {"name": "Empty string distance=len", "code": "assert edit_distance('', 'abc') == 3 and edit_distance('abc', '') == 3"},
+    {"name": "Single char substitution", "code": "assert edit_distance('cat', 'car') == 1"}
+  ],
+  "hints": [
+    "dp[0][j] = j (insert j chars from empty string)",
+    "dp[i][0] = i (delete i chars to reach empty string)",
+    "cost=0 if chars match, else 1"
+  ],
+  "related_problems": ["15.18", "13.13", "15.1"]
+}

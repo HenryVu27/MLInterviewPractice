@@ -3,27 +3,44 @@
   "title": "Multivariate Gaussian PDF",
   "difficulty": "Medium",
   "category": "Probability & Statistics",
-  "tags": ["numpy", "from-scratch", "gaussian", "multivariate"],
-  "description": "Implement `multivariate_gaussian_pdf(X, mu, Sigma)` which evaluates the multivariate Gaussian PDF at each row of X:\n\n```\nN(x; mu, Sigma) = (1 / ((2*pi)^(D/2) * sqrt(det(Sigma)))) * exp(-0.5 * (x-mu)^T Sigma^{-1} (x-mu))\n```\n\nInputs:\n- `X`: array of shape `(N, D)` — N data points\n- `mu`: array of shape `(D,)` — mean vector\n- `Sigma`: array of shape `(D, D)` — positive definite covariance matrix\n\nReturns: array of shape `(N,)` — PDF value at each point.\n\n**Why this matters:** Multivariate Gaussians are used in GMMs, Kalman filters, Gaussian processes, and as prior/likelihood in Bayesian models.",
+  "tags": ["gaussian", "multivariate", "covariance", "pdf", "linear algebra"],
+  "description": "Implement `multivariate_gaussian_pdf(x, mu, sigma)` that evaluates the **multivariate Gaussian PDF** for a single point `x` (or a batch of points).\n\nFor a d-dimensional vector x, the PDF is:\n\n```\nf(x) = (1 / ((2*pi)^(d/2) * |Sigma|^(1/2))) * exp(-0.5 * (x-mu)^T * Sigma^{-1} * (x-mu))\n```\n\nwhere:\n- `mu` is the mean vector of shape `(d,)`\n- `Sigma` is the covariance matrix of shape `(d, d)`, symmetric positive definite\n- `x` is a single point of shape `(d,)` or a batch of shape `(n, d)`\n\nReturn a scalar if x is 1D, or an array of shape `(n,)` if x is 2D.",
   "constraints": [
-    "Use numpy; no explicit loops over data points",
-    "Use Cholesky decomposition for numerical stability (not direct matrix inverse)",
     "Sigma must be symmetric positive definite",
-    "Work in log space first, then exponentiate"
+    "Use numpy only, no scipy",
+    "Handle both single point (d,) and batch (n, d) inputs",
+    "Do not use np.linalg.solve in place of the inverse; use np.linalg.inv or Cholesky"
   ],
-  "starter_code": "import numpy as np\n\ndef multivariate_gaussian_pdf(X, mu, Sigma):\n    \"\"\"Evaluate multivariate Gaussian PDF at each row of X.\n\n    Args:\n        X: array of shape (N, D)\n        mu: mean vector of shape (D,)\n        Sigma: covariance matrix of shape (D, D), must be positive definite\n\n    Returns:\n        pdf_values: array of shape (N,) with N(x_i; mu, Sigma) for each row\n    \"\"\"\n    pass",
-  "solution_code": "import numpy as np\n\ndef multivariate_gaussian_pdf(X, mu, Sigma):\n    X = np.asarray(X, dtype=float)\n    mu = np.asarray(mu, dtype=float)\n    Sigma = np.asarray(Sigma, dtype=float)\n    N, D = X.shape\n\n    # Cholesky decomposition for numerical stability: Sigma = L L^T\n    L = np.linalg.cholesky(Sigma)  # lower triangular\n\n    # log det(Sigma) = 2 * sum(log(diag(L)))\n    log_det = 2.0 * np.sum(np.log(np.diag(L)))\n\n    # Mahalanobis distance squared: (x-mu)^T Sigma^{-1} (x-mu)\n    # = ||L^{-1}(x-mu)||^2  where we solve L z = (x-mu)\n    diff = X - mu  # (N, D)\n    z = np.linalg.solve(L, diff.T).T  # (N, D): each row is L^{-1}(x_i - mu)\n    maha_sq = np.sum(z ** 2, axis=1)  # (N,)\n\n    # Log PDF\n    log_pdf = -0.5 * (D * np.log(2 * np.pi) + log_det + maha_sq)\n    return np.exp(log_pdf)",
-  "explanation": "**Key concepts:**\n\n1. **Mahalanobis distance:** `(x-mu)^T Sigma^{-1} (x-mu)` generalizes Euclidean distance by accounting for correlations and different scales. Contours of equal Mahalanobis distance are ellipses.\n\n2. **Cholesky decomposition:** `Sigma = L L^T` where L is lower triangular. Used because:\n   - More numerically stable than direct inversion\n   - `log det(Sigma) = 2 * sum(log(diag(L)))` — efficient and stable\n   - Solving `L z = (x - mu)` gives `z = L^{-1}(x-mu)`, then `z^T z = (x-mu)^T Sigma^{-1}(x-mu)`\n\n3. **Log-space computation:** Compute log PDF first, then exponentiate. This avoids underflow when evaluating Gaussian at points far from the mean.\n\n4. **Batch evaluation:** Solving `L Z = diff^T` where diff is `(N, D)` processes all N points simultaneously.\n\n5. **Applications:** GMM uses this to compute the responsibility of each Gaussian for each data point during the E-step.",
+  "starter_code": "import numpy as np\n\ndef multivariate_gaussian_pdf(x: np.ndarray, mu: np.ndarray, sigma: np.ndarray) -> np.ndarray:\n    \"\"\"\n    Evaluate the multivariate Gaussian PDF.\n\n    Args:\n        x: Point(s) to evaluate. Shape (d,) or (n, d).\n        mu: Mean vector. Shape (d,).\n        sigma: Covariance matrix. Shape (d, d), symmetric positive definite.\n\n    Returns:\n        PDF value(s). Scalar if x is (d,), array of shape (n,) if x is (n, d).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef multivariate_gaussian_pdf(x: np.ndarray, mu: np.ndarray, sigma: np.ndarray) -> np.ndarray:\n    x = np.asarray(x, dtype=float)\n    mu = np.asarray(mu, dtype=float)\n    sigma = np.asarray(sigma, dtype=float)\n    d = mu.shape[0]\n\n    single = x.ndim == 1\n    if single:\n        x = x[np.newaxis, :]  # (1, d)\n\n    sigma_inv = np.linalg.inv(sigma)\n    det = np.linalg.det(sigma)\n    norm = 1.0 / (np.sqrt((2 * np.pi) ** d * det))\n\n    diff = x - mu  # (n, d)\n    # Mahalanobis: sum over last axis of (diff @ sigma_inv) * diff\n    mahal = np.sum((diff @ sigma_inv) * diff, axis=1)  # (n,)\n    result = norm * np.exp(-0.5 * mahal)\n\n    return float(result[0]) if single else result\n",
+  "explanation": "1. The multivariate Gaussian PDF involves two key computations: the normalisation constant and the Mahalanobis distance.\n2. The normalisation constant is `1 / sqrt((2*pi)^d * |Sigma|)`.\n3. The Mahalanobis distance is the quadratic form `(x-mu)^T Sigma^{-1} (x-mu)`.\n4. For a batch of n points, the computation is vectorised: `(diff @ sigma_inv) * diff` sums element-wise to give each point's Mahalanobis distance.\n5. In practice, use Cholesky decomposition (`np.linalg.cholesky`) for better numerical stability.",
   "test_cases": [
-    {"name": "Standard bivariate Gaussian at origin", "code": "import numpy as np\nX = np.array([[0.0, 0.0]])\nmu = np.zeros(2)\nSigma = np.eye(2)\npdf = multivariate_gaussian_pdf(X, mu, Sigma)\nexpected = 1.0 / (2 * np.pi)\nassert abs(pdf[0] - expected) < 1e-9"},
-    {"name": "Output shape", "code": "import numpy as np\nX = np.random.randn(10, 3)\nmu = np.zeros(3)\nSigma = np.eye(3)\nassert multivariate_gaussian_pdf(X, mu, Sigma).shape == (10,)"},
-    {"name": "PDF is non-negative", "code": "import numpy as np\nX = np.random.randn(20, 2)\nmu = np.array([1.0, -1.0])\nSigma = np.array([[2.0, 0.5], [0.5, 1.0]])\nassert np.all(multivariate_gaussian_pdf(X, mu, Sigma) >= 0)"},
-    {"name": "Integrates to 1 (approx, 1D via diagonal)", "code": "import numpy as np\nx = np.linspace(-5, 5, 1000).reshape(-1, 1)\nmu = np.array([0.0])\nSigma = np.array([[1.0]])\npdf = multivariate_gaussian_pdf(x, mu, Sigma)\ndx = x[1, 0] - x[0, 0]\nassert abs(np.sum(pdf) * dx - 1.0) < 1e-2"},
-    {"name": "Matches 1D Gaussian", "code": "import numpy as np\nX = np.array([[1.5]])\nmu = np.array([0.0])\nSigma = np.array([[1.0]])\npdf_mv = multivariate_gaussian_pdf(X, mu, Sigma)[0]\npdf_1d = (1.0/np.sqrt(2*np.pi)) * np.exp(-0.5 * 1.5**2)\nassert abs(pdf_mv - pdf_1d) < 1e-9"}
+    {
+      "name": "Standard bivariate Gaussian at origin",
+      "code": "import numpy as np\nmu = np.array([0.0, 0.0])\nsigma = np.eye(2)\nresult = multivariate_gaussian_pdf(np.array([0.0, 0.0]), mu, sigma)\nexpected = 1.0 / (2 * np.pi)\nassert abs(result - expected) < 1e-10, f'Expected {expected}, got {result}'"
+    },
+    {
+      "name": "PDF integrates to 1 in 1D (d=1 degenerate check)",
+      "code": "import numpy as np\nmu = np.array([0.0])\nsigma = np.array([[1.0]])\nx_vals = np.linspace(-5, 5, 100000).reshape(-1, 1)\ndx = 10.0 / 100000\npdfs = multivariate_gaussian_pdf(x_vals, mu, sigma)\nintegral = np.sum(pdfs) * dx\nassert abs(integral - 1.0) < 1e-4, f'Should integrate to 1, got {integral}'"
+    },
+    {
+      "name": "Batch evaluation returns correct shape",
+      "code": "import numpy as np\nmu = np.array([1.0, 2.0])\nsigma = np.array([[2.0, 0.5], [0.5, 1.0]])\npoints = np.random.randn(10, 2)\nresult = multivariate_gaussian_pdf(points, mu, sigma)\nassert result.shape == (10,), f'Expected (10,), got {result.shape}'\nassert np.all(result > 0), 'PDF values must be positive'"
+    },
+    {
+      "name": "PDF is highest at mean",
+      "code": "import numpy as np\nmu = np.array([3.0, -1.0])\nsigma = np.eye(2)\npdf_at_mean = multivariate_gaussian_pdf(mu, mu, sigma)\npdf_away = multivariate_gaussian_pdf(mu + np.array([1.0, 0.0]), mu, sigma)\nassert pdf_at_mean > pdf_away, 'PDF should be highest at the mean'"
+    },
+    {
+      "name": "Diagonal covariance factorises to product of univariate PDFs",
+      "code": "import numpy as np\nmu = np.array([0.0, 0.0])\nsigma = np.diag([4.0, 9.0])  # sigma_x=2, sigma_y=3\nx = np.array([1.0, 1.5])\nresult = multivariate_gaussian_pdf(x, mu, sigma)\npdf1 = (1/(2*np.sqrt(2*np.pi))) * np.exp(-0.5*(1.0/2)**2)\npdf2 = (1/(3*np.sqrt(2*np.pi))) * np.exp(-0.5*(1.5/3)**2)\nassert abs(result - pdf1 * pdf2) < 1e-10, f'Diagonal case should factorise, got {result}'"
+    }
   ],
   "hints": [
-    "Use Cholesky: L = np.linalg.cholesky(Sigma), then solve L @ z = (x - mu) for z; Mahalanobis = ||z||^2",
-    "log det(Sigma) = 2 * sum(log(diag(L))) is faster and more stable than np.linalg.det"
+    "Compute `np.linalg.inv(sigma)` for the precision matrix and `np.linalg.det(sigma)` for the normalisation.",
+    "The Mahalanobis distance for a batch is `np.sum((diff @ sigma_inv) * diff, axis=1)` — no need for explicit loops.",
+    "Handle the single-point case by reshaping to (1, d) and back.",
+    "For numerical stability consider using `np.linalg.slogdet` instead of `np.linalg.det` to avoid overflow."
   ],
-  "related_problems": ["2.8", "2.10", "2.2"]
+  "related_problems": ["2.8", "2.10", "1.9"]
 }

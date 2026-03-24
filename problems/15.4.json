@@ -1,0 +1,27 @@
+{
+  "id": "15.4",
+  "title": "Text Preprocessing Pipeline",
+  "difficulty": "Easy",
+  "category": "NLP",
+  "tags": ["nlp", "preprocessing", "tokenization", "stopwords"],
+  "description": "Implement a simple text preprocessing pipeline:\n\n1. **Lowercase** the input\n2. **Tokenize** by splitting on whitespace and removing punctuation\n3. **Remove stopwords** from a provided list\n4. Return the list of cleaned tokens\n\n**Example:**\n```\ntext = 'The quick brown fox jumps!'\nstopwords = {'the', 'a', 'is'}\n=> ['quick', 'brown', 'fox', 'jumps']\n```",
+  "constraints": [
+    "Remove punctuation characters (keep only a-z and spaces after lowercasing)",
+    "Stopwords comparison is case-insensitive (already handled by lowercasing)",
+    "Return list of strings"
+  ],
+  "starter_code": "import re\n\ndef preprocess(text: str, stopwords: set[str] = None) -> list[str]:\n    \"\"\"Preprocess text: lowercase, tokenize, remove stopwords.\n\n    Args:\n        text: Raw input string\n        stopwords: Set of stopword strings (lowercase)\n\n    Returns:\n        List of cleaned tokens\n    \"\"\"\n    pass",
+  "solution_code": "import re\n\ndef preprocess(text: str, stopwords: set[str] = None) -> list[str]:\n    if stopwords is None:\n        stopwords = set()\n    text = text.lower()\n    text = re.sub(r'[^a-z\\s]', '', text)\n    tokens = text.split()\n    tokens = [t for t in tokens if t not in stopwords]\n    return tokens",
+  "explanation": "Text preprocessing standardizes raw text before feeding it to ML models. Lowercasing reduces vocabulary size. Punctuation removal avoids treating 'word.' and 'word' as different tokens. Stopword removal eliminates high-frequency words that carry little semantic meaning (e.g., 'the', 'is'). The order matters: lowercase before stopword comparison.",
+  "test_cases": [
+    {"name": "Lowercase and tokenize", "code": "import re\nresult = preprocess('Hello World')\nassert result == ['hello', 'world']"},
+    {"name": "Remove punctuation", "code": "import re\nresult = preprocess('Quick, brown fox!')\nassert 'fox' in result and '!' not in ' '.join(result)"},
+    {"name": "Remove stopwords", "code": "import re\nresult = preprocess('The quick brown fox', stopwords={'the', 'a'})\nassert 'the' not in result and 'quick' in result"},
+    {"name": "Empty string", "code": "import re\nassert preprocess('') == []"}
+  ],
+  "hints": [
+    "Use re.sub to remove non-alphabetic characters",
+    "str.split() handles multiple spaces automatically"
+  ],
+  "related_problems": ["15.5", "15.1", "15.3"]
+}

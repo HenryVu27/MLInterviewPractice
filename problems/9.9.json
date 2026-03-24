@@ -1,0 +1,47 @@
+{
+  "id": "9.9",
+  "title": "RNN in NumPy (Simulating nn.LSTM Pattern)",
+  "difficulty": "Medium",
+  "category": "Recurrent Neural Networks",
+  "tags": ["lstm", "pytorch-pattern", "numpy-simulation", "api-design"],
+  "description": "Implement a numpy-based LSTM module that mirrors PyTorch's `nn.LSTM` API pattern.\n\nPyTorch `nn.LSTM` signature:\n```python\nlstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first)\noutput, (h_n, c_n) = lstm(x, (h_0, c_0))\n```\n\nImplement `NumpyLSTM` class that:\n1. Initializes weights like PyTorch (Xavier uniform for W, zeros for b)\n2. Supports `num_layers` stacked LSTM layers\n3. Has `forward(x, h0=None, c0=None)` method returning `(output, (h_n, c_n))`\n4. Uses `batch_first=True` option (input shape: batch, T, features)\n\nFor multi-layer: output of layer i becomes input of layer i+1.",
+  "constraints": [
+    "Use numpy only",
+    "Xavier uniform init for weights: uniform(-sqrt(1/hidden), sqrt(1/hidden))",
+    "Batch-first when batch_first=True: input (batch, T, input_size)",
+    "Multi-layer: stack num_layers LSTM layers",
+    "h_n, c_n shape: (num_layers, batch, hidden_size)"
+  ],
+  "starter_code": "import numpy as np\n\nclass NumpyLSTM:\n    \"\"\"Numpy simulation of PyTorch nn.LSTM.\"\"\"\n    \n    def __init__(self, input_size: int, hidden_size: int,\n                 num_layers: int = 1, batch_first: bool = False,\n                 rng: np.random.Generator = None):\n        \"\"\"Initialize LSTM with Xavier weights.\n        \n        Args:\n            input_size: Input feature size\n            hidden_size: Hidden state size\n            num_layers: Number of stacked LSTM layers\n            batch_first: If True, input is (batch, T, input) else (T, batch, input)\n            rng: Random generator for init\n        \"\"\"\n        pass\n    \n    def forward(self, x: np.ndarray,\n                h0: np.ndarray = None,\n                c0: np.ndarray = None) -> tuple:\n        \"\"\"LSTM forward pass.\n        \n        Args:\n            x: Input sequence\n            h0: Initial hidden states (num_layers, batch, hidden_size)\n            c0: Initial cell states (num_layers, batch, hidden_size)\n        \n        Returns:\n            (output, (h_n, c_n))\n            output: All hidden states of last layer (T, batch, hidden_size)\n            h_n: Final hidden state per layer (num_layers, batch, hidden_size)\n            c_n: Final cell state per layer (num_layers, batch, hidden_size)\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass NumpyLSTM:\n    def __init__(self, input_size, hidden_size, num_layers=1,\n                 batch_first=False, rng=None):\n        if rng is None:\n            rng = np.random.default_rng()\n        self.hidden_size = hidden_size\n        self.num_layers = num_layers\n        self.batch_first = batch_first\n        bound = np.sqrt(1.0 / hidden_size)\n        self.layers = []\n        for layer_idx in range(num_layers):\n            in_size = input_size if layer_idx == 0 else hidden_size\n            W = rng.uniform(-bound, bound, (4*hidden_size, in_size + hidden_size))\n            b = np.zeros(4*hidden_size)\n            self.layers.append({'W': W, 'b': b})\n    \n    def _lstm_cell(self, x_t, h, c, W, b):\n        combined = np.concatenate([x_t, h], axis=1)\n        gates = combined @ W.T + b\n        H = self.hidden_size\n        i = 1 / (1 + np.exp(-gates[:, :H]))\n        f = 1 / (1 + np.exp(-gates[:, H:2*H]))\n        g = np.tanh(gates[:, 2*H:3*H])\n        o = 1 / (1 + np.exp(-gates[:, 3*H:]))\n        c_new = f * c + i * g\n        h_new = o * np.tanh(c_new)\n        return h_new, c_new\n    \n    def forward(self, x, h0=None, c0=None):\n        if self.batch_first:\n            x = x.transpose(1, 0, 2)  # (batch, T, F) -> (T, batch, F)\n        T, batch, _ = x.shape\n        H = self.hidden_size\n        if h0 is None:\n            h0 = np.zeros((self.num_layers, batch, H))\n        if c0 is None:\n            c0 = np.zeros((self.num_layers, batch, H))\n        h_n = np.zeros_like(h0)\n        c_n = np.zeros_like(c0)\n        layer_input = x\n        for layer_idx, layer in enumerate(self.layers):\n            h = h0[layer_idx]\n            c = c0[layer_idx]\n            outputs = np.zeros((T, batch, H))\n            for t in range(T):\n                h, c = self._lstm_cell(layer_input[t], h, c, layer['W'], layer['b'])\n                outputs[t] = h\n            h_n[layer_idx] = h\n            c_n[layer_idx] = c\n            layer_input = outputs\n        if self.batch_first:\n            layer_input = layer_input.transpose(1, 0, 2)\n        return layer_input, (h_n, c_n)",
+  "explanation": "**Key concepts:**\n\n1. **PyTorch API mirroring:** `output, (h_n, c_n) = lstm(x, (h0, c0))`. This pattern is important to know for interviews.\n\n2. **Multi-layer stacking:** Output of layer L becomes input of layer L+1. Only the final layer's outputs are returned.\n\n3. **Xavier initialization:** `uniform(-1/sqrt(H), 1/sqrt(H))`. Keeps activations from exploding or vanishing at init.\n\n4. **batch_first:** When True, transpose input/output so batch dim is first (more natural for most use cases).\n\n5. **h_n vs output:** `output` contains all T hidden states of the last layer. `h_n` contains the final hidden state of every layer.",
+  "test_cases": [
+    {
+      "name": "Single layer output shapes (time-first)",
+      "code": "import numpy as np\nlstm = NumpyLSTM(8, 16, num_layers=1, rng=np.random.default_rng(0))\nx = np.random.randn(10, 4, 8)\noutput, (h_n, c_n) = lstm.forward(x)\nassert output.shape == (10, 4, 16)\nassert h_n.shape == (1, 4, 16)\nassert c_n.shape == (1, 4, 16)"
+    },
+    {
+      "name": "batch_first=True transposes correctly",
+      "code": "import numpy as np\nlstm = NumpyLSTM(8, 16, batch_first=True, rng=np.random.default_rng(0))\nx = np.random.randn(4, 10, 8)  # (batch, T, features)\noutput, (h_n, c_n) = lstm.forward(x)\nassert output.shape == (4, 10, 16)  # batch_first output"
+    },
+    {
+      "name": "Multi-layer shapes",
+      "code": "import numpy as np\nlstm = NumpyLSTM(8, 16, num_layers=3, rng=np.random.default_rng(1))\nx = np.random.randn(5, 2, 8)\noutput, (h_n, c_n) = lstm.forward(x)\nassert output.shape == (5, 2, 16)\nassert h_n.shape == (3, 2, 16)\nassert c_n.shape == (3, 2, 16)"
+    },
+    {
+      "name": "h_n matches last time step of output",
+      "code": "import numpy as np\nlstm = NumpyLSTM(4, 8, num_layers=1, rng=np.random.default_rng(2))\nx = np.random.randn(6, 3, 4)\noutput, (h_n, c_n) = lstm.forward(x)\nassert np.allclose(h_n[0], output[-1])"
+    },
+    {
+      "name": "Hidden states bounded in (-1, 1)",
+      "code": "import numpy as np\nlstm = NumpyLSTM(8, 16, num_layers=2, rng=np.random.default_rng(3))\nx = np.random.randn(10, 4, 8) * 5\noutput, (h_n, c_n) = lstm.forward(x)\nassert np.all(output >= -1) and np.all(output <= 1)\nassert np.all(h_n >= -1) and np.all(h_n <= 1)"
+    }
+  ],
+  "hints": [
+    "Initialize all layers in a list; layer 0 takes input_size, others take hidden_size",
+    "For multi-layer: pass outputs of layer i as x to layer i+1",
+    "batch_first: transpose input at start and output at end",
+    "h_n[layer] = final h from each layer; c_n[layer] = final c"
+  ],
+  "related_problems": ["9.3", "9.2", "9.6"]
+}

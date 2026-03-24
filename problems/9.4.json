@@ -1,0 +1,42 @@
+{
+  "id": "9.4",
+  "title": "GRU Cell",
+  "difficulty": "Medium",
+  "category": "Recurrent Neural Networks",
+  "tags": ["gru", "gating", "reset-gate", "update-gate"],
+  "description": "Implement a single GRU (Gated Recurrent Unit) cell.\n\nThe GRU computes:\n```\nz = sigmoid(W_z @ [x_t, h_{t-1}] + b_z)           # update gate\nr = sigmoid(W_r @ [x_t, h_{t-1}] + b_r)           # reset gate\nn = tanh(W_n @ [x_t, r * h_{t-1}] + b_n)          # candidate hidden\nh_t = (1 - z) * h_{t-1} + z * n                   # new hidden state\n```\n\nNote: The reset gate `r` only multiplies h_{t-1} in the candidate computation (not x_t).\n\nUse separate weight matrices for the first two gates (can combine z and r) and a separate one for n.",
+  "constraints": [
+    "Use numpy only",
+    "W_zr: combined weights for z and r gates, shape (2*hidden, input+hidden)",
+    "W_n: weights for candidate, shape (hidden, input+hidden)",
+    "b_zr: bias for z,r gates, shape (2*hidden,)",
+    "b_n: bias for candidate, shape (hidden,)"
+  ],
+  "starter_code": "import numpy as np\n\ndef gru_cell(x_t: np.ndarray, h_prev: np.ndarray,\n             W_zr: np.ndarray, b_zr: np.ndarray,\n             W_n: np.ndarray, b_n: np.ndarray) -> np.ndarray:\n    \"\"\"Single GRU cell step.\n    \n    Args:\n        x_t: Input (batch, input_size)\n        h_prev: Previous hidden state (batch, hidden_size)\n        W_zr: Combined weights for z,r gates (2*hidden, input+hidden)\n        b_zr: Bias for z,r (2*hidden,)\n        W_n: Weights for candidate (hidden, input+hidden)\n        b_n: Bias for candidate (hidden,)\n    \n    Returns:\n        h_t: New hidden state (batch, hidden_size)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef gru_cell(x_t: np.ndarray, h_prev: np.ndarray,\n             W_zr: np.ndarray, b_zr: np.ndarray,\n             W_n: np.ndarray, b_n: np.ndarray) -> np.ndarray:\n    hidden_size = h_prev.shape[1]\n    combined = np.concatenate([x_t, h_prev], axis=1)\n    zr = 1 / (1 + np.exp(-(combined @ W_zr.T + b_zr)))\n    z = zr[:, :hidden_size]\n    r = zr[:, hidden_size:]\n    # Candidate: reset gate applied to h_prev before concatenation\n    combined_n = np.concatenate([x_t, r * h_prev], axis=1)\n    n = np.tanh(combined_n @ W_n.T + b_n)\n    h_t = (1 - z) * h_prev + z * n\n    return h_t",
+  "explanation": "**Key concepts:**\n\n1. **Update gate z:** Controls how much to update the hidden state. z~1 means replace h with new candidate; z~0 means keep h unchanged.\n\n2. **Reset gate r:** Controls how much of h_prev to use in computing the candidate. r~0 means ignore past; r~1 means use full past.\n\n3. **Candidate n:** The proposed new hidden state, computed with reset-gated h_prev.\n\n4. **GRU vs LSTM:** GRU has no separate cell state (fewer parameters), often comparable performance. GRU merges forget and input gates into z.\n\n5. **Interpolation:** `h_t = (1-z)*h_prev + z*n` is a convex combination, so GRU can perfectly copy h_prev when z=0.",
+  "test_cases": [
+    {
+      "name": "Output shape correct",
+      "code": "import numpy as np\nbatch, input_size, hidden_size = 4, 8, 16\nx_t = np.random.randn(batch, input_size)\nh_prev = np.zeros((batch, hidden_size))\nW_zr = np.random.randn(2*hidden_size, input_size+hidden_size) * 0.1\nb_zr = np.zeros(2*hidden_size)\nW_n = np.random.randn(hidden_size, input_size+hidden_size) * 0.1\nb_n = np.zeros(hidden_size)\nh_t = gru_cell(x_t, h_prev, W_zr, b_zr, W_n, b_n)\nassert h_t.shape == (batch, hidden_size)"
+    },
+    {
+      "name": "z=0: output equals h_prev",
+      "code": "import numpy as np\nbatch, input_size, hidden_size = 2, 4, 8\nx_t = np.zeros((batch, input_size))\nh_prev = np.random.randn(batch, hidden_size)\nW_zr = np.zeros((2*hidden_size, input_size+hidden_size))\nb_zr = np.concatenate([np.full(hidden_size, -100.0), np.zeros(hidden_size)])  # z=-inf -> z~0\nW_n = np.zeros((hidden_size, input_size+hidden_size))\nb_n = np.zeros(hidden_size)\nh_t = gru_cell(x_t, h_prev, W_zr, b_zr, W_n, b_n)\nassert np.allclose(h_t, h_prev, atol=0.01)"
+    },
+    {
+      "name": "h_t bounded in (-1, 1)",
+      "code": "import numpy as np\nbatch, input_size, hidden_size = 2, 4, 8\nx_t = np.random.randn(batch, input_size) * 10\nh_prev = np.random.randn(batch, hidden_size)\nW_zr = np.random.randn(2*hidden_size, input_size+hidden_size)\nb_zr = np.random.randn(2*hidden_size)\nW_n = np.random.randn(hidden_size, input_size+hidden_size)\nb_n = np.random.randn(hidden_size)\nh_t = gru_cell(x_t, h_prev, W_zr, b_zr, W_n, b_n)\nassert np.all(h_t >= -1) and np.all(h_t <= 1)"
+    },
+    {
+      "name": "Previous h affects output",
+      "code": "import numpy as np\nnp.random.seed(0)\nbatch, input_size, hidden_size = 1, 4, 8\nx_t = np.ones((batch, input_size))\nh_prev_a = np.zeros((batch, hidden_size))\nh_prev_b = np.ones((batch, hidden_size))\nW_zr = np.random.randn(2*hidden_size, input_size+hidden_size)*0.1\nb_zr = np.zeros(2*hidden_size)\nW_n = np.random.randn(hidden_size, input_size+hidden_size)*0.1\nb_n = np.zeros(hidden_size)\nout_a = gru_cell(x_t, h_prev_a, W_zr, b_zr, W_n, b_n)\nout_b = gru_cell(x_t, h_prev_b, W_zr, b_zr, W_n, b_n)\nassert not np.allclose(out_a, out_b)"
+    }
+  ],
+  "hints": [
+    "Compute z and r together: combined @ W_zr.T + b_zr, then split",
+    "Reset gate applies only to h_prev in candidate: np.concatenate([x_t, r*h_prev], axis=1)",
+    "Output is convex combination: (1-z)*h_prev + z*n"
+  ],
+  "related_problems": ["9.3", "9.1", "9.2"]
+}

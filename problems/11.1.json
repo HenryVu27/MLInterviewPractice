@@ -1,0 +1,48 @@
+{
+  "id": "11.1",
+  "title": "Simple Vector Index",
+  "difficulty": "Easy",
+  "category": "Embeddings & Similarity Search",
+  "tags": ["cosine similarity", "vector search", "embeddings"],
+  "description": "Implement a simple vector index that supports adding vectors and searching for the most similar vector to a query using cosine similarity.\n\nYou need to implement a `SimpleVectorIndex` class with two methods:\n- `add(vector, doc_id)`: Add a vector with an associated document ID to the index.\n- `search(query, top_k=1)`: Return the top-k document IDs sorted by cosine similarity to the query vector (highest first).",
+  "constraints": [
+    "Vectors are numpy arrays of shape (d,) where d is the embedding dimension.",
+    "All vectors have the same dimensionality.",
+    "doc_id can be any hashable value (string, int, etc.).",
+    "top_k >= 1 and top_k <= number of indexed vectors.",
+    "Vectors are non-zero (no division by zero issues).",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\nclass SimpleVectorIndex:\n    def __init__(self):\n        pass\n\n    def add(self, vector: np.ndarray, doc_id) -> None:\n        pass\n\n    def search(self, query: np.ndarray, top_k: int = 1) -> list:\n        pass\n",
+  "solution_code": "import numpy as np\n\nclass SimpleVectorIndex:\n    def __init__(self):\n        self.vectors = []\n        self.doc_ids = []\n\n    def add(self, vector: np.ndarray, doc_id) -> None:\n        norm = np.linalg.norm(vector)\n        self.vectors.append(vector / norm)\n        self.doc_ids.append(doc_id)\n\n    def search(self, query: np.ndarray, top_k: int = 1) -> list:\n        query_norm = query / np.linalg.norm(query)\n        matrix = np.stack(self.vectors, axis=0)  # (n, d)\n        similarities = matrix @ query_norm         # (n,)\n        indices = np.argsort(-similarities)[:top_k]\n        return [self.doc_ids[i] for i in indices]\n",
+  "explanation": "Cosine similarity between two vectors a and b is defined as dot(a, b) / (||a|| * ||b||). By pre-normalizing all stored vectors and also normalizing the query vector at search time, the cosine similarity reduces to a simple dot product. We store the normalized vectors in a list, stack them into a matrix for batch dot products, then argsort descending to get the top-k results. This gives O(n*d) search complexity where n is the number of indexed vectors and d is the dimension.",
+  "test_cases": [
+    {
+      "name": "test_single_vector_exact_match",
+      "code": "import numpy as np\nindex = SimpleVectorIndex()\nv = np.array([1.0, 0.0, 0.0])\nindex.add(v, 'doc_a')\nresult = index.search(v, top_k=1)\nassert result == ['doc_a'], f\"Expected ['doc_a'], got {result}\""
+    },
+    {
+      "name": "test_top1_returns_most_similar",
+      "code": "import numpy as np\nindex = SimpleVectorIndex()\nindex.add(np.array([1.0, 0.0]), 'doc_x')\nindex.add(np.array([0.0, 1.0]), 'doc_y')\nquery = np.array([0.9, 0.1])\nresult = index.search(query, top_k=1)\nassert result == ['doc_x'], f\"Expected ['doc_x'], got {result}\""
+    },
+    {
+      "name": "test_top_k_ordering",
+      "code": "import numpy as np\nindex = SimpleVectorIndex()\nindex.add(np.array([1.0, 0.0, 0.0]), 'a')\nindex.add(np.array([0.0, 1.0, 0.0]), 'b')\nindex.add(np.array([0.0, 0.0, 1.0]), 'c')\nquery = np.array([0.9, 0.4, 0.1])\nresult = index.search(query, top_k=3)\nassert result[0] == 'a', f\"First result should be 'a', got {result[0]}\"\nassert result[1] == 'b', f\"Second result should be 'b', got {result[1]}\""
+    },
+    {
+      "name": "test_unnormalized_vectors",
+      "code": "import numpy as np\nindex = SimpleVectorIndex()\nindex.add(np.array([3.0, 0.0]), 'long')\nindex.add(np.array([0.1, 0.0]), 'short')\nquery = np.array([1.0, 0.0])\nresult = index.search(query, top_k=2)\nassert result[0] == 'long' or result[0] == 'short', f\"Both have same direction: {result}\"\nassert set(result) == {'long', 'short'}"
+    },
+    {
+      "name": "test_high_dimensional",
+      "code": "import numpy as np\nnp.random.seed(42)\nindex = SimpleVectorIndex()\nvecs = [np.random.randn(128) for _ in range(10)]\nfor i, v in enumerate(vecs):\n    index.add(v, i)\nquery = vecs[5].copy()\nresult = index.search(query, top_k=1)\nassert result == [5], f\"Expected [5] (exact match), got {result}\""
+    }
+  ],
+  "hints": [
+    "Pre-normalize vectors when adding them to avoid repeated normalization at search time.",
+    "Cosine similarity of unit vectors equals their dot product.",
+    "Use np.stack to form a matrix and compute all dot products at once with matrix multiplication.",
+    "np.argsort with negation gives descending order."
+  ],
+  "related_problems": ["11.2", "11.3", "11.4", "11.13"]
+}

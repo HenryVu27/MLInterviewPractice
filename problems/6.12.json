@@ -1,0 +1,21 @@
+{
+  "id": "6.12",
+  "title": "Gradient Clipping by Value",
+  "difficulty": "Easy",
+  "category": "Optimization Algorithms",
+  "tags": ["numpy", "from-scratch", "optimization", "gradient-clipping"],
+  "description": "Implement gradient clipping by value (element-wise clamping).\n\nElement-wise clipping clamps each gradient component to [-clip_value, clip_value]:\n```\ng_i = clip(g_i, -clip_value, clip_value)  element-wise\n```\n\nThis is simpler than norm clipping but changes the gradient direction.\n\n**Why this matters:** Value clipping is straightforward to implement and can prevent any single gradient component from being too large. Used in DQN and some RNN training recipes.",
+  "constraints": ["Use numpy only", "Clip in-place", "Implement as function clip_grad_value(grads, clip_value)", "Return None"],
+  "starter_code": "import numpy as np\n\ndef clip_grad_value(grads: list[np.ndarray], clip_value: float) -> None:\n    \"\"\"Clip gradients element-wise to [-clip_value, clip_value].\n    \n    Args:\n        grads: List of gradient arrays (modified in-place)\n        clip_value: Maximum absolute value for each gradient element\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef clip_grad_value(grads: list[np.ndarray], clip_value: float) -> None:\n    for g in grads:\n        np.clip(g, -clip_value, clip_value, out=g)",
+  "explanation": "**Key concepts:**\n\n1. **Element-wise vs global**: Value clipping treats each element independently. A gradient of [-100, 0.01] clipped to [-1, 1] becomes [-1, 0.01], changing the ratio between components.\n\n2. **Direction change**: Unlike norm clipping (which scales all components equally), value clipping can change gradient direction. Use norm clipping when direction matters.\n\n3. **np.clip with out=g**: The `out` parameter clips in-place without allocating a new array.\n\n4. **Use case**: DQN clips gradient to [-1, 1] to implement Huber loss behavior on the Bellman error.",
+  "test_cases": [
+    {"name": "Values within range are unchanged", "code": "g = np.array([0.5, -0.3, 0.9])\nclip_grad_value([g], clip_value=1.0)\nnp.testing.assert_allclose(g, [0.5, -0.3, 0.9])"},
+    {"name": "Values exceeding range are clamped", "code": "g = np.array([5.0, -3.0, 0.5])\nclip_grad_value([g], clip_value=2.0)\nnp.testing.assert_allclose(g, [2.0, -2.0, 0.5])"},
+    {"name": "Clips in-place", "code": "g = np.array([10.0])\ngid = id(g)\nclip_grad_value([g], clip_value=1.0)\nassert id(g) == gid\nassert g[0] == 1.0"},
+    {"name": "Multiple gradient tensors", "code": "g1 = np.array([3.0, -3.0])\ng2 = np.array([0.5, 10.0])\nclip_grad_value([g1, g2], clip_value=2.0)\nnp.testing.assert_allclose(g1, [2.0, -2.0])\nnp.testing.assert_allclose(g2, [0.5, 2.0])"},
+    {"name": "All values in [-cv, cv] after clipping", "code": "import numpy as np\ngrads = [np.random.randn(10) * 100]\nclip_grad_value(grads, clip_value=5.0)\nassert np.all(grads[0] >= -5.0) and np.all(grads[0] <= 5.0)"}
+  ],
+  "hints": ["np.clip(g, -clip_value, clip_value, out=g) clips in-place", "Unlike norm clipping, this changes the gradient direction for gradients exceeding the threshold"],
+  "related_problems": ["6.11", "6.1"]
+}

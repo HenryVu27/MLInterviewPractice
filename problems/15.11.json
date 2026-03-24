@@ -1,0 +1,28 @@
+{
+  "id": "15.11",
+  "title": "NER with BiLSTM-CRF (numpy)",
+  "difficulty": "Hard",
+  "category": "NLP",
+  "tags": ["nlp", "ner", "sequence-labeling", "bilstm", "crf"],
+  "description": "Implement a simplified forward pass and Viterbi decoding for a BiLSTM-CRF NER model using numpy.\n\nGiven pre-computed emission scores (from BiLSTM) and a transition matrix:\n- **Emission scores:** shape (seq_len, num_tags) — score for each tag at each position\n- **Transition matrix:** shape (num_tags, num_tags) — transition[i,j] = score of going from tag i to tag j\n\nImplement **Viterbi decoding** to find the tag sequence with maximum total score.\n\nTotal score = sum of emissions + sum of transitions.",
+  "constraints": [
+    "Use numpy only",
+    "Include start/end tag padding (index 0 = START, last = END)",
+    "Return list of predicted tag indices (not including START/END)"
+  ],
+  "starter_code": "import numpy as np\n\ndef viterbi_decode(emissions: np.ndarray, transitions: np.ndarray) -> list[int]:\n    \"\"\"Viterbi decoding for CRF.\n\n    Args:\n        emissions: shape (seq_len, num_tags) — emission scores\n        transitions: shape (num_tags, num_tags) — transition[i,j] = score from tag i to j\n\n    Returns:\n        Best tag sequence as list of ints (length = seq_len)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef viterbi_decode(emissions: np.ndarray, transitions: np.ndarray) -> list[int]:\n    emissions = np.asarray(emissions, dtype=float)\n    transitions = np.asarray(transitions, dtype=float)\n    seq_len, num_tags = emissions.shape\n\n    # viterbi[t, j] = best score of any sequence ending with tag j at position t\n    viterbi = np.full((seq_len, num_tags), -np.inf)\n    backpointer = np.zeros((seq_len, num_tags), dtype=int)\n\n    # Initialize: start from position 0\n    viterbi[0] = emissions[0]\n\n    # Fill\n    for t in range(1, seq_len):\n        # For each tag j at time t:\n        # viterbi[t,j] = max_i(viterbi[t-1,i] + transitions[i,j]) + emissions[t,j]\n        scores = viterbi[t-1][:, None] + transitions  # (num_tags, num_tags)\n        best_prev = np.argmax(scores, axis=0)          # (num_tags,)\n        viterbi[t] = scores[best_prev, np.arange(num_tags)] + emissions[t]\n        backpointer[t] = best_prev\n\n    # Backtrack\n    best_last = int(np.argmax(viterbi[-1]))\n    tags = [best_last]\n    for t in range(seq_len - 1, 0, -1):\n        best_last = backpointer[t, best_last]\n        tags.append(best_last)\n    return list(reversed(tags))",
+  "explanation": "The CRF layer in BiLSTM-CRF models global sequence constraints (e.g., I-ORG cannot follow B-PER). Viterbi decoding finds the globally optimal tag sequence in O(L * K^2) where L=sequence length and K=number of tags. This is more expensive than greedy per-token argmax but avoids label inconsistencies. The backpointer matrix enables efficient traceback.",
+  "test_cases": [
+    {"name": "Output length matches input", "code": "import numpy as np\nnp.random.seed(0)\nemissions = np.random.randn(5, 4)\ntransitions = np.random.randn(4, 4)\nresult = viterbi_decode(emissions, transitions)\nassert len(result) == 5"},
+    {"name": "All tags are valid indices", "code": "import numpy as np\nnp.random.seed(1)\nemissions = np.random.randn(6, 5)\ntransitions = np.random.randn(5, 5)\nresult = viterbi_decode(emissions, transitions)\nassert all(0 <= t < 5 for t in result)"},
+    {"name": "Deterministic for same input", "code": "import numpy as np\nnp.random.seed(2)\nemissions = np.random.randn(4, 3)\ntransitions = np.random.randn(3, 3)\nr1 = viterbi_decode(emissions, transitions)\nr2 = viterbi_decode(emissions, transitions)\nassert r1 == r2"},
+    {"name": "Single token sequence", "code": "import numpy as np\nemissions = np.array([[1.0, 5.0, 2.0]])\ntransitions = np.zeros((3,3))\nresult = viterbi_decode(emissions, transitions)\nassert result == [1]"}
+  ],
+  "hints": [
+    "viterbi[t,j] = max over previous tags of (viterbi[t-1,prev] + trans[prev,j]) + emission[t,j]",
+    "Use backpointer[t,j] = argmax over prev tags at each step",
+    "Backtrack from the best last tag using backpointer"
+  ],
+  "related_problems": ["15.12", "15.13", "15.3"]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "4.7",
+  "title": "He/Kaiming Initialization",
+  "difficulty": "Easy",
+  "category": "Neural Network Fundamentals",
+  "tags": ["numpy", "from-scratch", "initialization", "weight-init", "relu"],
+  "description": "Implement **He (Kaiming) initialization** for ReLU networks — both uniform and normal variants.\n\n**Motivation:** Xavier initialization assumes symmetric activations (mean 0). ReLU sets half its inputs to zero, halving the variance. He initialization corrects for this by using `2/fan_in` instead of `2/(fan_in+fan_out)`.\n\n**He Uniform (mode='fan_in'):**\n```\nW ~ Uniform(-limit, +limit)\nlimit = sqrt(6 / fan_in)\n```\n\n**He Normal (mode='fan_in'):**\n```\nW ~ Normal(0, std)\nstd = sqrt(2 / fan_in)\n```\n\nAlso support `mode='fan_out'` which uses fan_out in the denominator (useful for transposed convolutions).\n\nBiases initialized to zero.",
+  "constraints": [
+    "Use only numpy",
+    "Support both 'uniform' and 'normal' distributions",
+    "Support mode='fan_in' and mode='fan_out'",
+    "Raise ValueError for unknown mode or distribution"
+  ],
+  "starter_code": "import numpy as np\n\ndef he_init(fan_in: int, fan_out: int, mode: str = 'fan_in', distribution: str = 'normal') -> np.ndarray:\n    \"\"\"He/Kaiming initialization for ReLU networks.\n\n    Args:\n        fan_in: number of input units\n        fan_out: number of output units\n        mode: 'fan_in' or 'fan_out'\n        distribution: 'normal' or 'uniform'\n\n    Returns:\n        Weight matrix of shape (fan_in, fan_out)\n    \"\"\"\n    pass\n\ndef init_mlp_he(layer_sizes: list[int], distribution: str = 'normal') -> list[tuple]:\n    \"\"\"Initialize all layers of an MLP using He initialization.\n\n    Returns:\n        List of (W, b) tuples\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef he_init(fan_in: int, fan_out: int, mode: str = 'fan_in', distribution: str = 'normal') -> np.ndarray:\n    if mode == 'fan_in':\n        n = fan_in\n    elif mode == 'fan_out':\n        n = fan_out\n    else:\n        raise ValueError(f\"mode must be 'fan_in' or 'fan_out', got '{mode}'\")\n\n    if distribution == 'normal':\n        std = np.sqrt(2.0 / n)\n        return np.random.randn(fan_in, fan_out) * std\n    elif distribution == 'uniform':\n        limit = np.sqrt(6.0 / n)\n        return np.random.uniform(-limit, limit, size=(fan_in, fan_out))\n    else:\n        raise ValueError(f\"distribution must be 'normal' or 'uniform', got '{distribution}'\")\n\ndef init_mlp_he(layer_sizes: list[int], distribution: str = 'normal') -> list[tuple]:\n    params = []\n    for i in range(len(layer_sizes) - 1):\n        W = he_init(layer_sizes[i], layer_sizes[i + 1], mode='fan_in', distribution=distribution)\n        b = np.zeros(layer_sizes[i + 1])\n        params.append((W, b))\n    return params",
+  "explanation": "**Key concepts:**\n\n1. **Why 2/fan_in?** For a ReLU layer with fan_in inputs, the expected squared output (assuming standard normal inputs and He init weights) is:\n   `E[output^2] = fan_in * Var(w) * E[relu(x)^2] = fan_in * (2/fan_in) * 0.5 = 1`\n   The factor 0.5 comes from ReLU killing half the input variance.\n\n2. **Comparison to Xavier:** Xavier uses 2/(fan_in + fan_out). He uses 2/fan_in. He is strictly better for ReLU; Xavier is better for sigmoid/tanh.\n\n3. **fan_in vs fan_out:** fan_in preserves forward-pass signal variance. fan_out preserves backward-pass gradient variance. fan_in is the default in PyTorch (`torch.nn.init.kaiming_normal_`).\n\n4. **Uniform He:** limit = sqrt(6/fan_in). Note sqrt(3) * std = limit, consistent with Uniform[-a,a] having variance a^2/3.\n\n5. **Default in PyTorch:** `nn.Linear` uses Kaiming uniform (He uniform) by default.\n\n**Interview angle:** Derive why ReLU requires 2/fan_in. What about Leaky ReLU? (Use 2/(1+negative_slope^2)/fan_in.)",
+  "test_cases": [
+    {"name": "He normal shape and std", "code": "import numpy as np\nnp.random.seed(0)\nW = he_init(512, 512, mode='fan_in', distribution='normal')\nassert W.shape == (512, 512)\nexpected_std = np.sqrt(2.0 / 512)\nassert abs(W.std() - expected_std) < 0.005, f'Std {W.std():.4f} vs expected {expected_std:.4f}'"},
+    {"name": "He uniform bounds", "code": "import numpy as np\nnp.random.seed(1)\nW = he_init(128, 64, mode='fan_in', distribution='uniform')\nassert W.shape == (128, 64)\nlimit = np.sqrt(6.0 / 128)\nassert np.all(W >= -limit - 1e-10) and np.all(W <= limit + 1e-10)"},
+    {"name": "fan_out mode uses fan_out", "code": "import numpy as np\nnp.random.seed(2)\nfan_in, fan_out = 64, 256\nW = he_init(fan_in, fan_out, mode='fan_out', distribution='normal')\nassert W.shape == (fan_in, fan_out)\nexpected_std = np.sqrt(2.0 / fan_out)\nassert abs(W.std() - expected_std) < 0.01, f'fan_out mode std wrong'"},
+    {"name": "He init larger than Xavier for ReLU", "code": "import numpy as np\nnp.random.seed(3)\nfan_in, fan_out = 100, 100\nW_he = he_init(fan_in, fan_out, distribution='normal')\nW_xavier_std = np.sqrt(2 / (fan_in + fan_out))\nW_he_std = np.sqrt(2 / fan_in)\nassert W_he_std > W_xavier_std, 'He std should be larger than Xavier for same fan_in=fan_out'"},
+    {"name": "Invalid args raise ValueError", "code": "import numpy as np\ntry:\n    he_init(10, 10, mode='bad')\n    assert False\nexcept ValueError:\n    pass\ntry:\n    he_init(10, 10, distribution='laplace')\n    assert False\nexcept ValueError:\n    pass"}
+  ],
+  "hints": [
+    "He normal: std = sqrt(2/n), W = np.random.randn(fan_in, fan_out) * std where n = fan_in (mode='fan_in')",
+    "He uniform: limit = sqrt(6/n), W = np.random.uniform(-limit, limit, (fan_in, fan_out))"
+  ],
+  "related_problems": ["4.6", "4.2", "4.3"]
+}

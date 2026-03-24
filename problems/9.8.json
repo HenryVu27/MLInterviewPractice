@@ -1,0 +1,46 @@
+{
+  "id": "9.8",
+  "title": "Character-Level Language Model with RNN",
+  "difficulty": "Hard",
+  "category": "Recurrent Neural Networks",
+  "tags": ["language-model", "char-level", "sampling", "generation", "rnn"],
+  "description": "Implement a character-level language model using a vanilla RNN, including text generation with temperature-controlled sampling.\n\nThe model:\n1. Encodes each character as a one-hot vector\n2. Processes the sequence with an RNN\n3. Projects hidden state to vocabulary logits: `logits = h @ W_out + b_out`\n4. Applies softmax to get probabilities\n5. Trains with cross-entropy loss\n\nImplement:\n- `char_rnn_forward(x_onehot, h0, params)` - forward pass returning (logits_seq, h_states)\n- `softmax(x)` - numerically stable softmax\n- `cross_entropy_loss(logits, targets)` - compute mean CE loss\n- `sample_from_rnn(params, seed_char_idx, vocab_size, length, temperature)` - generate text",
+  "constraints": [
+    "Use numpy only",
+    "One-hot input: x_onehot shape (T, batch, vocab_size)",
+    "params has: W_xh (hidden, vocab), W_hh (hidden, hidden), b (hidden), W_out (vocab, hidden), b_out (vocab)",
+    "Sampling: sample from softmax(logits / temperature)",
+    "temperature > 1 = more random, < 1 = more greedy"
+  ],
+  "starter_code": "import numpy as np\n\ndef softmax(x: np.ndarray) -> np.ndarray:\n    \"\"\"Numerically stable softmax over last axis.\"\"\"\n    pass\n\ndef char_rnn_forward(x_onehot: np.ndarray, h0: np.ndarray,\n                     params: dict) -> tuple:\n    \"\"\"Forward pass for char-level RNN LM.\n    \n    Args:\n        x_onehot: (T, batch, vocab_size) one-hot inputs\n        h0: (batch, hidden_size) initial hidden state\n        params: dict with W_xh, W_hh, b, W_out, b_out\n    \n    Returns:\n        (logits_seq, h_states)\n        logits_seq: (T, batch, vocab_size) raw logits\n        h_states: (T+1, batch, hidden_size)\n    \"\"\"\n    pass\n\ndef cross_entropy_loss(logits: np.ndarray, targets: np.ndarray) -> float:\n    \"\"\"Compute mean cross-entropy loss.\n    \n    Args:\n        logits: (T, batch, vocab_size)\n        targets: (T, batch) integer class indices\n    \n    Returns:\n        Scalar mean loss\n    \"\"\"\n    pass\n\ndef sample_from_rnn(params: dict, seed_idx: int, vocab_size: int,\n                    length: int, temperature: float = 1.0,\n                    rng: np.random.Generator = None) -> list:\n    \"\"\"Generate a sequence of character indices.\n    \n    Args:\n        params: Model parameters\n        seed_idx: Starting character index\n        vocab_size: Size of vocabulary\n        length: Number of characters to generate\n        temperature: Sampling temperature\n        rng: Random generator\n    \n    Returns:\n        List of character indices (length items)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef softmax(x: np.ndarray) -> np.ndarray:\n    x = x - x.max(axis=-1, keepdims=True)\n    e = np.exp(x)\n    return e / e.sum(axis=-1, keepdims=True)\n\ndef char_rnn_forward(x_onehot, h0, params):\n    T, batch, vocab_size = x_onehot.shape\n    hidden_size = h0.shape[1]\n    h_states = np.zeros((T+1, batch, hidden_size))\n    h_states[0] = h0\n    logits_seq = np.zeros((T, batch, vocab_size))\n    for t in range(T):\n        h_states[t+1] = np.tanh(\n            x_onehot[t] @ params['W_xh'].T + h_states[t] @ params['W_hh'].T + params['b']\n        )\n        logits_seq[t] = h_states[t+1] @ params['W_out'].T + params['b_out']\n    return logits_seq, h_states\n\ndef cross_entropy_loss(logits, targets):\n    T, batch, vocab_size = logits.shape\n    probs = softmax(logits)  # (T, batch, vocab)\n    # Gather probability of true class\n    probs_flat = probs.reshape(-1, vocab_size)  # (T*batch, vocab)\n    targets_flat = targets.reshape(-1)  # (T*batch,)\n    correct_probs = probs_flat[np.arange(len(targets_flat)), targets_flat]\n    return -np.mean(np.log(correct_probs + 1e-12))\n\ndef sample_from_rnn(params, seed_idx, vocab_size, length, temperature=1.0, rng=None):\n    if rng is None:\n        rng = np.random.default_rng()\n    hidden_size = params['W_hh'].shape[0]\n    h = np.zeros((1, hidden_size))\n    idx = seed_idx\n    result = []\n    for _ in range(length):\n        x = np.zeros((1, 1, vocab_size))\n        x[0, 0, idx] = 1.0\n        h_new = np.tanh(x[0] @ params['W_xh'].T + h @ params['W_hh'].T + params['b'])\n        logits = h_new @ params['W_out'].T + params['b_out']\n        probs = softmax(logits / temperature)[0]\n        idx = rng.choice(vocab_size, p=probs)\n        result.append(int(idx))\n        h = h_new\n    return result",
+  "explanation": "**Key concepts:**\n\n1. **Char-level LM:** Each input character is one-hot encoded. The model predicts the next character's probability distribution.\n\n2. **Output projection:** `logits = h @ W_out.T + b_out`. Then softmax gives character probabilities.\n\n3. **Cross-entropy:** `-log P(true_char)`. Minimizing this maximizes the probability assigned to the correct next character.\n\n4. **Temperature sampling:** Scale logits by 1/T before softmax. T>1: more random (flatter distribution). T<1: more greedy (peaks sharper). T->0: argmax.\n\n5. **Autoregressive generation:** Feed the sampled character back as next input. The model generates one token at a time.",
+  "test_cases": [
+    {
+      "name": "Forward output shapes",
+      "code": "import numpy as np\nnp.random.seed(0)\nT, batch, vocab, hidden = 5, 2, 10, 16\nparams = {\n    'W_xh': np.random.randn(hidden, vocab)*0.1,\n    'W_hh': np.random.randn(hidden, hidden)*0.1,\n    'b': np.zeros(hidden),\n    'W_out': np.random.randn(vocab, hidden)*0.1,\n    'b_out': np.zeros(vocab)\n}\nx = np.zeros((T, batch, vocab))\nx[0, 0, 3] = 1.0\nh0 = np.zeros((batch, hidden))\nlogits, h_states = char_rnn_forward(x, h0, params)\nassert logits.shape == (T, batch, vocab)\nassert h_states.shape == (T+1, batch, hidden)"
+    },
+    {
+      "name": "Softmax sums to 1",
+      "code": "import numpy as np\nx = np.random.randn(4, 10)\nprobs = softmax(x)\nassert np.allclose(probs.sum(axis=-1), 1.0)\nassert np.all(probs >= 0)"
+    },
+    {
+      "name": "Cross-entropy loss is positive",
+      "code": "import numpy as np\nnp.random.seed(0)\nT, batch, vocab = 4, 2, 8\nlogits = np.random.randn(T, batch, vocab)\ntargets = np.random.randint(0, vocab, (T, batch))\nloss = cross_entropy_loss(logits, targets)\nassert loss > 0\nassert np.isfinite(loss)"
+    },
+    {
+      "name": "Sample output length correct",
+      "code": "import numpy as np\nnp.random.seed(0)\nvocab, hidden = 10, 16\nparams = {\n    'W_xh': np.random.randn(hidden, vocab)*0.1,\n    'W_hh': np.random.randn(hidden, hidden)*0.1,\n    'b': np.zeros(hidden),\n    'W_out': np.random.randn(vocab, hidden)*0.1,\n    'b_out': np.zeros(vocab)\n}\nresult = sample_from_rnn(params, seed_idx=0, vocab_size=vocab, length=20,\n                          rng=np.random.default_rng(42))\nassert len(result) == 20\nassert all(0 <= idx < vocab for idx in result)"
+    },
+    {
+      "name": "Perfect prediction gives low loss",
+      "code": "import numpy as np\nvocab = 5\n# Create logits that are very confident (correct class gets large value)\nT, batch = 2, 1\ntargets = np.array([[2], [3]])\nlogits = np.full((T, batch, vocab), -100.0)\nfor t in range(T):\n    logits[t, 0, targets[t, 0]] = 100.0\nloss = cross_entropy_loss(logits, targets)\nassert loss < 0.01, f'Expected low loss, got {loss}'"
+    }
+  ],
+  "hints": [
+    "Softmax: subtract max for stability, then exp/sum",
+    "cross_entropy: gather probs at target indices, then -mean(log(probs))",
+    "sample_from_rnn: maintain h, compute one step at a time, sample from softmax(logits/T)"
+  ],
+  "related_problems": ["9.2", "9.7", "9.9"]
+}

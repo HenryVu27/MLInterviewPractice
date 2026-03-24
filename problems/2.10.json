@@ -1,29 +1,46 @@
 {
   "id": "2.10",
-  "title": "MLE for Gaussian Parameters",
+  "title": "MLE for Gaussian Distribution",
   "difficulty": "Medium",
   "category": "Probability & Statistics",
-  "tags": ["numpy", "from-scratch", "mle", "gaussian", "statistics"],
-  "description": "Implement `mle_gaussian(X)` which estimates the mean vector and covariance matrix of a multivariate Gaussian via **Maximum Likelihood Estimation (MLE)**:\n\n```\nmu_hat = (1/N) * sum_i x_i\nSigma_hat = (1/N) * sum_i (x_i - mu_hat)(x_i - mu_hat)^T\n```\n\nNote: MLE uses `1/N` (not `1/(N-1)`), giving a biased but consistent estimator.\n\nAlso implement `mle_univariate(x)` for the 1-D case, returning `(mu, sigma)` where `sigma` is the MLE standard deviation.\n\n**Why this matters:** MLE is the foundation of most statistical estimation. The Gaussian MLE is derived by setting the gradient of the log-likelihood to zero — a derivation interviewers may ask you to sketch.",
+  "tags": ["MLE", "maximum likelihood", "gaussian", "mean", "covariance", "estimation"],
+  "description": "Implement `mle_gaussian(data)` that estimates the parameters of a multivariate Gaussian distribution via **Maximum Likelihood Estimation (MLE)**.\n\nGiven a data matrix `X` of shape `(n, d)` containing `n` observations in `d` dimensions, return the MLE estimates:\n\n- **Mean**: `mu_hat = (1/n) * sum_i x_i`\n- **Covariance**: `sigma_hat = (1/n) * sum_i (x_i - mu_hat)(x_i - mu_hat)^T`\n\nNote: The MLE covariance uses `1/n` (biased), **not** `1/(n-1)` (unbiased).\n\nReturn a tuple `(mu_hat, sigma_hat)` where `mu_hat` has shape `(d,)` and `sigma_hat` has shape `(d, d)`.",
   "constraints": [
-    "Do NOT use np.cov — implement from scratch",
-    "MLE covariance uses 1/N (not 1/(N-1))",
-    "Use numpy matrix operations",
-    "N must be at least 2 — raise ValueError otherwise"
+    "Input X has shape (n, d) with n > 1",
+    "Use numpy only, no scipy",
+    "Use 1/n normalisation (biased MLE estimate) for covariance",
+    "Do not use np.cov (it uses 1/(n-1) by default)"
   ],
-  "starter_code": "import numpy as np\n\ndef mle_univariate(x):\n    \"\"\"Estimate Gaussian parameters via MLE for 1-D data.\n\n    Args:\n        x: 1-D array of observations\n\n    Returns:\n        (mu_hat, sigma_hat): MLE mean and standard deviation\n    \"\"\"\n    pass\n\n\ndef mle_gaussian(X):\n    \"\"\"Estimate multivariate Gaussian parameters via MLE.\n\n    Args:\n        X: array of shape (N, D) — N observations, D features\n\n    Returns:\n        (mu_hat, Sigma_hat): MLE mean (D,) and covariance (D, D)\n\n    Raises:\n        ValueError: if N < 2\n    \"\"\"\n    pass",
-  "solution_code": "import numpy as np\n\ndef mle_univariate(x):\n    x = np.asarray(x, dtype=float)\n    N = len(x)\n    if N < 2:\n        raise ValueError(\"Need at least 2 observations\")\n    mu_hat = np.sum(x) / N\n    sigma_sq_hat = np.sum((x - mu_hat) ** 2) / N  # MLE uses 1/N\n    return float(mu_hat), float(np.sqrt(sigma_sq_hat))\n\n\ndef mle_gaussian(X):\n    X = np.asarray(X, dtype=float)\n    N, D = X.shape\n    if N < 2:\n        raise ValueError(\"Need at least 2 observations\")\n    mu_hat = np.sum(X, axis=0) / N  # (D,)\n    X_c = X - mu_hat  # (N, D)\n    Sigma_hat = X_c.T @ X_c / N  # (D, D) — MLE uses 1/N\n    return mu_hat, Sigma_hat",
-  "explanation": "**Key concepts:**\n\n1. **MLE derivation:** Maximize log-likelihood `L = sum_i log N(x_i; mu, Sigma)`. Setting d/d_mu = 0 gives `mu_hat = mean(X)`. Setting d/d_Sigma = 0 gives `Sigma_hat = (1/N) sum_i (x_i - mu_hat)(x_i - mu_hat)^T`.\n\n2. **MLE is biased:** The MLE covariance uses 1/N and is a biased estimator of the true covariance. The unbiased estimator uses 1/(N-1) (Bessel's correction). However, MLE is consistent — it converges to the truth as N grows.\n\n3. **Why 1/N?** MLE maximizes the likelihood, not the unbiasedness. The 1/N estimate has lower MSE than 1/(N-1) when both bias and variance are considered for small N.\n\n4. **Sufficient statistics:** mu_hat and Sigma_hat are sufficient statistics for the Gaussian — they capture everything the data tells you about the parameters.\n\n5. **EM algorithm:** MLE of Gaussian parameters is the M-step in the EM algorithm for Gaussian Mixture Models.",
+  "starter_code": "import numpy as np\n\ndef mle_gaussian(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"\n    Estimate Gaussian parameters via MLE.\n\n    Args:\n        X: Data matrix of shape (n, d).\n\n    Returns:\n        (mu_hat, sigma_hat) where mu_hat has shape (d,) and\n        sigma_hat has shape (d, d).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef mle_gaussian(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n    n, d = X.shape\n    mu_hat = X.mean(axis=0)          # shape (d,)\n    diff = X - mu_hat                # shape (n, d)\n    sigma_hat = (diff.T @ diff) / n  # shape (d, d)\n    return mu_hat, sigma_hat\n",
+  "explanation": "1. The MLE mean is simply the sample mean: `mu_hat = mean(X, axis=0)`.\n2. The MLE covariance is `(1/n) * (X - mu_hat)^T (X - mu_hat)`. The matrix product `diff.T @ diff` computes the sum of outer products `sum_i (x_i - mu)(x_i - mu)^T` efficiently.\n3. The MLE covariance is biased (divides by n), but it is the maximum likelihood estimate. The unbiased sample covariance divides by (n-1) (Bessel's correction).\n4. As n -> infinity, both estimates converge to the true covariance.\n5. Note that `np.cov(X.T)` uses (n-1) by default; use `np.cov(X.T, bias=True)` or implement manually.",
   "test_cases": [
-    {"name": "1D MLE mean", "code": "import numpy as np\nx = [1., 2., 3., 4., 5.]\nmu, sigma = mle_univariate(x)\nassert abs(mu - 3.0) < 1e-9"},
-    {"name": "1D MLE uses 1/N not 1/(N-1)", "code": "import numpy as np\nx = [2., 4.]\nmu, sigma = mle_univariate(x)\n# MLE sigma = sqrt((1/2)*((2-3)^2 + (4-3)^2)) = 1.0\nassert abs(sigma - 1.0) < 1e-9"},
-    {"name": "Multivariate mean", "code": "import numpy as np\nX = np.array([[1., 2.], [3., 4.], [5., 6.]])\nmu, Sigma = mle_gaussian(X)\nassert np.allclose(mu, [3., 4.])"},
-    {"name": "Covariance shape", "code": "import numpy as np\nX = np.random.randn(20, 5)\nmu, Sigma = mle_gaussian(X)\nassert Sigma.shape == (5, 5)"},
-    {"name": "Covariance is symmetric PSD", "code": "import numpy as np\nX = np.random.randn(100, 3)\nmu, Sigma = mle_gaussian(X)\nassert np.allclose(Sigma, Sigma.T)\nassert np.all(np.linalg.eigvalsh(Sigma) >= -1e-9)"}
+    {
+      "name": "Mean estimate is close to true mean",
+      "code": "import numpy as np\nnp.random.seed(42)\ntrue_mu = np.array([1.0, -2.0, 3.0])\nX = np.random.randn(10000, 3) + true_mu\nmu_hat, _ = mle_gaussian(X)\nassert np.allclose(mu_hat, true_mu, atol=0.05), f'Mean estimate off: {mu_hat}'"
+    },
+    {
+      "name": "Covariance estimate is close to identity for standard normal",
+      "code": "import numpy as np\nnp.random.seed(0)\nX = np.random.randn(10000, 3)\n_, sigma_hat = mle_gaussian(X)\nassert np.allclose(sigma_hat, np.eye(3), atol=0.05), f'Cov estimate off: {sigma_hat}'"
+    },
+    {
+      "name": "Covariance is symmetric and positive semi-definite",
+      "code": "import numpy as np\nnp.random.seed(1)\nX = np.random.randn(100, 4)\n_, sigma_hat = mle_gaussian(X)\nassert np.allclose(sigma_hat, sigma_hat.T), 'Covariance should be symmetric'\neigenvalues = np.linalg.eigvalsh(sigma_hat)\nassert np.all(eigenvalues >= -1e-10), f'Covariance should be PSD, min eigenvalue: {eigenvalues.min()}'"
+    },
+    {
+      "name": "MLE uses biased 1/n normalisation",
+      "code": "import numpy as np\nX = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])\nmu_hat, sigma_hat = mle_gaussian(X)\nexpected_mu = np.array([3.0, 4.0])\nassert np.allclose(mu_hat, expected_mu), f'Expected mu {expected_mu}, got {mu_hat}'\n# Biased variance for [1,3,5] is 8/3 not 4\nassert abs(sigma_hat[0, 0] - 8.0/3) < 1e-10, f'Expected biased variance 8/3, got {sigma_hat[0,0]}'"
+    },
+    {
+      "name": "Output shapes are correct",
+      "code": "import numpy as np\nX = np.random.randn(50, 5)\nmu_hat, sigma_hat = mle_gaussian(X)\nassert mu_hat.shape == (5,), f'Expected mu shape (5,), got {mu_hat.shape}'\nassert sigma_hat.shape == (5, 5), f'Expected sigma shape (5,5), got {sigma_hat.shape}'"
+    }
   ],
   "hints": [
-    "mu_hat = X.sum(axis=0) / N",
-    "Sigma_hat = X_centered.T @ X_centered / N (divide by N for MLE, not N-1)"
+    "Use `X.mean(axis=0)` to compute the mean over all n samples.",
+    "Compute `diff = X - mu_hat` (shape n x d), then `sigma_hat = diff.T @ diff / n`.",
+    "The MLE covariance is biased. numpy's `np.cov` uses 1/(n-1) by default.",
+    "Check your result is symmetric: `np.allclose(sigma, sigma.T)` should be True."
   ],
-  "related_problems": ["2.8", "2.9", "2.2"]
+  "related_problems": ["2.9", "2.11", "2.8"]
 }

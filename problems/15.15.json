@@ -1,0 +1,29 @@
+{
+  "id": "15.15",
+  "title": "Masked Language Model Training Step (numpy)",
+  "difficulty": "Medium",
+  "category": "NLP",
+  "tags": ["nlp", "masked-lm", "bert", "pretraining"],
+  "description": "Implement one training step of a Masked Language Model (MLM) using numpy.\n\nGiven a token sequence, apply BERT-style masking:\n1. Randomly select 15% of tokens as candidates\n2. Of those: 80% replace with [MASK] id, 10% replace with random token, 10% keep original\n3. Compute cross-entropy loss **only** at masked positions\n\n**Forward pass:** embeddings → linear projection → logits (vocab_size)\n**Loss:** mean cross-entropy at masked positions only\n\nReturn the loss and the indices of masked positions.",
+  "constraints": [
+    "Use numpy only",
+    "mask_id and vocab_size are given",
+    "Only compute loss at originally selected positions",
+    "Return (loss, masked_indices)"
+  ],
+  "starter_code": "import numpy as np\n\ndef mlm_step(\n    token_ids: np.ndarray,\n    embeddings: np.ndarray,\n    W_proj: np.ndarray,\n    b_proj: np.ndarray,\n    mask_id: int,\n    vocab_size: int,\n    mask_prob: float = 0.15,\n    rng: np.random.Generator = None\n) -> tuple[float, np.ndarray]:\n    \"\"\"One MLM training step.\n\n    Args:\n        token_ids: Original token ids, shape (seq_len,)\n        embeddings: Embedding matrix, shape (vocab_size, embed_dim)\n        W_proj: Projection weight, shape (embed_dim, vocab_size)\n        b_proj: Projection bias, shape (vocab_size,)\n        mask_id: Token id for [MASK]\n        vocab_size: Vocabulary size\n        mask_prob: Fraction of tokens to mask\n        rng: Random generator\n\n    Returns:\n        (loss, masked_indices)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef mlm_step(\n    token_ids: np.ndarray,\n    embeddings: np.ndarray,\n    W_proj: np.ndarray,\n    b_proj: np.ndarray,\n    mask_id: int,\n    vocab_size: int,\n    mask_prob: float = 0.15,\n    rng: np.random.Generator = None\n) -> tuple[float, np.ndarray]:\n    if rng is None:\n        rng = np.random.default_rng()\n    token_ids = np.asarray(token_ids, dtype=int)\n    seq_len = len(token_ids)\n    # Select 15% of positions\n    n_mask = max(1, int(seq_len * mask_prob))\n    masked_indices = rng.choice(seq_len, size=n_mask, replace=False)\n    masked_indices = np.sort(masked_indices)\n    # Apply masking\n    input_ids = token_ids.copy()\n    for idx in masked_indices:\n        r = rng.random()\n        if r < 0.8:\n            input_ids[idx] = mask_id\n        elif r < 0.9:\n            input_ids[idx] = rng.integers(0, vocab_size)\n        # else: keep original\n    # Forward pass: embedding lookup + linear projection\n    x = embeddings[input_ids]           # (seq_len, embed_dim)\n    logits = x @ W_proj + b_proj        # (seq_len, vocab_size)\n    # Loss at masked positions only\n    targets = token_ids[masked_indices]  # true tokens\n    pred_logits = logits[masked_indices] # (n_mask, vocab_size)\n    # Numerically stable cross-entropy\n    m = pred_logits.max(axis=1, keepdims=True)\n    log_sum_exp = np.log(np.exp(pred_logits - m).sum(axis=1)) + m[:, 0]\n    loss = float(np.mean(log_sum_exp - pred_logits[np.arange(n_mask), targets]))\n    return loss, masked_indices",
+  "explanation": "BERT's MLM pre-training task trains the model to predict masked tokens using both left and right context (bidirectional). The 80/10/10 split (mask/random/keep) ensures the model cannot simply rely on the [MASK] token as a signal but must learn general representations. Loss is computed only at masked positions to focus gradient on reconstruction. This pre-training enables BERT to be fine-tuned on many downstream tasks.",
+  "test_cases": [
+    {"name": "Returns loss and indices", "code": "import numpy as np\nrng = np.random.default_rng(0)\ntoken_ids = np.array([1,2,3,4,5,6,7,8,9,10])\nemb = np.random.randn(20, 4)\nW = np.random.randn(4, 20)\nb = np.zeros(20)\nloss, idx = mlm_step(token_ids, emb, W, b, mask_id=0, vocab_size=20, rng=rng)\nassert isinstance(loss, float) and len(idx) >= 1"},
+    {"name": "Loss is positive", "code": "import numpy as np\nrng = np.random.default_rng(1)\ntoken_ids = np.arange(10)\nemb = np.random.randn(15, 6)\nW = np.random.randn(6, 15)\nb = np.zeros(15)\nloss, _ = mlm_step(token_ids, emb, W, b, mask_id=14, vocab_size=15, rng=rng)\nassert loss > 0"},
+    {"name": "Masked indices are valid", "code": "import numpy as np\nrng = np.random.default_rng(2)\ntoken_ids = np.arange(8)\nemb = np.random.randn(10, 4)\nW = np.random.randn(4, 10)\nb = np.zeros(10)\n_, idx = mlm_step(token_ids, emb, W, b, mask_id=9, vocab_size=10, rng=rng)\nassert all(0 <= i < 8 for i in idx)"},
+    {"name": "Loss is finite", "code": "import numpy as np\nrng = np.random.default_rng(3)\ntoken_ids = np.array([0,1,2,3,4])\nemb = np.random.randn(10, 8)\nW = np.random.randn(8, 10)\nb = np.zeros(10)\nloss, _ = mlm_step(token_ids, emb, W, b, mask_id=9, vocab_size=10, rng=rng)\nassert np.isfinite(loss)"}
+  ],
+  "hints": [
+    "Select 15% of positions randomly without replacement",
+    "80%: replace with mask_id, 10%: random token, 10%: keep",
+    "Cross-entropy loss only at masked positions"
+  ],
+  "related_problems": ["15.16", "15.3", "15.7"]
+}

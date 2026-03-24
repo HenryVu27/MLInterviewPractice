@@ -1,0 +1,29 @@
+{
+  "id": "15.12",
+  "title": "Text Classification with CNN (numpy)",
+  "difficulty": "Medium",
+  "category": "NLP",
+  "tags": ["nlp", "text-classification", "cnn", "conv1d"],
+  "description": "Implement the forward pass of a CNN text classifier using numpy.\n\nArchitecture (Kim 2014):\n1. **Embedding lookup:** tokens → embeddings, shape (seq_len, embed_dim)\n2. **Conv1D + ReLU** with multiple filter sizes (e.g., [2, 3, 4]), each producing num_filters feature maps\n3. **Max-over-time pooling:** take max across the sequence dimension for each filter\n4. **Concatenate** pooled features from all filter sizes\n5. **Linear classifier:** features → logits over num_classes\n\nReturn the logits (pre-softmax).",
+  "constraints": [
+    "Use numpy only",
+    "filter_sizes: list of ints (n-gram window sizes)",
+    "All weights provided as numpy arrays",
+    "Return shape (num_classes,)"
+  ],
+  "starter_code": "import numpy as np\n\ndef cnn_text_classify(\n    token_ids: list[int],\n    embeddings: np.ndarray,\n    conv_weights: list[np.ndarray],\n    conv_biases: list[np.ndarray],\n    fc_weight: np.ndarray,\n    fc_bias: np.ndarray\n) -> np.ndarray:\n    \"\"\"CNN text classifier forward pass.\n\n    Args:\n        token_ids: List of token indices\n        embeddings: Embedding matrix, shape (vocab_size, embed_dim)\n        conv_weights: List of conv filters, each shape (filter_size, embed_dim, num_filters)\n        conv_biases: List of bias vectors, each shape (num_filters,)\n        fc_weight: shape (sum_filters, num_classes)\n        fc_bias: shape (num_classes,)\n\n    Returns:\n        Logits of shape (num_classes,)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef cnn_text_classify(\n    token_ids: list[int],\n    embeddings: np.ndarray,\n    conv_weights: list[np.ndarray],\n    conv_biases: list[np.ndarray],\n    fc_weight: np.ndarray,\n    fc_bias: np.ndarray\n) -> np.ndarray:\n    # Embedding lookup: (seq_len, embed_dim)\n    x = embeddings[token_ids]  # (L, E)\n    L, E = x.shape\n    pooled = []\n    for W, b in zip(conv_weights, conv_biases):\n        # W: (filter_size, E, num_filters)\n        fs, _, nf = W.shape\n        # Conv1D: for each position i, output[i,k] = sum(x[i:i+fs] * W[:,:,k]) + b[k]\n        out_len = L - fs + 1\n        if out_len <= 0:\n            # Pad with zeros if sequence too short\n            pooled.append(np.zeros(nf))\n            continue\n        feature_map = np.zeros((out_len, nf))\n        for i in range(out_len):\n            patch = x[i:i+fs]  # (fs, E)\n            feature_map[i] = np.tensordot(patch, W, axes=([0,1],[0,1])) + b\n        # ReLU\n        feature_map = np.maximum(0, feature_map)\n        # Max pooling over time\n        pooled.append(feature_map.max(axis=0))  # (num_filters,)\n    # Concatenate all pooled features\n    combined = np.concatenate(pooled)  # (sum of num_filters,)\n    # FC layer\n    logits = combined @ fc_weight + fc_bias\n    return logits",
+  "explanation": "CNN text classifiers use 1D convolutions over word embeddings to capture local n-gram features. Multiple filter sizes capture patterns at different granularities (bigrams, trigrams, etc.). Max-over-time pooling selects the most important feature per filter regardless of position, making the model invariant to feature location. This architecture achieves strong performance on many text classification benchmarks.",
+  "test_cases": [
+    {"name": "Output shape is num_classes", "code": "import numpy as np\nnp.random.seed(0)\nV, E, nf, nc = 100, 8, 4, 3\nemb = np.random.randn(V, E)\ncws = [np.random.randn(2, E, nf), np.random.randn(3, E, nf)]\ncbs = [np.zeros(nf), np.zeros(nf)]\nfw = np.random.randn(2*nf, nc)\nfb = np.zeros(nc)\nlogits = cnn_text_classify([1,2,3,4,5], emb, cws, cbs, fw, fb)\nassert logits.shape == (nc,)"},
+    {"name": "Returns finite values", "code": "import numpy as np\nnp.random.seed(1)\nV, E, nf, nc = 50, 4, 3, 2\nemb = np.random.randn(V, E)\ncws = [np.random.randn(2, E, nf)]\ncbs = [np.zeros(nf)]\nfw = np.random.randn(nf, nc)\nfb = np.zeros(nc)\nlogits = cnn_text_classify([0,1,2,3], emb, cws, cbs, fw, fb)\nassert np.all(np.isfinite(logits))"},
+    {"name": "ReLU removes negatives", "code": "import numpy as np\n# With zero weights, bias=0, conv output = 0, max pool = 0\nV, E, nf, nc = 10, 2, 2, 2\nemb = np.ones((V, E))\ncws = [np.zeros((2, E, nf))]\ncbs = [np.zeros(nf)]\nfw = np.ones((nf, nc))\nfb = np.zeros(nc)\nlogits = cnn_text_classify([0,1,2], emb, cws, cbs, fw, fb)\nassert np.all(logits == 0)"},
+    {"name": "Different filter sizes work", "code": "import numpy as np\nnp.random.seed(2)\nV, E, nf, nc = 20, 4, 2, 3\nemb = np.random.randn(V, E)\ncws = [np.random.randn(fs, E, nf) for fs in [2,3,4]]\ncbs = [np.zeros(nf) for _ in range(3)]\nfw = np.random.randn(3*nf, nc)\nfb = np.zeros(nc)\nlogits = cnn_text_classify(list(range(6)), emb, cws, cbs, fw, fb)\nassert logits.shape == (nc,)"}
+  ],
+  "hints": [
+    "Loop over positions 0..L-fs for each filter size fs",
+    "np.tensordot(patch, W, axes=([0,1],[0,1])) computes dot product over patch and filter",
+    "Max pool: feature_map.max(axis=0) over sequence positions"
+  ],
+  "related_problems": ["15.13", "15.11", "15.14"]
+}

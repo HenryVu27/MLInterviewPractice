@@ -1,0 +1,20 @@
+{
+  "id": "28.16",
+  "title": "SMOTE (Simplified)",
+  "difficulty": "Medium",
+  "category": "Feature Engineering",
+  "tags": ["preprocessing", "oversampling", "imbalanced", "smote"],
+  "description": "Implement a simplified version of SMOTE (Synthetic Minority Oversampling Technique).\n\nSMOTE generates synthetic minority class samples by interpolating between existing minority samples and their K nearest neighbors:\n```\nx_new = x_i + alpha * (x_neighbor - x_i)\n```\nwhere alpha ~ Uniform(0, 1).\n\nGiven minority class samples X_min, a desired number of synthetic samples n_synthetic, and k nearest neighbors:\n1. For each synthetic sample to generate:\n   a. Pick a random minority sample x_i\n   b. Find its K nearest neighbors among X_min\n   c. Pick a random neighbor x_neighbor\n   d. Interpolate: x_new = x_i + alpha * (x_neighbor - x_i)\n\nReturn the synthetic samples as array of shape (n_synthetic, n_features).",
+  "constraints": ["Use numpy only", "Use Euclidean distance for KNN", "alpha ~ Uniform(0, 1) for interpolation", "k default = 5"],
+  "starter_code": "import numpy as np\n\ndef smote(X_min: np.ndarray, n_synthetic: int, k: int = 5, random_state: int = 42) -> np.ndarray:\n    \"\"\"Generate synthetic minority samples using SMOTE.\n    \n    Args:\n        X_min: Minority class samples, shape (n_min, n_features)\n        n_synthetic: Number of synthetic samples to generate\n        k: Number of nearest neighbors\n        random_state: For reproducibility\n    \n    Returns:\n        X_synthetic: Synthetic samples, shape (n_synthetic, n_features)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef smote(X_min: np.ndarray, n_synthetic: int, k: int = 5, random_state: int = 42) -> np.ndarray:\n    rng = np.random.RandomState(random_state)\n    n_min, n_features = X_min.shape\n    k = min(k, n_min - 1)  # k cannot exceed n_min - 1\n    \n    # Precompute KNN for all minority samples\n    dists = np.sum((X_min[:, None, :] - X_min[None, :, :]) ** 2, axis=2)\n    np.fill_diagonal(dists, np.inf)\n    neighbors = np.argsort(dists, axis=1)[:, :k]\n    \n    synthetic = np.zeros((n_synthetic, n_features))\n    for idx in range(n_synthetic):\n        i = rng.randint(n_min)\n        nn_idx = neighbors[i, rng.randint(k)]\n        alpha = rng.uniform(0, 1)\n        synthetic[idx] = X_min[i] + alpha * (X_min[nn_idx] - X_min[i])\n    \n    return synthetic",
+  "explanation": "**Key concepts:**\n\n1. **Interpolation:** Synthetic samples lie on line segments between minority samples, staying within the feature space of the minority class.\n\n2. **vs random oversampling:** Random oversampling just duplicates existing samples, which can cause overfitting. SMOTE creates novel samples.\n\n3. **KNN selection:** Using k nearest neighbors (not random samples) ensures synthetic points are interpolated within dense regions.\n\n4. **Practical use:** Combine with undersampling of majority class. Use in cross-validation: apply SMOTE only to training folds to avoid data leakage.",
+  "test_cases": [
+    {"name": "Output shape correct", "code": "np.random.seed(0)\nX_min = np.random.randn(10, 4)\nX_syn = smote(X_min, n_synthetic=20, k=3)\nassert X_syn.shape == (20, 4)"},
+    {"name": "Synthetic samples are interpolations", "code": "X_min = np.array([[0.0, 0.0], [2.0, 0.0], [0.0, 2.0], [2.0, 2.0], [1.0, 1.0]])\nX_syn = smote(X_min, n_synthetic=50, k=3, random_state=0)\nassert X_syn.min() >= 0.0 and X_syn.max() <= 2.0, 'Synthetic samples out of interpolation range'"},
+    {"name": "Reproducible with random_state", "code": "X_min = np.random.randn(8, 3)\nX1 = smote(X_min, 10, k=3, random_state=7)\nX2 = smote(X_min, 10, k=3, random_state=7)\nassert np.allclose(X1, X2)"},
+    {"name": "Returns numpy array", "code": "X_min = np.random.randn(6, 2)\nresult = smote(X_min, 5, k=3)\nassert isinstance(result, np.ndarray)"}
+  ],
+  "hints": ["Precompute pairwise distances: np.sum((X[:,None,:]-X[None,:,:])**2, axis=2)", "np.fill_diagonal(dists, inf) to exclude self", "x_new = x_i + alpha * (x_nn - x_i)"],
+  "related_problems": ["28.15", "28.7", "28.8"]
+}

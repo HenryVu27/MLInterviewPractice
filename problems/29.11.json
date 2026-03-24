@@ -1,0 +1,20 @@
+{
+  "id": "29.11",
+  "title": "Position-wise FFN",
+  "difficulty": "Easy",
+  "category": "Multimodal & Misc",
+  "tags": ["transformer", "ffn", "gelu", "feed-forward"],
+  "description": "Implement the Position-wise Feed-Forward Network (FFN) used in Transformer models.\n\nThe FFN applies the same two-layer MLP independently to each position:\n```\nFFN(x) = GELU(x @ W1 + b1) @ W2 + b2\n```\n\nWhere:\n- x has shape (seq_len, d_model)\n- W1: (d_model, d_ff), b1: (d_ff,) — expansion layer (typically d_ff = 4 * d_model)\n- W2: (d_ff, d_model), b2: (d_model,) — projection layer\n- GELU activation: `0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))`\n\nReturn output of shape (seq_len, d_model).\n\nAlso implement the GELU activation function separately.",
+  "constraints": ["Use numpy only", "Use the tanh approximation of GELU", "Input shape: (seq_len, d_model)"],
+  "starter_code": "import numpy as np\n\ndef gelu(x: np.ndarray) -> np.ndarray:\n    \"\"\"GELU activation using tanh approximation.\"\"\"\n    pass\n\ndef positionwise_ffn(x: np.ndarray, W1: np.ndarray, b1: np.ndarray, W2: np.ndarray, b2: np.ndarray) -> np.ndarray:\n    \"\"\"Position-wise FFN: GELU(x @ W1 + b1) @ W2 + b2.\"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef gelu(x: np.ndarray) -> np.ndarray:\n    return 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x ** 3)))\n\ndef positionwise_ffn(x: np.ndarray, W1: np.ndarray, b1: np.ndarray, W2: np.ndarray, b2: np.ndarray) -> np.ndarray:\n    hidden = gelu(x @ W1 + b1)\n    return hidden @ W2 + b2",
+  "explanation": "**Key concepts:**\n\n1. **Position-wise:** The same MLP is applied independently at each sequence position — no interaction between positions (that's handled by attention).\n\n2. **Expansion factor:** d_ff = 4*d_model is typical. The expansion allows the model to learn complex functions in the larger space before projecting back.\n\n3. **GELU:** Gaussian Error Linear Unit. Smoother than ReLU, differentiable at 0, used in BERT, GPT, and most modern transformers.\n\n4. **tanh approximation:** GELU = x * Phi(x) where Phi is the Gaussian CDF. The tanh formula is a close approximation used in practice.",
+  "test_cases": [
+    {"name": "Output shape correct", "code": "np.random.seed(0)\nseq_len, d_model, d_ff = 5, 8, 32\nx = np.random.randn(seq_len, d_model)\nW1 = np.random.randn(d_model, d_ff) * 0.1\nb1 = np.zeros(d_ff)\nW2 = np.random.randn(d_ff, d_model) * 0.1\nb2 = np.zeros(d_model)\nout = positionwise_ffn(x, W1, b1, W2, b2)\nassert out.shape == (seq_len, d_model)"},
+    {"name": "GELU of 0 is 0", "code": "assert abs(gelu(np.array([0.0]))[0]) < 1e-6"},
+    {"name": "GELU is approximately linear for large positive x", "code": "x = np.array([10.0])\nassert abs(gelu(x)[0] - 10.0) < 0.01, f'GELU(10) should be ~10, got {gelu(x)[0]}'"},
+    {"name": "GELU near zero for large negative x", "code": "x = np.array([-10.0])\nassert abs(gelu(x)[0]) < 0.001, f'GELU(-10) should be ~0, got {gelu(x)[0]}'"}
+  ],
+  "hints": ["GELU: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x**3)))", "FFN: two matrix multiplications with GELU between them", "x @ W1 broadcasts over seq_len dimension automatically"],
+  "related_problems": ["29.12", "29.2", "29.4"]
+}

@@ -1,0 +1,49 @@
+{
+  "id": "11.5",
+  "title": "Product Quantization",
+  "difficulty": "Hard",
+  "category": "Embeddings & Similarity Search",
+  "tags": ["product quantization", "vector compression", "approximate nearest neighbors", "kmeans"],
+  "description": "Implement Product Quantization (PQ) for compressing high-dimensional vectors.\n\nPQ splits each d-dimensional vector into M sub-vectors of dimension d/M, then independently quantizes each sub-vector using a codebook of K centroids learned via k-means. A vector is compressed to M integers (codebook indices).\n\nImplement a `ProductQuantizer` class:\n- `__init__(self, M, K, dim)`: M subspaces, K centroids per codebook, embedding dimension dim. Requires dim % M == 0.\n- `fit(self, vectors)`: Learn M codebooks from the training vectors using k-means (run 10 iterations).\n- `encode(self, vectors)`: Return integer codes of shape (n, M).\n- `decode(self, codes)`: Reconstruct approximate vectors from codes, shape (n, dim).\n- `compute_adcs(self, query)`: Compute asymmetric distance table of shape (M, K) where entry [m, k] = squared L2 distance between query sub-vector m and centroid k of codebook m.",
+  "constraints": [
+    "dim must be divisible by M.",
+    "Use k-means with random initialization (seed per subspace for reproducibility).",
+    "K-means: 10 iterations, assign each point to nearest centroid, update centroids as means.",
+    "encode returns shape (n, M) integer array.",
+    "decode returns shape (n, dim) float array.",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\nclass ProductQuantizer:\n    def __init__(self, M: int, K: int, dim: int):\n        pass\n\n    def fit(self, vectors: np.ndarray) -> None:\n        pass\n\n    def encode(self, vectors: np.ndarray) -> np.ndarray:\n        pass\n\n    def decode(self, codes: np.ndarray) -> np.ndarray:\n        pass\n\n    def compute_adcs(self, query: np.ndarray) -> np.ndarray:\n        pass\n",
+  "solution_code": "import numpy as np\n\nclass ProductQuantizer:\n    def __init__(self, M: int, K: int, dim: int):\n        assert dim % M == 0, \"dim must be divisible by M\"\n        self.M = M\n        self.K = K\n        self.dim = dim\n        self.sub_dim = dim // M\n        self.codebooks = None  # shape (M, K, sub_dim)\n\n    def _kmeans(self, data: np.ndarray, K: int, seed: int) -> np.ndarray:\n        \"\"\"Simple k-means, returns centroids of shape (K, d).\"\"\"\n        rng = np.random.RandomState(seed)\n        n = len(data)\n        indices = rng.choice(n, K, replace=False)\n        centroids = data[indices].copy()\n        for _ in range(10):\n            # Assign\n            dists = np.linalg.norm(data[:, None, :] - centroids[None, :, :], axis=2)  # (n, K)\n            assignments = np.argmin(dists, axis=1)  # (n,)\n            # Update\n            new_centroids = np.zeros_like(centroids)\n            for k in range(K):\n                mask = assignments == k\n                if mask.sum() > 0:\n                    new_centroids[k] = data[mask].mean(axis=0)\n                else:\n                    new_centroids[k] = centroids[k]  # keep old centroid if empty\n            centroids = new_centroids\n        return centroids\n\n    def fit(self, vectors: np.ndarray) -> None:\n        n, d = vectors.shape\n        assert d == self.dim\n        self.codebooks = np.zeros((self.M, self.K, self.sub_dim))\n        for m in range(self.M):\n            sub_vecs = vectors[:, m * self.sub_dim:(m + 1) * self.sub_dim]\n            self.codebooks[m] = self._kmeans(sub_vecs, self.K, seed=m)\n\n    def encode(self, vectors: np.ndarray) -> np.ndarray:\n        n = len(vectors)\n        codes = np.zeros((n, self.M), dtype=np.int32)\n        for m in range(self.M):\n            sub_vecs = vectors[:, m * self.sub_dim:(m + 1) * self.sub_dim]  # (n, sub_dim)\n            dists = np.linalg.norm(\n                sub_vecs[:, None, :] - self.codebooks[m][None, :, :], axis=2\n            )  # (n, K)\n            codes[:, m] = np.argmin(dists, axis=1)\n        return codes\n\n    def decode(self, codes: np.ndarray) -> np.ndarray:\n        n = len(codes)\n        reconstructed = np.zeros((n, self.dim))\n        for m in range(self.M):\n            centroid_indices = codes[:, m]  # (n,)\n            reconstructed[:, m * self.sub_dim:(m + 1) * self.sub_dim] = \\\n                self.codebooks[m][centroid_indices]\n        return reconstructed\n\n    def compute_adcs(self, query: np.ndarray) -> np.ndarray:\n        \"\"\"Asymmetric distance computation table: shape (M, K).\"\"\"\n        adcs = np.zeros((self.M, self.K))\n        for m in range(self.M):\n            q_sub = query[m * self.sub_dim:(m + 1) * self.sub_dim]  # (sub_dim,)\n            diff = self.codebooks[m] - q_sub[None, :]  # (K, sub_dim)\n            adcs[m] = np.sum(diff ** 2, axis=1)  # (K,)\n        return adcs\n",
+  "explanation": "Product Quantization compresses a d-dimensional vector into M integers by: (1) splitting it into M sub-vectors of dimension d/M; (2) learning a k-means codebook of K centroids for each subspace; (3) encoding each sub-vector as the index of its nearest centroid. A vector goes from d float32 values (4*d bytes) to M uint8/int values (M bytes if K<=256), an ~4d/M compression ratio. Asymmetric distance computation (ADC) speeds up search: precompute distances from the query sub-vectors to all centroids in each subspace (M*K lookups), then for any database vector encoded as (c_0,...,c_{M-1}), the approximate squared L2 distance is simply sum_m(adcs[m, c_m]) — only M table lookups per database vector.",
+  "test_cases": [
+    {
+      "name": "test_encode_decode_shape",
+      "code": "import numpy as np\nnp.random.seed(42)\nvectors = np.random.randn(100, 16)\npq = ProductQuantizer(M=4, K=8, dim=16)\npq.fit(vectors)\ncodes = pq.encode(vectors)\nassert codes.shape == (100, 4), f\"codes shape should be (100,4), got {codes.shape}\"\nrecon = pq.decode(codes)\nassert recon.shape == (100, 16), f\"recon shape should be (100,16), got {recon.shape}\""
+    },
+    {
+      "name": "test_reconstruction_error",
+      "code": "import numpy as np\nnp.random.seed(0)\nvectors = np.random.randn(200, 8)\npq = ProductQuantizer(M=2, K=16, dim=8)\npq.fit(vectors)\ncodes = pq.encode(vectors)\nrecon = pq.decode(codes)\nmse = float(np.mean((vectors - recon) ** 2))\nassert mse < 1.0, f\"MSE reconstruction error should be < 1.0 for training data, got {mse:.4f}\""
+    },
+    {
+      "name": "test_code_values_in_range",
+      "code": "import numpy as np\nnp.random.seed(7)\nvectors = np.random.randn(50, 8)\npq = ProductQuantizer(M=2, K=4, dim=8)\npq.fit(vectors)\ncodes = pq.encode(vectors)\nassert codes.min() >= 0, f\"Codes should be >= 0\"\nassert codes.max() < 4, f\"Codes should be < K=4, got max {codes.max()}\""
+    },
+    {
+      "name": "test_adcs_shape_and_nonneg",
+      "code": "import numpy as np\nnp.random.seed(5)\nvectors = np.random.randn(100, 12)\npq = ProductQuantizer(M=3, K=8, dim=12)\npq.fit(vectors)\nquery = np.random.randn(12)\nadcs = pq.compute_adcs(query)\nassert adcs.shape == (3, 8), f\"ADC table shape should be (M=3, K=8), got {adcs.shape}\"\nassert (adcs >= 0).all(), \"Squared distances must be non-negative\""
+    },
+    {
+      "name": "test_adcs_approximate_distance",
+      "code": "import numpy as np\nnp.random.seed(2)\nvectors = np.random.randn(200, 8)\npq = ProductQuantizer(M=2, K=32, dim=8)\npq.fit(vectors)\nquery = np.random.randn(8)\nadcs = pq.compute_adcs(query)\ncodes = pq.encode(vectors)\n# PQ approximate distance for vector 0\npq_dist = float(adcs[0, codes[0, 0]] + adcs[1, codes[0, 1]])\n# Exact L2 from reconstructed vector to query\nrecon = pq.decode(codes[:1])[0]\nexact_dist = float(np.sum((recon - query) ** 2))\nassert abs(pq_dist - exact_dist) < 1e-9, f\"ADC distance should match reconstruct distance: {pq_dist} vs {exact_dist}\""
+    }
+  ],
+  "hints": [
+    "Split vectors into M chunks along the feature dimension: sub_vecs = vectors[:, m*sub_dim:(m+1)*sub_dim].",
+    "For k-means, initialize centroids by sampling K random data points.",
+    "Distance from each data point to each centroid: broadcast subtraction then norm, or use the identity ||a-b||^2 = ||a||^2 - 2a.b + ||b||^2.",
+    "compute_adcs precomputes per-subspace distances between query sub-vectors and codebook centroids.",
+    "The sum of ADC entries for a code equals the squared L2 distance between query and the reconstructed vector."
+  ],
+  "related_problems": ["11.6", "11.2", "11.3"]
+}

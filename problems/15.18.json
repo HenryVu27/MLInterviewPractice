@@ -1,0 +1,28 @@
+{
+  "id": "15.18",
+  "title": "Longest Common Subsequence",
+  "difficulty": "Medium",
+  "category": "NLP",
+  "tags": ["nlp", "lcs", "dynamic-programming", "rouge"],
+  "description": "Implement Longest Common Subsequence (LCS) using dynamic programming.\n\nLCS finds the longest subsequence common to two sequences (not necessarily contiguous).\n\n**Recurrence:**\n```\ndp[i][j] = dp[i-1][j-1] + 1         if s[i-1] == t[j-1]\n         = max(dp[i-1][j], dp[i][j-1])  otherwise\n```\n\nLCS length is used in ROUGE-L metric computation.\n\n**Example:**\n```\nlcs('ABCBDAB', 'BDCAB') = 4  (BCAB or BDAB)\n```",
+  "constraints": [
+    "Handle empty sequences",
+    "Return integer (LCS length)",
+    "O(m*n) DP solution"
+  ],
+  "starter_code": "def lcs_length(s: list, t: list) -> int:\n    \"\"\"Compute Longest Common Subsequence length.\n\n    Args:\n        s: First sequence (list or string)\n        t: Second sequence (list or string)\n\n    Returns:\n        Length of LCS as integer\n    \"\"\"\n    pass",
+  "solution_code": "def lcs_length(s: list, t: list) -> int:\n    m, n = len(s), len(t)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if s[i-1] == t[j-1]:\n                dp[i][j] = dp[i-1][j-1] + 1\n            else:\n                dp[i][j] = max(dp[i-1][j], dp[i][j-1])\n    return dp[m][n]",
+  "explanation": "LCS is a classic DP problem used in diff tools (Unix diff), ROUGE-L computation, and bioinformatics (sequence alignment). Unlike edit distance, only matches contribute positively (no substitution cost). ROUGE-L uses LCS to measure sentence-level structural similarity without requiring contiguous matches, which is more flexible than bigram overlap (ROUGE-2).",
+  "test_cases": [
+    {"name": "Classic example", "code": "assert lcs_length('ABCBDAB', 'BDCAB') == 4"},
+    {"name": "Identical sequences", "code": "assert lcs_length('hello', 'hello') == 5"},
+    {"name": "No common elements", "code": "assert lcs_length('abc', 'xyz') == 0"},
+    {"name": "Empty sequence", "code": "assert lcs_length('', 'abc') == 0 and lcs_length('abc', '') == 0"}
+  ],
+  "hints": [
+    "dp[i][j] represents LCS length of s[:i] and t[:j]",
+    "If characters match: dp[i][j] = dp[i-1][j-1] + 1",
+    "Otherwise: take max of skipping one char from either sequence"
+  ],
+  "related_problems": ["15.17", "13.13", "15.1"]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "9.1",
+  "title": "Vanilla RNN Cell",
+  "difficulty": "Medium",
+  "category": "Recurrent Neural Networks",
+  "tags": ["rnn", "recurrent", "cell", "tanh", "numpy"],
+  "description": "Implement a single vanilla RNN cell.\n\nThe RNN cell computes:\n```\nh_t = tanh(W_hh @ h_{t-1} + W_xh @ x_t + b)\n```\n\nWhere:\n- `x_t`: input at time t, shape `(batch, input_size)`\n- `h_{t-1}`: previous hidden state, shape `(batch, hidden_size)`\n- `W_xh`: input-to-hidden weights, shape `(hidden_size, input_size)`\n- `W_hh`: hidden-to-hidden weights, shape `(hidden_size, hidden_size)`\n- `b`: bias, shape `(hidden_size,)`\n\nReturn the new hidden state `h_t`.",
+  "constraints": [
+    "Use numpy only",
+    "Activation: tanh",
+    "W_xh shape: (hidden_size, input_size)",
+    "W_hh shape: (hidden_size, hidden_size)",
+    "b shape: (hidden_size,)"
+  ],
+  "starter_code": "import numpy as np\n\ndef rnn_cell(x_t: np.ndarray, h_prev: np.ndarray,\n             W_xh: np.ndarray, W_hh: np.ndarray,\n             b: np.ndarray) -> np.ndarray:\n    \"\"\"Single RNN cell step.\n    \n    Args:\n        x_t: Input at time t, shape (batch, input_size)\n        h_prev: Previous hidden state, shape (batch, hidden_size)\n        W_xh: Input-to-hidden weights (hidden_size, input_size)\n        W_hh: Hidden-to-hidden weights (hidden_size, hidden_size)\n        b: Bias (hidden_size,)\n    \n    Returns:\n        h_t: New hidden state (batch, hidden_size)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef rnn_cell(x_t: np.ndarray, h_prev: np.ndarray,\n             W_xh: np.ndarray, W_hh: np.ndarray,\n             b: np.ndarray) -> np.ndarray:\n    return np.tanh(x_t @ W_xh.T + h_prev @ W_hh.T + b)",
+  "explanation": "**Key concepts:**\n\n1. **RNN equation:** `h_t = tanh(W_hh @ h_{t-1} + W_xh @ x_t + b)`. Both current input and previous state contribute.\n\n2. **Tanh activation:** Output in (-1, 1). Saturates for large inputs (vanishing gradient issue).\n\n3. **Recurrent connection:** W_hh connects the previous hidden state to the current. This is what makes it 'recurrent'.\n\n4. **Parameter sharing:** Same W_xh, W_hh, b are used at every time step - this is the key RNN property.\n\n5. **Why tanh not ReLU?** Historically, tanh was preferred as it's zero-centered. Modern variants (LSTM, GRU) use more sophisticated gating.",
+  "test_cases": [
+    {
+      "name": "Output shape correct",
+      "code": "import numpy as np\nbatch, input_size, hidden_size = 4, 8, 16\nx_t = np.random.randn(batch, input_size)\nh_prev = np.zeros((batch, hidden_size))\nW_xh = np.random.randn(hidden_size, input_size) * 0.1\nW_hh = np.random.randn(hidden_size, hidden_size) * 0.1\nb = np.zeros(hidden_size)\nh_t = rnn_cell(x_t, h_prev, W_xh, W_hh, b)\nassert h_t.shape == (batch, hidden_size)"
+    },
+    {
+      "name": "Output in (-1, 1) due to tanh",
+      "code": "import numpy as np\nbatch, input_size, hidden_size = 2, 4, 8\nx_t = np.random.randn(batch, input_size) * 10\nh_prev = np.random.randn(batch, hidden_size)\nW_xh = np.random.randn(hidden_size, input_size)\nW_hh = np.random.randn(hidden_size, hidden_size)\nb = np.zeros(hidden_size)\nh_t = rnn_cell(x_t, h_prev, W_xh, W_hh, b)\nassert np.all(h_t > -1) and np.all(h_t < 1)"
+    },
+    {
+      "name": "Zero input and zero h_prev -> tanh(b)",
+      "code": "import numpy as np\nbatch = 2; hidden_size = 4; input_size = 3\nx_t = np.zeros((batch, input_size))\nh_prev = np.zeros((batch, hidden_size))\nW_xh = np.random.randn(hidden_size, input_size)\nW_hh = np.random.randn(hidden_size, hidden_size)\nb = np.array([1.0, -1.0, 0.5, -0.5])\nh_t = rnn_cell(x_t, h_prev, W_xh, W_hh, b)\nassert np.allclose(h_t, np.tanh(b))"
+    },
+    {
+      "name": "Previous hidden state affects output",
+      "code": "import numpy as np\nnp.random.seed(0)\nbatch, input_size, hidden_size = 1, 4, 8\nx_t = np.ones((batch, input_size))\nh_prev_0 = np.zeros((batch, hidden_size))\nh_prev_1 = np.ones((batch, hidden_size))\nW_xh = np.random.randn(hidden_size, input_size) * 0.1\nW_hh = np.random.randn(hidden_size, hidden_size) * 0.1\nb = np.zeros(hidden_size)\nout0 = rnn_cell(x_t, h_prev_0, W_xh, W_hh, b)\nout1 = rnn_cell(x_t, h_prev_1, W_xh, W_hh, b)\nassert not np.allclose(out0, out1)"
+    }
+  ],
+  "hints": [
+    "h_t = tanh(x_t @ W_xh.T + h_prev @ W_hh.T + b)",
+    "Use np.tanh for the activation",
+    "Matrix shapes: x (batch, input) @ W_xh.T (input, hidden) = (batch, hidden)"
+  ],
+  "related_problems": ["9.2", "9.3", "9.4"]
+}

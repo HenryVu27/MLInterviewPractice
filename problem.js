@@ -297,6 +297,8 @@ function createWorker() {
     } else if (type === 'ready') {
       hideOverlay();
       document.getElementById('btn-run').disabled = false;
+    } else if (type === 'error') {
+      showOverlayError(`Python runtime failed: ${event.data.message || 'Unknown error'}`);
     } else if (type === 'result') {
       if (runTimeout !== null) {
         clearTimeout(runTimeout);

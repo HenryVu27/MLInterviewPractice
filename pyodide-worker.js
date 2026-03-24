@@ -1,12 +1,17 @@
 let pyodide = null;
 
 async function initPyodide() {
-  postMessage({ type: 'loading', progress: 'Downloading Python runtime...' });
-  importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
-  pyodide = await loadPyodide();
-  postMessage({ type: 'loading', progress: 'Loading numpy...' });
-  await pyodide.loadPackage('numpy');
-  postMessage({ type: 'ready' });
+  try {
+    postMessage({ type: 'loading', progress: 'Downloading Python runtime...' });
+    importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js');
+    postMessage({ type: 'loading', progress: 'Initializing Python...' });
+    pyodide = await loadPyodide();
+    postMessage({ type: 'loading', progress: 'Loading numpy...' });
+    await pyodide.loadPackage('numpy');
+    postMessage({ type: 'ready' });
+  } catch (err) {
+    postMessage({ type: 'error', message: err.message || String(err) });
+  }
 }
 
 const initPromise = initPyodide();

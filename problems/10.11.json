@@ -1,0 +1,47 @@
+{
+  "id": "10.11",
+  "title": "Grouped Query Attention (GQA)",
+  "difficulty": "Hard",
+  "category": "Attention & Transformers",
+  "tags": ["GQA", "grouped query attention", "LLaMA", "KV cache", "numpy"],
+  "description": "Implement Grouped Query Attention (GQA), used in LLaMA 2/3, Mistral, and other modern LLMs to reduce KV cache size.\n\nIn standard MHA, each of H query heads has its own K and V heads (H total KV heads). In GQA, the H query heads are divided into G groups, and each group shares one K head and one V head (G KV heads total where G < H).\n\nThis reduces the KV cache memory by H/G while keeping the number of query heads the same.\n\nSpecial cases:\n- G == H: standard Multi-Head Attention (MHA)\n- G == 1: Multi-Query Attention (MQA) — all queries share one K, V head\n\nWeight matrices:\n- W_Q: (num_q_heads * d_k, d_model) for queries\n- W_K: (num_kv_heads * d_k, d_model) for keys\n- W_V: (num_kv_heads * d_k, d_model) for values\n- W_O: (d_model, num_q_heads * d_k) for output\n\nFor each query head h, it belongs to group g = h // (num_q_heads // num_kv_heads) and uses KV head g.",
+  "constraints": [
+    "Use numpy only",
+    "num_q_heads must be divisible by num_kv_heads",
+    "d_k = d_model // num_q_heads",
+    "Each group of (num_q_heads // num_kv_heads) query heads shares one K, V head",
+    "Input shape: (seq_len, d_model), output: (seq_len, d_model)",
+    "Support optional causal mask"
+  ],
+  "starter_code": "import numpy as np\n\ndef grouped_query_attention(x, W_Q, W_K, W_V, W_O, num_q_heads, num_kv_heads, mask=None):\n    \"\"\"Grouped Query Attention.\n\n    Args:\n        x: Input (seq_len, d_model)\n        W_Q: Query weights (num_q_heads * d_k, d_model)\n        W_K: Key weights (num_kv_heads * d_k, d_model)\n        W_V: Value weights (num_kv_heads * d_k, d_model)\n        W_O: Output weights (d_model, num_q_heads * d_k)\n        num_q_heads: Number of query heads\n        num_kv_heads: Number of key/value heads (groups)\n        mask: Optional causal mask (seq_len, seq_len)\n\n    Returns:\n        output: (seq_len, d_model)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef grouped_query_attention(x, W_Q, W_K, W_V, W_O, num_q_heads, num_kv_heads, mask=None):\n    seq_len, d_model = x.shape\n    assert num_q_heads % num_kv_heads == 0\n    heads_per_group = num_q_heads // num_kv_heads\n    d_k = d_model // num_q_heads\n\n    # Project to Q, K, V\n    Q = (x @ W_Q.T).reshape(seq_len, num_q_heads, d_k)   # (seq, H_q, d_k)\n    K = (x @ W_K.T).reshape(seq_len, num_kv_heads, d_k)  # (seq, H_kv, d_k)\n    V = (x @ W_V.T).reshape(seq_len, num_kv_heads, d_k)  # (seq, H_kv, d_k)\n\n    # Transpose: (H, seq, d_k)\n    Q = Q.transpose(1, 0, 2)  # (H_q, seq, d_k)\n    K = K.transpose(1, 0, 2)  # (H_kv, seq, d_k)\n    V = V.transpose(1, 0, 2)  # (H_kv, seq, d_k)\n\n    # Expand K, V by repeating for each group\n    # (H_kv, seq, d_k) -> (H_q, seq, d_k) by repeating each KV head heads_per_group times\n    K_exp = np.repeat(K, heads_per_group, axis=0)  # (H_q, seq, d_k)\n    V_exp = np.repeat(V, heads_per_group, axis=0)  # (H_q, seq, d_k)\n\n    # Scaled dot-product attention\n    scores = Q @ K_exp.transpose(0, 2, 1) / np.sqrt(d_k)  # (H_q, seq, seq)\n    if mask is not None:\n        scores = np.where(mask[None], -1e9, scores)\n    exp_s = np.exp(scores - scores.max(axis=-1, keepdims=True))\n    w = exp_s / exp_s.sum(axis=-1, keepdims=True)\n\n    # Attended values\n    out = w @ V_exp  # (H_q, seq, d_k)\n    out = out.transpose(1, 0, 2).reshape(seq_len, num_q_heads * d_k)  # (seq, H_q*d_k)\n    return out @ W_O.T\n",
+  "explanation": "GQA (Ainslie et al., 2023) reduces KV cache memory without significantly hurting quality:\n\nMHA: H query heads, H key heads, H value heads — KV cache size proportional to H\nGQA: H query heads, G key heads, G value heads (G < H) — KV cache size proportional to G\nMQA: H query heads, 1 key head, 1 value head — minimal KV cache\n\nImplementation trick: instead of a loop over groups, use np.repeat to expand K and V from (H_kv, seq, d_k) to (H_q, seq, d_k) by repeating each KV head 'heads_per_group' times. Then apply standard MHA logic.\n\nWhy it works well: query heads learn diverse attention patterns, but K and V capture the 'content' to attend to — sharing K/V across queries within a group is an acceptable approximation.\n\nLLaMA 2/3 uses GQA with num_kv_heads = num_q_heads // 4 or // 8.",
+  "test_cases": [
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nseq, d_model = 8, 64\nnum_q_heads, num_kv_heads = 8, 2\nd_k = d_model // num_q_heads\nW_Q = np.random.randn(num_q_heads*d_k, d_model)*0.1\nW_K = np.random.randn(num_kv_heads*d_k, d_model)*0.1\nW_V = np.random.randn(num_kv_heads*d_k, d_model)*0.1\nW_O = np.random.randn(d_model, num_q_heads*d_k)*0.1\nx = np.random.randn(seq, d_model)\nout = grouped_query_attention(x, W_Q, W_K, W_V, W_O, num_q_heads, num_kv_heads)\nassert out.shape == (seq, d_model)"
+    },
+    {
+      "name": "test_gqa_equals_mha_when_g_equals_h",
+      "code": "import numpy as np\nnp.random.seed(1)\nseq, d_model, num_heads = 5, 16, 4\nd_k = d_model // num_heads\nW_Q = np.random.randn(num_heads*d_k, d_model)*0.1\nW_K = np.random.randn(num_heads*d_k, d_model)*0.1\nW_V = np.random.randn(num_heads*d_k, d_model)*0.1\nW_O = np.random.randn(d_model, num_heads*d_k)*0.1\nx = np.random.randn(seq, d_model)\n# GQA with num_kv_heads == num_q_heads should equal standard MHA\nout_gqa = grouped_query_attention(x, W_Q, W_K, W_V, W_O, num_heads, num_heads)\nassert out_gqa.shape == (seq, d_model)"
+    },
+    {
+      "name": "test_mqa_special_case",
+      "code": "import numpy as np\nnp.random.seed(2)\nseq, d_model, num_q_heads = 6, 16, 4\nnum_kv_heads = 1  # MQA\nd_k = d_model // num_q_heads\nW_Q = np.random.randn(num_q_heads*d_k, d_model)*0.1\nW_K = np.random.randn(num_kv_heads*d_k, d_model)*0.1\nW_V = np.random.randn(num_kv_heads*d_k, d_model)*0.1\nW_O = np.random.randn(d_model, num_q_heads*d_k)*0.1\nx = np.random.randn(seq, d_model)\nout = grouped_query_attention(x, W_Q, W_K, W_V, W_O, num_q_heads, num_kv_heads)\nassert out.shape == (seq, d_model)"
+    },
+    {
+      "name": "test_causal_mask",
+      "code": "import numpy as np\nnp.random.seed(3)\nseq, d_model = 5, 16\nnum_q_heads, num_kv_heads = 4, 2\nd_k = d_model // num_q_heads\nW_Q = np.random.randn(num_q_heads*d_k, d_model)*0.1\nW_K = np.random.randn(num_kv_heads*d_k, d_model)*0.1\nW_V = np.random.randn(num_kv_heads*d_k, d_model)*0.1\nW_O = np.random.randn(d_model, num_q_heads*d_k)*0.1\nx = np.random.randn(seq, d_model)\nmask = np.triu(np.ones((seq, seq), dtype=bool), k=1)\nout = grouped_query_attention(x, W_Q, W_K, W_V, W_O, num_q_heads, num_kv_heads, mask=mask)\nassert out.shape == (seq, d_model)\nassert np.all(np.isfinite(out))"
+    },
+    {
+      "name": "test_kv_heads_affect_output",
+      "code": "import numpy as np\nnp.random.seed(4)\nseq, d_model = 4, 16\nnum_q_heads = 4\nd_k = d_model // num_q_heads\nW_Q = np.random.randn(num_q_heads*d_k, d_model)*0.1\nW_O = np.random.randn(d_model, num_q_heads*d_k)*0.1\nx = np.random.randn(seq, d_model)\n# Different KV projections should yield different outputs\nW_K1 = np.random.randn(2*d_k, d_model)*0.1\nW_V1 = np.random.randn(2*d_k, d_model)*0.1\nW_K2 = np.random.randn(2*d_k, d_model)*0.1\nW_V2 = np.random.randn(2*d_k, d_model)*0.1\nout1 = grouped_query_attention(x, W_Q, W_K1, W_V1, W_O, num_q_heads, 2)\nout2 = grouped_query_attention(x, W_Q, W_K2, W_V2, W_O, num_q_heads, 2)\nassert not np.allclose(out1, out2)"
+    }
+  ],
+  "hints": [
+    "heads_per_group = num_q_heads // num_kv_heads",
+    "Expand K, V: np.repeat(K, heads_per_group, axis=0) to match query head count",
+    "Then apply standard MHA attention logic over the expanded K, V"
+  ],
+  "related_problems": ["10.2", "10.12", "10.10"]
+}

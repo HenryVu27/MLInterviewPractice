@@ -1,0 +1,48 @@
+{
+  "id": "11.14",
+  "title": "ColBERT MaxSim Scoring",
+  "difficulty": "Medium",
+  "category": "Embeddings & Similarity Search",
+  "tags": ["colbert", "late interaction", "maxsim", "multi-vector retrieval"],
+  "description": "Implement the MaxSim scoring function used in ColBERT — a late interaction retrieval model.\n\nColBERT represents each query and document as sets of per-token embeddings (multi-vector). The relevance score between a query Q and document D is computed as:\n\n  score(Q, D) = sum over each query token q of max over each doc token d of cosine_sim(q, d)\n\nThis is called MaxSim: for each query token, find the most similar document token, then sum these maximum similarities.\n\nImplement:\n```python\ndef maxsim_score(query_embeds: np.ndarray, doc_embeds: np.ndarray) -> float:\n```\n\nAnd for batch scoring:\n```python\ndef batch_maxsim(query_embeds: np.ndarray, doc_embeds_list: list) -> np.ndarray:\n```\nScores multiple documents against a single query. Returns shape (num_docs,).",
+  "constraints": [
+    "query_embeds: shape (q_len, d) — per-token query embeddings.",
+    "doc_embeds: shape (doc_len, d) — per-token document embeddings.",
+    "Normalize embeddings before computing cosine similarity.",
+    "MaxSim = sum_q max_d cosine_sim(q_token, d_token).",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\ndef maxsim_score(query_embeds: np.ndarray, doc_embeds: np.ndarray) -> float:\n    pass\n\ndef batch_maxsim(query_embeds: np.ndarray, doc_embeds_list: list) -> np.ndarray:\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef _normalize(embeds: np.ndarray) -> np.ndarray:\n    norms = np.linalg.norm(embeds, axis=1, keepdims=True)\n    return embeds / (norms + 1e-10)\n\ndef maxsim_score(query_embeds: np.ndarray, doc_embeds: np.ndarray) -> float:\n    q_norm = _normalize(query_embeds)   # (q_len, d)\n    d_norm = _normalize(doc_embeds)     # (doc_len, d)\n    # Cosine similarity matrix: (q_len, doc_len)\n    sim_matrix = q_norm @ d_norm.T\n    # For each query token, take max over doc tokens\n    max_sims = sim_matrix.max(axis=1)   # (q_len,)\n    return float(max_sims.sum())\n\ndef batch_maxsim(query_embeds: np.ndarray, doc_embeds_list: list) -> np.ndarray:\n    scores = np.array([maxsim_score(query_embeds, doc_e) for doc_e in doc_embeds_list])\n    return scores\n",
+  "explanation": "ColBERT's late interaction avoids compressing queries and documents into single vectors (like bi-encoders), instead preserving per-token embeddings and computing token-level interactions at retrieval time. The MaxSim operator: for each of the Nq query tokens, find the document token most similar to it (the 'soft' alignment), then sum these max similarities. This is like a soft term matching: if a document contains a token very similar to any query token, it scores high. The sum over query tokens means longer queries can score higher, but normalization by query length is optional. ColBERT achieves better accuracy than bi-encoders at the cost of higher compute and storage.",
+  "test_cases": [
+    {
+      "name": "test_identical_query_doc",
+      "code": "import numpy as np\nembeds = np.array([[1.0, 0.0], [0.0, 1.0]])\nscore = maxsim_score(embeds, embeds)\n# Each query token matches itself perfectly: sum of 2 maxsims = 2.0\nassert abs(score - 2.0) < 1e-6, f\"Identical Q=D should score {len(embeds)}, got {score}\""
+    },
+    {
+      "name": "test_orthogonal_zero_score",
+      "code": "import numpy as np\nq = np.array([[1.0, 0.0, 0.0]])\nd = np.array([[0.0, 1.0, 0.0]])\nscore = maxsim_score(q, d)\nassert abs(score) < 1e-6, f\"Orthogonal embeddings should score 0, got {score}\""
+    },
+    {
+      "name": "test_batch_maxsim_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nq = np.random.randn(5, 16)\ndocs = [np.random.randn(10, 16) for _ in range(7)]\nscores = batch_maxsim(q, docs)\nassert scores.shape == (7,), f\"Expected (7,), got {scores.shape}\""
+    },
+    {
+      "name": "test_more_similar_doc_scores_higher",
+      "code": "import numpy as np\nq = np.array([[1.0, 0.0]])\ndoc_similar = np.array([[0.9, 0.1], [0.8, 0.2]])\ndoc_dissimilar = np.array([[0.0, 1.0], [-0.5, 0.5]])\ns1 = maxsim_score(q, doc_similar)\ns2 = maxsim_score(q, doc_dissimilar)\nassert s1 > s2, f\"Similar doc should score higher: {s1:.4f} vs {s2:.4f}\""
+    },
+    {
+      "name": "test_maxsim_uses_max_not_mean",
+      "code": "import numpy as np\n# Query has 1 token pointing in x direction\nq = np.array([[1.0, 0.0]])\n# Doc 1: one perfect match, one bad\ndoc1 = np.array([[1.0, 0.0], [0.0, 1.0]])\n# Doc 2: two medium matches\ndoc2 = np.array([[0.7, 0.7], [0.7, 0.7]])\ns1 = maxsim_score(q, doc1)  # max = 1.0\ns2 = maxsim_score(q, doc2)  # max = 0.707\nassert s1 > s2, f\"MaxSim should pick best match: {s1:.4f} vs {s2:.4f}\""
+    }
+  ],
+  "hints": [
+    "Normalize both query and doc embeddings before computing similarities.",
+    "Cosine similarity matrix: q_norm @ d_norm.T gives shape (q_len, doc_len).",
+    "MaxSim for one query token: max along axis=1 (over doc tokens).",
+    "Sum the per-query-token maxsims to get the final score.",
+    "batch_maxsim can simply call maxsim_score in a loop."
+  ],
+  "related_problems": ["11.1", "11.13", "11.15", "12.6"]
+}

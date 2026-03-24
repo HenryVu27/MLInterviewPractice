@@ -1,0 +1,47 @@
+{
+  "id": "23.12",
+  "title": "Knowledge Graph Completion",
+  "difficulty": "Hard",
+  "category": "Knowledge Graphs",
+  "tags": ["knowledge-graphs", "link-prediction", "KG-completion", "TransE", "scoring"],
+  "description": "Implement knowledge graph completion: given a partially observed KG, predict missing links (triples).\n\nKG completion tasks:\n1. **Tail prediction**: Given (h, r, ?), rank all candidate entities by score.\n2. **Head prediction**: Given (?, r, t), rank all candidate entities by score.\n3. **Filtered ranking metrics**: Compute Mean Rank (MR), Mean Reciprocal Rank (MRR), and Hits@k.\n\nImplement:\n1. `transe_score(h_emb, r_emb, t_emb)`: TransE score = -||h + r - t||.\n2. `predict_tail(h, r, entity_embs, relation_embs)`: Return ranked entity indices for tail prediction.\n3. `predict_head(r, t, entity_embs, relation_embs)`: Return ranked entity indices for head prediction.\n4. `evaluate_kgc(test_triples, all_triples, entity_embs, relation_embs)`: Compute MR, MRR, Hits@1, Hits@3, Hits@10 using filtered ranking (exclude known true triples from ranking).",
+  "constraints": [
+    "entity_embs has shape (n_entities, dim)",
+    "relation_embs has shape (n_relations, dim)",
+    "all_triples is a set of (h, r, t) tuples for filtering",
+    "Filtered ranking: when ranking for (h, r, ?), exclude entities e where (h, r, e) is in all_triples except the test triple itself",
+    "Use numpy only"
+  ],
+  "starter_code": "import numpy as np\n\ndef transe_score(h_emb, r_emb, t_emb):\n    \"\"\"\n    TransE score: -||h + r - t||_2. Higher = more plausible.\n    \"\"\"\n    pass\n\ndef predict_tail(h, r, entity_embs, relation_embs):\n    \"\"\"\n    Given (h, r, ?), score all entities as tail candidates.\n    Returns sorted entity indices (best first).\n    \"\"\"\n    pass\n\ndef predict_head(r, t, entity_embs, relation_embs):\n    \"\"\"\n    Given (?, r, t), score all entities as head candidates.\n    Returns sorted entity indices (best first).\n    \"\"\"\n    pass\n\ndef evaluate_kgc(test_triples, all_triples, entity_embs, relation_embs):\n    \"\"\"\n    Evaluate KG completion with filtered ranking.\n    Returns dict with 'mr', 'mrr', 'hits@1', 'hits@3', 'hits@10'.\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef transe_score(h_emb, r_emb, t_emb):\n    return -np.linalg.norm(h_emb + r_emb - t_emb, axis=-1)\n\ndef predict_tail(h, r, entity_embs, relation_embs):\n    n = entity_embs.shape[0]\n    h_emb = entity_embs[h]\n    r_emb = relation_embs[r]\n    # Score all entities as tail\n    diff = h_emb + r_emb - entity_embs  # (n, dim)\n    scores = -np.linalg.norm(diff, axis=1)\n    return np.argsort(scores)[::-1]\n\ndef predict_head(r, t, entity_embs, relation_embs):\n    n = entity_embs.shape[0]\n    t_emb = entity_embs[t]\n    r_emb = relation_embs[r]\n    # Score all entities as head: h + r ~ t => h ~ t - r\n    diff = entity_embs + r_emb - t_emb  # (n, dim)\n    scores = -np.linalg.norm(diff, axis=1)\n    return np.argsort(scores)[::-1]\n\ndef evaluate_kgc(test_triples, all_triples, entity_embs, relation_embs):\n    all_triples_set = set(map(tuple, all_triples))\n    n_entities = entity_embs.shape[0]\n\n    ranks = []\n    for triple in test_triples:\n        h, r, t = triple\n\n        # Tail prediction\n        ranked_tails = predict_tail(h, r, entity_embs, relation_embs)\n        # Filter out all known true tails except the test one\n        filtered = [e for e in ranked_tails\n                    if e == t or (h, r, e) not in all_triples_set or (h, r, e) == (h, r, t)]\n        rank_t = filtered.index(t) + 1\n        ranks.append(rank_t)\n\n        # Head prediction\n        ranked_heads = predict_head(r, t, entity_embs, relation_embs)\n        filtered_h = [e for e in ranked_heads\n                      if e == h or (e, r, t) not in all_triples_set or (e, r, t) == (h, r, t)]\n        rank_h = filtered_h.index(h) + 1\n        ranks.append(rank_h)\n\n    ranks = np.array(ranks, dtype=float)\n    return {\n        'mr': float(ranks.mean()),\n        'mrr': float((1.0 / ranks).mean()),\n        'hits@1': float((ranks <= 1).mean()),\n        'hits@3': float((ranks <= 3).mean()),\n        'hits@10': float((ranks <= 10).mean())\n    }\n",
+  "explanation": "Knowledge Graph Completion (KGC) predicts missing links in a KG using learned embeddings.\n\nTask types:\n- Tail prediction: (h, r, ?) -> rank all entities by score(h, r, e)\n- Head prediction: (?, r, t) -> rank all entities by score(e, r, t)\n\nFiltered ranking: In evaluation, known true triples are removed from the candidate list before computing rank. This prevents penalizing the model for ranking other correct answers highly.\n\nMetrics:\n- MR (Mean Rank): Lower is better. Sensitive to outliers.\n- MRR (Mean Reciprocal Rank): 1/rank averaged. More robust.\n- Hits@k: Fraction of test triples ranked in top-k.\n\nTransE scoring: score(h,r,t) = -||h+r-t||. For head prediction: score(?,r,t) = -||e+r-t|| for each candidate e.",
+  "test_cases": [
+    {
+      "name": "test_transe_score",
+      "code": "import numpy as np\nh = np.array([1.0, 0.0])\nr = np.array([0.0, 1.0])\nt = np.array([1.0, 1.0])\nassert abs(transe_score(h, r, t) - 0.0) < 1e-9\nt2 = np.array([0.0, 0.0])\nassert transe_score(h, r, t) > transe_score(h, r, t2)\nprint('test_transe_score passed')"
+    },
+    {
+      "name": "test_predict_tail",
+      "code": "import numpy as np\nnp.random.seed(0)\nE = np.random.randn(5, 4)\nR = np.random.randn(2, 4)\n# Make entity 3 the perfect tail for (0, 0)\nE[3] = E[0] + R[0]\nranked = predict_tail(0, 0, E, R)\nassert ranked[0] == 3\nprint('test_predict_tail passed')"
+    },
+    {
+      "name": "test_predict_head",
+      "code": "import numpy as np\nnp.random.seed(1)\nE = np.random.randn(5, 4)\nR = np.random.randn(2, 4)\n# Make entity 2 the perfect head for (?, 1, 4): E[2] + R[1] ~ E[4]\nE[2] = E[4] - R[1]\nranked = predict_head(1, 4, E, R)\nassert ranked[0] == 2\nprint('test_predict_head passed')"
+    },
+    {
+      "name": "test_evaluate_kgc_structure",
+      "code": "import numpy as np\nnp.random.seed(2)\nE = np.random.randn(8, 6)\nR = np.random.randn(3, 6)\ntest_triples = [(0,0,1),(2,1,3),(4,2,5)]\nall_triples = test_triples + [(0,0,2),(1,1,3)]\nmetrics = evaluate_kgc(test_triples, all_triples, E, R)\nassert 'mr' in metrics and 'mrr' in metrics\nassert 'hits@1' in metrics and 'hits@10' in metrics\nassert metrics['mr'] >= 1.0\nassert 0.0 <= metrics['mrr'] <= 1.0\nassert 0.0 <= metrics['hits@10'] <= 1.0\nprint('test_evaluate_kgc_structure passed')"
+    },
+    {
+      "name": "test_perfect_embeddings_rank_1",
+      "code": "import numpy as np\nn, dim = 5, 4\nE = np.eye(n, dim)\nR = np.zeros((2, dim))\n# Perfect: (0,0,1): E[0]+R[0] = E[0], but we set R[0] = E[1]-E[0]\nR[0] = E[1] - E[0]\ntest_triples = [(0, 0, 1)]\nall_triples = [(0, 0, 1)]\nmetrics = evaluate_kgc(test_triples, all_triples, E, R)\nassert metrics['hits@1'] == 1.0, f'Expected rank 1, got MR={metrics[\"mr\"]}'\nprint('test_perfect_embeddings_rank_1 passed')"
+    }
+  ],
+  "hints": [
+    "Vectorize scoring: diff = h_emb + r_emb - entity_embs gives (n, dim); scores = -||diff||_2 along axis=1.",
+    "For head prediction: score(e,r,t) = -||e + r - t||; vectorized as -(entity_embs + r_emb - t_emb).",
+    "Filtered ranking: build a set of all_triples; when computing rank for (h,r,t), skip entities e where (h,r,e) is in all_triples (except e=t).",
+    "rank = filtered_list.index(correct_entity) + 1 (1-indexed)."
+  ],
+  "related_problems": ["23.5", "23.6", "23.4"]
+}

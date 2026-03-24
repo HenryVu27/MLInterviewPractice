@@ -1,0 +1,49 @@
+{
+  "id": "12.2",
+  "title": "BM25",
+  "difficulty": "Medium",
+  "category": "Information Retrieval",
+  "tags": ["bm25", "okapi bm25", "ranking", "information retrieval"],
+  "description": "Implement the BM25 (Best Match 25 / Okapi BM25) ranking function — the de-facto standard for lexical retrieval.\n\nBM25 score for a query Q and document D:\n  score(D, Q) = sum over terms t in Q of:\n    IDF(t) * (tf(t,D) * (k1 + 1)) / (tf(t,D) + k1 * (1 - b + b * |D| / avgdl))\n\nWhere:\n- tf(t,D) = count of term t in D\n- IDF(t) = log((N - df(t) + 0.5) / (df(t) + 0.5) + 1)  (Robertson-Sparck Jones IDF)\n- |D| = document length (number of tokens)\n- avgdl = average document length\n- k1 (default 1.5): term frequency saturation parameter\n- b (default 0.75): length normalization parameter\n\nImplement a `BM25` class with `fit(corpus)` and `score(query, top_k)` methods.",
+  "constraints": [
+    "corpus: list of tokenized documents (list of list of strings).",
+    "query: list of strings (tokenized query).",
+    "fit() builds vocabulary, document frequencies, and document lengths.",
+    "score(query, top_k) returns list of (doc_index, score) tuples sorted by descending score.",
+    "Only score documents where at least one query term matches.",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\nfrom collections import Counter\nimport math\n\nclass BM25:\n    def __init__(self, k1: float = 1.5, b: float = 0.75):\n        self.k1 = k1\n        self.b = b\n\n    def fit(self, corpus: list) -> 'BM25':\n        pass\n\n    def score(self, query: list, top_k: int = 10) -> list:\n        pass\n",
+  "solution_code": "import numpy as np\nfrom collections import Counter\nimport math\n\nclass BM25:\n    def __init__(self, k1: float = 1.5, b: float = 0.75):\n        self.k1 = k1\n        self.b = b\n        self.corpus = None\n        self.doc_freqs = None   # list of Counter per document\n        self.doc_lens = None\n        self.avgdl = None\n        self.df = None          # document frequency per term\n        self.N = None\n        self.idf = None\n\n    def fit(self, corpus: list) -> 'BM25':\n        self.corpus = corpus\n        self.N = len(corpus)\n        self.doc_freqs = [Counter(doc) for doc in corpus]\n        self.doc_lens = np.array([len(doc) for doc in corpus], dtype=float)\n        self.avgdl = self.doc_lens.mean()\n        # Document frequency\n        self.df = Counter()\n        for doc in corpus:\n            self.df.update(set(doc))\n        # IDF per term\n        self.idf = {}\n        for term, df_count in self.df.items():\n            self.idf[term] = math.log((self.N - df_count + 0.5) / (df_count + 0.5) + 1)\n        return self\n\n    def _score_doc(self, query_terms, doc_idx):\n        doc_tf = self.doc_freqs[doc_idx]\n        doc_len = self.doc_lens[doc_idx]\n        score = 0.0\n        for term in query_terms:\n            if term not in self.idf or term not in doc_tf:\n                continue\n            tf = doc_tf[term]\n            idf = self.idf[term]\n            norm = self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)\n            score += idf * (tf * (self.k1 + 1)) / (tf + norm)\n        return score\n\n    def score(self, query: list, top_k: int = 10) -> list:\n        query_terms = set(query)\n        # Only score docs with at least one matching term\n        candidate_docs = set()\n        for term in query_terms:\n            if term in self.df:\n                for doc_idx, doc_freq in enumerate(self.doc_freqs):\n                    if term in doc_freq:\n                        candidate_docs.add(doc_idx)\n        results = []\n        for doc_idx in candidate_docs:\n            s = self._score_doc(query, doc_idx)\n            if s > 0:\n                results.append((doc_idx, s))\n        results.sort(key=lambda x: -x[1])\n        return results[:top_k]\n",
+  "explanation": "BM25 improves on TF-IDF by saturating the term frequency contribution (the TF numerator grows sublinearly and caps around k1+1 for very high TF) and applying length normalization (the b parameter controls how much document length penalizes longer documents). The k1=1.5 and b=0.75 defaults are empirically tuned across many test collections. BM25's IDF uses a slightly different formula (Robertson-Sparck Jones) that ensures IDF is always positive. BM25 remains the standard baseline for lexical retrieval in production search systems.",
+  "test_cases": [
+    {
+      "name": "test_relevant_doc_ranks_first",
+      "code": "import numpy as np\ncorpus = [\n    ['the', 'quick', 'brown', 'fox'],\n    ['fox', 'fox', 'fox', 'fox', 'fox'],\n    ['the', 'lazy', 'dog']\n]\nbm25 = BM25()\nbm25.fit(corpus)\nresults = bm25.score(['fox'], top_k=3)\nassert len(results) > 0\n# Doc 1 has most 'fox' occurrences\nassert results[0][0] == 1, f\"Doc with most fox should rank first, got doc {results[0][0]}\""
+    },
+    {
+      "name": "test_no_match_returns_empty",
+      "code": "import numpy as np\ncorpus = [['hello', 'world'], ['foo', 'bar']]\nbm25 = BM25()\nbm25.fit(corpus)\nresults = bm25.score(['xyz'], top_k=5)\nassert results == [], f\"Unknown query should return empty, got {results}\""
+    },
+    {
+      "name": "test_scores_nonneg",
+      "code": "import numpy as np\ncorpus = [['cat', 'sat', 'on', 'the', 'mat'], ['dog', 'ran', 'fast'], ['cat', 'ran']]\nbm25 = BM25()\nbm25.fit(corpus)\nresults = bm25.score(['cat', 'ran'], top_k=3)\nfor doc_idx, score in results:\n    assert score > 0, f\"Scores must be positive for matching docs, got {score} for doc {doc_idx}\""
+    },
+    {
+      "name": "test_idf_higher_for_rare_term",
+      "code": "import numpy as np\ncorpus = [['the', 'cat'], ['the', 'dog'], ['the', 'fish'], ['rare']]\nbm25 = BM25()\nbm25.fit(corpus)\nassert bm25.idf['rare'] > bm25.idf['the'], f\"idf(rare)={bm25.idf['rare']:.4f} should be > idf(the)={bm25.idf['the']:.4f}\""
+    },
+    {
+      "name": "test_top_k_respected",
+      "code": "import numpy as np\ncorpus = [['cat'] * (i+1) for i in range(10)]\nbm25 = BM25()\nbm25.fit(corpus)\nresults = bm25.score(['cat'], top_k=3)\nassert len(results) <= 3, f\"Should return at most top_k=3 results, got {len(results)}\""
+    }
+  ],
+  "hints": [
+    "Precompute document frequency (df) and IDF values during fit().",
+    "Store per-document term frequency Counters for fast lookup during scoring.",
+    "BM25 IDF = log((N - df + 0.5) / (df + 0.5) + 1).",
+    "The denominator: tf + k1 * (1 - b + b * doc_len / avgdl).",
+    "Only iterate over documents containing at least one query term for efficiency."
+  ],
+  "related_problems": ["12.1", "12.4", "12.7", "12.12"]
+}

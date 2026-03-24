@@ -1,0 +1,47 @@
+{
+  "id": "10.12",
+  "title": "Multi-Query Attention (MQA)",
+  "difficulty": "Hard",
+  "category": "Attention & Transformers",
+  "tags": ["MQA", "multi-query attention", "inference efficiency", "numpy"],
+  "description": "Implement Multi-Query Attention (MQA), an extreme variant of GQA where all query heads share a single K head and a single V head.\n\nIn standard MHA:\n- H query heads, H key heads, H value heads\n\nIn MQA (Shazeer, 2019):\n- H query heads, but only 1 key head and 1 value head\n- KV cache size reduced by factor H\n- Each query head independently attends to the same K, V\n\nWeight matrices:\n- W_Q: (H * d_k, d_model)\n- W_K: (d_k, d_model)  — single K head\n- W_V: (d_k, d_model)  — single V head\n- W_O: (d_model, H * d_k)\n\nThe output is the concatenation of all query heads' attention outputs, then projected by W_O.",
+  "constraints": [
+    "Use numpy only",
+    "d_k = d_model // num_heads",
+    "W_K and W_V project to (seq_len, d_k) — single head",
+    "Each query head attends to the same K and V",
+    "Support optional causal mask",
+    "Input/output shape: (seq_len, d_model)"
+  ],
+  "starter_code": "import numpy as np\n\ndef multi_query_attention(x, W_Q, W_K, W_V, W_O, num_heads, mask=None):\n    \"\"\"Multi-Query Attention (single K, V shared by all query heads).\n\n    Args:\n        x: Input (seq_len, d_model)\n        W_Q: Query projection (num_heads * d_k, d_model)\n        W_K: Key projection (d_k, d_model) — single head\n        W_V: Value projection (d_k, d_model) — single head\n        W_O: Output projection (d_model, num_heads * d_k)\n        num_heads: Number of query heads\n        mask: Optional boolean mask (seq_len, seq_len)\n\n    Returns:\n        output: (seq_len, d_model)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef multi_query_attention(x, W_Q, W_K, W_V, W_O, num_heads, mask=None):\n    seq_len, d_model = x.shape\n    d_k = d_model // num_heads\n\n    # Project Q: (seq_len, num_heads, d_k)\n    Q = (x @ W_Q.T).reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)  # (H, seq, d_k)\n\n    # Project K, V: single head each (seq_len, d_k)\n    K = x @ W_K.T  # (seq_len, d_k)\n    V = x @ W_V.T  # (seq_len, d_k)\n\n    # Compute attention scores for each query head against the shared K\n    # Q: (H, seq_q, d_k), K: (seq_k, d_k)\n    scores = Q @ K.T / np.sqrt(d_k)  # (H, seq_q, seq_k)\n\n    if mask is not None:\n        scores = np.where(mask[None], -1e9, scores)\n\n    exp_s = np.exp(scores - scores.max(axis=-1, keepdims=True))\n    w = exp_s / exp_s.sum(axis=-1, keepdims=True)  # (H, seq_q, seq_k)\n\n    # Attended values: each head uses the same V\n    out = w @ V  # (H, seq_q, d_k)\n\n    # Concat and project\n    out = out.transpose(1, 0, 2).reshape(seq_len, num_heads * d_k)\n    return out @ W_O.T\n",
+  "explanation": "Multi-Query Attention (Shazeer, 2019) was one of the first techniques to reduce KV cache memory for faster inference.\n\nKey insight: different query heads need different projections of Q to learn diverse attention patterns, but they can share the same K and V representation without much quality loss.\n\nMemory reduction: KV cache goes from O(H * seq_len * d_k) in MHA to O(seq_len * d_k) in MQA — a factor of H reduction.\n\nQuality trade-off: MQA slightly underperforms MHA, which led to the development of GQA as a middle ground.\n\nImplementation: W_K and W_V project to d_k (not H*d_k), giving a single K and V. Then each query head attends to this shared K, V. The operation Q @ K.T (with Q: H, seq, d_k and K: seq, d_k) works directly by broadcasting.",
+  "test_cases": [
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nseq, d_model, num_heads = 8, 32, 4\nd_k = d_model // num_heads\nx = np.random.randn(seq, d_model)\nW_Q = np.random.randn(num_heads*d_k, d_model)*0.1\nW_K = np.random.randn(d_k, d_model)*0.1\nW_V = np.random.randn(d_k, d_model)*0.1\nW_O = np.random.randn(d_model, num_heads*d_k)*0.1\nout = multi_query_attention(x, W_Q, W_K, W_V, W_O, num_heads)\nassert out.shape == (seq, d_model)"
+    },
+    {
+      "name": "test_causal_mask",
+      "code": "import numpy as np\nnp.random.seed(1)\nseq, d_model, num_heads = 6, 16, 2\nd_k = d_model // num_heads\nx = np.random.randn(seq, d_model)\nW_Q = np.random.randn(num_heads*d_k, d_model)*0.1\nW_K = np.random.randn(d_k, d_model)*0.1\nW_V = np.random.randn(d_k, d_model)*0.1\nW_O = np.random.randn(d_model, num_heads*d_k)*0.1\nmask = np.triu(np.ones((seq, seq), dtype=bool), k=1)\nout = multi_query_attention(x, W_Q, W_K, W_V, W_O, num_heads, mask=mask)\nassert out.shape == (seq, d_model)\nassert np.all(np.isfinite(out))"
+    },
+    {
+      "name": "test_single_head_case",
+      "code": "import numpy as np\nnp.random.seed(2)\nseq, d_model, num_heads = 5, 16, 1\nd_k = d_model\nx = np.random.randn(seq, d_model)\nW_Q = np.random.randn(d_k, d_model)*0.1\nW_K = np.random.randn(d_k, d_model)*0.1\nW_V = np.random.randn(d_k, d_model)*0.1\nW_O = np.random.randn(d_model, d_k)*0.1\nout = multi_query_attention(x, W_Q, W_K, W_V, W_O, num_heads)\nassert out.shape == (seq, d_model)"
+    },
+    {
+      "name": "test_different_input_different_output",
+      "code": "import numpy as np\nnp.random.seed(3)\nseq, d_model, num_heads = 4, 16, 2\nd_k = d_model // num_heads\nW_Q = np.random.randn(num_heads*d_k, d_model)*0.1\nW_K = np.random.randn(d_k, d_model)*0.1\nW_V = np.random.randn(d_k, d_model)*0.1\nW_O = np.random.randn(d_model, num_heads*d_k)*0.1\nx1 = np.random.randn(seq, d_model)\nx2 = np.random.randn(seq, d_model)\nout1 = multi_query_attention(x1, W_Q, W_K, W_V, W_O, num_heads)\nout2 = multi_query_attention(x2, W_Q, W_K, W_V, W_O, num_heads)\nassert not np.allclose(out1, out2)"
+    },
+    {
+      "name": "test_zero_wo_zero_output",
+      "code": "import numpy as np\nseq, d_model, num_heads = 4, 16, 2\nd_k = d_model // num_heads\nx = np.random.randn(seq, d_model)\nW_Q = np.random.randn(num_heads*d_k, d_model)*0.1\nW_K = np.random.randn(d_k, d_model)*0.1\nW_V = np.random.randn(d_k, d_model)*0.1\nW_O = np.zeros((d_model, num_heads*d_k))\nout = multi_query_attention(x, W_Q, W_K, W_V, W_O, num_heads)\nassert np.allclose(out, 0)"
+    }
+  ],
+  "hints": [
+    "W_K and W_V have shape (d_k, d_model) — they project to a single head's dimension",
+    "Q has shape (H, seq, d_k), K has shape (seq, d_k)",
+    "scores = Q @ K.T — numpy broadcasts so K.T (d_k, seq) works with Q (H, seq, d_k)"
+  ],
+  "related_problems": ["10.11", "10.10", "10.2"]
+}

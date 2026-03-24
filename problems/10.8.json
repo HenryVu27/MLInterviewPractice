@@ -1,0 +1,48 @@
+{
+  "id": "10.8",
+  "title": "Transformer Encoder Block",
+  "difficulty": "Hard",
+  "category": "Attention & Transformers",
+  "tags": ["transformer", "encoder", "pre-layernorm", "feedforward", "numpy"],
+  "description": "Implement a single Transformer Encoder Block using Pre-Layer Normalization (Pre-LN).\n\nPre-LN applies LayerNorm before each sub-layer (more stable training than the original Post-LN):\n\n```\nx = x + MHA(LayerNorm(x))         # self-attention with residual\nx = x + FFN(LayerNorm(x))         # feedforward with residual\n```\n\nWhere:\n- MHA = Multi-Head Attention (self-attention, Q=K=V=x)\n- FFN = Feed-Forward Network: Linear -> GELU -> Linear\n- LayerNorm normalizes over the last dimension (d_model)\n\nFFN dimensions: d_model -> d_ff -> d_model (typically d_ff = 4 * d_model)\n\nInput/Output shape: (seq_len, d_model)",
+  "constraints": [
+    "Use numpy only",
+    "Pre-LN: LayerNorm applied before each sublayer",
+    "MHA: multi-head self-attention (Q=K=V=input)",
+    "FFN: two linear layers with GELU activation",
+    "GELU approximation: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))",
+    "Residual connections around both MHA and FFN"
+  ],
+  "starter_code": "import numpy as np\n\ndef layer_norm(x, gamma, beta, eps=1e-5):\n    \"\"\"Layer normalization over last dimension.\"\"\"\n    mean = x.mean(axis=-1, keepdims=True)\n    var = x.var(axis=-1, keepdims=True)\n    return gamma * (x - mean) / np.sqrt(var + eps) + beta\n\n\ndef gelu(x):\n    \"\"\"GELU activation (tanh approximation).\"\"\"\n    pass\n\n\ndef transformer_encoder_block(x, params):\n    \"\"\"Single Transformer encoder block (Pre-LN).\n\n    Args:\n        x: Input (seq_len, d_model)\n        params: dict with keys:\n            W_Q, W_K, W_V, W_O: (d_model, d_model) attention weights\n            gamma1, beta1: (d_model,) LayerNorm 1 params\n            W1: (d_ff, d_model) FFN first layer\n            b1: (d_ff,) FFN first bias\n            W2: (d_model, d_ff) FFN second layer\n            b2: (d_model,) FFN second bias\n            gamma2, beta2: (d_model,) LayerNorm 2 params\n            num_heads: int\n\n    Returns:\n        output: (seq_len, d_model)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef layer_norm(x, gamma, beta, eps=1e-5):\n    mean = x.mean(axis=-1, keepdims=True)\n    var = x.var(axis=-1, keepdims=True)\n    return gamma * (x - mean) / np.sqrt(var + eps) + beta\n\n\ndef gelu(x):\n    return 0.5 * x * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * x**3)))\n\n\ndef mha(Q, K, V, W_Q, W_K, W_V, W_O, num_heads, mask=None):\n    seq_q, d_model = Q.shape\n    seq_k = K.shape[0]\n    d_k = d_model // num_heads\n    Q_p = Q @ W_Q.T\n    K_p = K @ W_K.T\n    V_p = V @ W_V.T\n    Q_h = Q_p.reshape(seq_q, num_heads, d_k).transpose(1, 0, 2)\n    K_h = K_p.reshape(seq_k, num_heads, d_k).transpose(1, 0, 2)\n    V_h = V_p.reshape(seq_k, num_heads, d_k).transpose(1, 0, 2)\n    scores = Q_h @ K_h.transpose(0, 2, 1) / np.sqrt(d_k)\n    if mask is not None:\n        scores = np.where(mask[None], -1e9, scores)\n    exp_s = np.exp(scores - scores.max(axis=-1, keepdims=True))\n    w = exp_s / exp_s.sum(axis=-1, keepdims=True)\n    out = (w @ V_h).transpose(1, 0, 2).reshape(seq_q, d_model)\n    return out @ W_O.T\n\n\ndef transformer_encoder_block(x, params):\n    num_heads = params['num_heads']\n    # Pre-LN self-attention\n    x_norm = layer_norm(x, params['gamma1'], params['beta1'])\n    attn_out = mha(x_norm, x_norm, x_norm,\n                   params['W_Q'], params['W_K'], params['W_V'], params['W_O'],\n                   num_heads)\n    x = x + attn_out  # residual\n    # Pre-LN FFN\n    x_norm = layer_norm(x, params['gamma2'], params['beta2'])\n    ffn_out = gelu(x_norm @ params['W1'].T + params['b1']) @ params['W2'].T + params['b2']\n    x = x + ffn_out  # residual\n    return x\n",
+  "explanation": "The Transformer Encoder Block has two sub-layers, each with a residual connection:\n\n1. Multi-Head Self-Attention: Q=K=V=x (queries, keys, and values all from the same sequence)\n2. Position-wise Feed-Forward Network: two linear layers with GELU activation\n\nPre-LN (used here) vs Post-LN (original paper):\n- Post-LN: x = LayerNorm(x + sublayer(x)) — output is normalized\n- Pre-LN: x = x + sublayer(LayerNorm(x)) — input to sublayer is normalized\nPre-LN is more training-stable and has become the standard in modern models.\n\nGELU: a smooth approximation to ReLU that allows small negative values, used in BERT and GPT models.\n\nFFN: each position is processed independently with the same weights — it's like a 1x1 convolution over the sequence dimension.",
+  "test_cases": [
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nseq, d_model, d_ff, num_heads = 8, 32, 128, 4\nparams = {\n    'W_Q': np.random.randn(d_model, d_model)*0.1,\n    'W_K': np.random.randn(d_model, d_model)*0.1,\n    'W_V': np.random.randn(d_model, d_model)*0.1,\n    'W_O': np.random.randn(d_model, d_model)*0.1,\n    'gamma1': np.ones(d_model), 'beta1': np.zeros(d_model),\n    'W1': np.random.randn(d_ff, d_model)*0.1,\n    'b1': np.zeros(d_ff),\n    'W2': np.random.randn(d_model, d_ff)*0.1,\n    'b2': np.zeros(d_model),\n    'gamma2': np.ones(d_model), 'beta2': np.zeros(d_model),\n    'num_heads': num_heads\n}\nx = np.random.randn(seq, d_model)\nout = transformer_encoder_block(x, params)\nassert out.shape == (seq, d_model)"
+    },
+    {
+      "name": "test_gelu_shape",
+      "code": "import numpy as np\nx = np.random.randn(10, 20)\nout = gelu(x)\nassert out.shape == x.shape"
+    },
+    {
+      "name": "test_gelu_properties",
+      "code": "import numpy as np\n# GELU(0) = 0\nassert abs(gelu(np.array([0.0]))[0]) < 1e-6\n# GELU is approx x for large positive x\nassert abs(gelu(np.array([10.0]))[0] - 10.0) < 0.01\n# GELU(negative large) ≈ 0\nassert abs(gelu(np.array([-10.0]))[0]) < 0.01"
+    },
+    {
+      "name": "test_residual_connection",
+      "code": "import numpy as np\nnp.random.seed(1)\nseq, d_model, d_ff, num_heads = 4, 8, 32, 2\n# With zero weight matrices, attention output = 0 and FFN output = 0\n# So output should equal input (pure residual)\nparams = {\n    'W_Q': np.zeros((d_model, d_model)),\n    'W_K': np.zeros((d_model, d_model)),\n    'W_V': np.zeros((d_model, d_model)),\n    'W_O': np.zeros((d_model, d_model)),\n    'gamma1': np.ones(d_model), 'beta1': np.zeros(d_model),\n    'W1': np.zeros((d_ff, d_model)),\n    'b1': np.zeros(d_ff),\n    'W2': np.zeros((d_model, d_ff)),\n    'b2': np.zeros(d_model),\n    'gamma2': np.ones(d_model), 'beta2': np.zeros(d_model),\n    'num_heads': num_heads\n}\nx = np.random.randn(seq, d_model)\nout = transformer_encoder_block(x, params)\nassert np.allclose(out, x, atol=1e-6), 'With zero weights, output should equal input via residual'"
+    },
+    {
+      "name": "test_layer_norm_shape",
+      "code": "import numpy as np\nx = np.random.randn(6, 32)\ngamma = np.ones(32)\nbeta = np.zeros(32)\nout = layer_norm(x, gamma, beta)\nassert out.shape == (6, 32)\n# Should have ~0 mean and ~1 std per row\nassert np.allclose(out.mean(axis=-1), 0, atol=1e-5)"
+    }
+  ],
+  "hints": [
+    "Pre-LN: apply layer_norm before MHA, then residual: x = x + mha(norm(x))",
+    "Similarly for FFN: x = x + ffn(norm(x))",
+    "GELU: 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715*x^3)))",
+    "FFN: x_ff = gelu(x @ W1.T + b1) @ W2.T + b2"
+  ],
+  "related_problems": ["10.2", "10.5", "10.9", "10.16"]
+}

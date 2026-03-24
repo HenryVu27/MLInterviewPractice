@@ -1,0 +1,49 @@
+{
+  "id": "12.3",
+  "title": "Reciprocal Rank Fusion (RRF)",
+  "difficulty": "Easy",
+  "category": "Information Retrieval",
+  "tags": ["rrf", "rank fusion", "hybrid search", "ensemble retrieval"],
+  "description": "Implement Reciprocal Rank Fusion (RRF), a simple and effective method for combining multiple ranked lists.\n\nGiven multiple ranked lists (each a list of document IDs ordered by relevance), RRF computes a fused score for each document:\n  RRF_score(d) = sum over each ranked_list of 1 / (k + rank(d, list))\n\nWhere rank(d, list) is the 1-based position of document d in that list (1 = best), and k is a constant (default k=60).\n\nImplement:\n```python\ndef reciprocal_rank_fusion(ranked_lists: list, k: int = 60) -> list:\n```\n\n- `ranked_lists`: list of lists of doc_ids (each sub-list is a ranked list).\n- Returns: list of (doc_id, rrf_score) tuples sorted by descending RRF score.\n- Documents not appearing in a list contribute 0 for that list.",
+  "constraints": [
+    "ranked_lists can have varying lengths.",
+    "A document may appear in some but not all lists.",
+    "rank is 1-based (first position = rank 1).",
+    "Return all documents that appear in at least one list.",
+    "Sort results by descending RRF score.",
+    "Use only Python stdlib (no numpy required)."
+  ],
+  "starter_code": "def reciprocal_rank_fusion(ranked_lists: list, k: int = 60) -> list:\n    pass\n",
+  "solution_code": "def reciprocal_rank_fusion(ranked_lists: list, k: int = 60) -> list:\n    rrf_scores = {}\n    for ranked_list in ranked_lists:\n        for rank, doc_id in enumerate(ranked_list, start=1):\n            if doc_id not in rrf_scores:\n                rrf_scores[doc_id] = 0.0\n            rrf_scores[doc_id] += 1.0 / (k + rank)\n    # Sort by descending score\n    results = sorted(rrf_scores.items(), key=lambda x: -x[1])\n    return results\n",
+  "explanation": "RRF is a rank aggregation method that is robust and requires no score normalization across retrieval systems. The key insight: only the rank position matters, not the actual relevance score (which may be on very different scales from different retrievers). The constant k=60 (empirically determined) prevents very high-ranked items from dominating completely. RRF is widely used for hybrid search: combining BM25 lexical rankings with dense vector retrieval rankings. Documents appearing near the top of multiple lists get the highest fused scores.",
+  "test_cases": [
+    {
+      "name": "test_single_list_preserves_order",
+      "code": "result = reciprocal_rank_fusion([['a', 'b', 'c']])\ndoc_ids = [doc for doc, _ in result]\nassert doc_ids == ['a', 'b', 'c'], f\"Single list should preserve order: {doc_ids}\""
+    },
+    {
+      "name": "test_top_ranked_in_all_lists_wins",
+      "code": "list1 = ['doc_a', 'doc_b', 'doc_c']\nlist2 = ['doc_a', 'doc_c', 'doc_b']\nresult = reciprocal_rank_fusion([list1, list2])\nassert result[0][0] == 'doc_a', f\"doc_a ranked 1st in both lists should win: {result[0]}\""
+    },
+    {
+      "name": "test_score_formula",
+      "code": "result = reciprocal_rank_fusion([['x']], k=60)\nassert abs(result[0][1] - 1/61) < 1e-10, f\"Score should be 1/(60+1), got {result[0][1]}\""
+    },
+    {
+      "name": "test_missing_from_one_list",
+      "code": "list1 = ['a', 'b']\nlist2 = ['c', 'a']  # 'b' missing from list2\nresult = reciprocal_rank_fusion([list1, list2], k=60)\nresult_dict = {doc: score for doc, score in result}\n# 'b' only appears in list1 rank 2: score = 1/62\nassert abs(result_dict['b'] - 1/62) < 1e-10, f\"'b' score should be 1/62, got {result_dict['b']}\"\n# 'c' only appears in list2 rank 1: score = 1/61\nassert abs(result_dict['c'] - 1/61) < 1e-10"
+    },
+    {
+      "name": "test_custom_k",
+      "code": "result_k0 = reciprocal_rank_fusion([['a', 'b']], k=0)\nresult_k60 = reciprocal_rank_fusion([['a', 'b']], k=60)\n# k=0: scores are 1/1 and 1/2; k=60: scores are 1/61 and 1/62\nassert result_k0[0][1] == 1.0, f\"k=0, rank=1 score should be 1.0, got {result_k0[0][1]}\"\nassert result_k0[1][1] == 0.5, f\"k=0, rank=2 score should be 0.5\"\nassert result_k60[0][1] < 0.02, \"k=60 should give small scores\""
+    }
+  ],
+  "hints": [
+    "Iterate over each list with enumerate starting at 1 for 1-based ranking.",
+    "Accumulate RRF scores in a dictionary keyed by doc_id.",
+    "Score for doc in list at rank r: 1 / (k + r).",
+    "At the end, sort the dictionary items by score descending.",
+    "Documents missing from a list simply don't get a contribution from that list."
+  ],
+  "related_problems": ["12.7", "12.1", "12.2"]
+}

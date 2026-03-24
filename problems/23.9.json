@@ -1,0 +1,47 @@
+{
+  "id": "23.9",
+  "title": "GCN Layer (Graph Convolutional Network)",
+  "difficulty": "Hard",
+  "category": "Knowledge Graphs",
+  "tags": ["GCN", "graph-neural-networks", "node-classification", "Laplacian", "message-passing"],
+  "description": "Implement a Graph Convolutional Network (GCN) layer from scratch as introduced by Kipf & Welling (2017).\n\nA GCN layer computes: H' = sigma(D_hat^{-1/2} A_hat D_hat^{-1/2} H W)\nwhere A_hat = A + I (adjacency with self-loops), D_hat is the degree matrix of A_hat, H is the input feature matrix, W is the learnable weight matrix.\n\nImplement:\n1. `add_self_loops(A)`: Return A + I.\n2. `normalize_adjacency(A_hat)`: Compute D_hat^{-1/2} A_hat D_hat^{-1/2}.\n3. `gcn_layer_forward(A, H, W, activation)`: Compute one GCN layer output.\n4. `two_layer_gcn(A, X, W1, W2)`: Forward pass of a 2-layer GCN with ReLU between layers and softmax output.",
+  "constraints": [
+    "A is a binary adjacency matrix of shape (n, n), not necessarily symmetric",
+    "H is the node feature matrix of shape (n, d_in)",
+    "W is the weight matrix of shape (d_in, d_out)",
+    "Use numpy only",
+    "activation can be 'relu', 'softmax', or None"
+  ],
+  "starter_code": "import numpy as np\n\ndef add_self_loops(A):\n    \"\"\"\n    Add self-loops: return A + I.\n    \"\"\"\n    pass\n\ndef normalize_adjacency(A_hat):\n    \"\"\"\n    Compute symmetric normalization: D_hat^{-1/2} A_hat D_hat^{-1/2}.\n    Returns normalized adjacency matrix.\n    \"\"\"\n    pass\n\ndef gcn_layer_forward(A, H, W, activation=None):\n    \"\"\"\n    Compute GCN layer: sigma(A_norm H W).\n    activation: 'relu', 'softmax', or None.\n    Returns output of shape (n, d_out).\n    \"\"\"\n    pass\n\ndef two_layer_gcn(A, X, W1, W2):\n    \"\"\"\n    Two-layer GCN: ReLU(A_norm X W1) then softmax(A_norm H1 W2).\n    Returns output of shape (n, d_out).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef add_self_loops(A):\n    return A + np.eye(A.shape[0])\n\ndef normalize_adjacency(A_hat):\n    d = A_hat.sum(axis=1)\n    d_inv_sqrt = np.where(d > 0, 1.0 / np.sqrt(d), 0.0)\n    D_inv_sqrt = np.diag(d_inv_sqrt)\n    return D_inv_sqrt @ A_hat @ D_inv_sqrt\n\ndef gcn_layer_forward(A, H, W, activation=None):\n    A_hat = add_self_loops(A)\n    A_norm = normalize_adjacency(A_hat)\n    Z = A_norm @ H @ W\n    if activation == 'relu':\n        return np.maximum(0, Z)\n    elif activation == 'softmax':\n        Z_exp = np.exp(Z - Z.max(axis=1, keepdims=True))\n        return Z_exp / Z_exp.sum(axis=1, keepdims=True)\n    return Z\n\ndef two_layer_gcn(A, X, W1, W2):\n    H1 = gcn_layer_forward(A, X, W1, activation='relu')\n    H2 = gcn_layer_forward(A, H1, W2, activation='softmax')\n    return H2\n",
+  "explanation": "GCN (Kipf & Welling, ICLR 2017) extends convolutions to graph-structured data.\n\nKey operation: Each node aggregates features from its neighbors (and itself via self-loop), then applies a linear transformation. The symmetric normalization D^{-1/2} A D^{-1/2} prevents scale issues when nodes have different degrees.\n\nMatrix form: H' = sigma(D_hat^{-1/2} A_hat D_hat^{-1/2} H W) where A_hat = A + I.\n\nA 2-layer GCN with ReLU and softmax is the standard architecture for semi-supervised node classification: Z = softmax(A_norm * ReLU(A_norm * X * W1) * W2).\n\nLimitation: Each layer aggregates exactly 1-hop neighbors; k layers capture k-hop neighborhoods. Over-smoothing occurs with many layers.",
+  "test_cases": [
+    {
+      "name": "test_add_self_loops",
+      "code": "import numpy as np\nA = np.array([[0.0,1.0],[1.0,0.0]])\nA_hat = add_self_loops(A)\nassert np.allclose(A_hat, np.array([[1.0,1.0],[1.0,1.0]]))\nprint('test_add_self_loops passed')"
+    },
+    {
+      "name": "test_normalize_adjacency",
+      "code": "import numpy as np\nA_hat = np.array([[2.0,1.0],[1.0,2.0]])\nA_norm = normalize_adjacency(A_hat)\nassert A_norm.shape == (2, 2)\nassert np.allclose(A_norm, A_norm.T)\n# Diagonal entries: 1/sqrt(2)*2*1/sqrt(2) = 1.0\nassert abs(A_norm[0,0] - 1.0) < 1e-9\nprint('test_normalize_adjacency passed')"
+    },
+    {
+      "name": "test_gcn_layer_output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nn, d_in, d_out = 5, 4, 3\nA = (np.random.rand(n, n) > 0.5).astype(float)\nnp.fill_diagonal(A, 0)\nH = np.random.randn(n, d_in)\nW = np.random.randn(d_in, d_out)\nout = gcn_layer_forward(A, H, W, activation='relu')\nassert out.shape == (n, d_out)\nassert np.all(out >= 0)\nprint('test_gcn_layer_output_shape passed')"
+    },
+    {
+      "name": "test_two_layer_gcn_softmax",
+      "code": "import numpy as np\nnp.random.seed(1)\nn, d_in, d_h, d_out = 6, 5, 4, 3\nA = (np.random.rand(n, n) > 0.6).astype(float)\nnp.fill_diagonal(A, 0)\nX = np.random.randn(n, d_in)\nW1 = np.random.randn(d_in, d_h) * 0.1\nW2 = np.random.randn(d_h, d_out) * 0.1\nout = two_layer_gcn(A, X, W1, W2)\nassert out.shape == (n, d_out)\nassert np.all(out >= 0)\nassert np.allclose(out.sum(axis=1), 1.0, atol=1e-6)\nprint('test_two_layer_gcn_softmax passed')"
+    },
+    {
+      "name": "test_isolated_nodes",
+      "code": "import numpy as np\nA = np.zeros((4, 4))\nH = np.eye(4)\nW = np.ones((4, 2))\nout = gcn_layer_forward(A, H, W, activation=None)\nassert out.shape == (4, 2)\nassert np.all(np.isfinite(out))\nprint('test_isolated_nodes passed')"
+    }
+  ],
+  "hints": [
+    "A_hat = A + I; D_hat[i,i] = sum of row i of A_hat.",
+    "d_inv_sqrt[i] = 1/sqrt(D_hat[i,i]); build as diagonal matrix.",
+    "The full normalized operation is: D_inv_sqrt @ A_hat @ D_inv_sqrt.",
+    "For softmax, subtract max for numerical stability before exp."
+  ],
+  "related_problems": ["23.10", "23.8", "23.4"]
+}

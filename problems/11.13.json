@@ -1,0 +1,46 @@
+{
+  "id": "11.13",
+  "title": "L2 Normalize Embeddings",
+  "difficulty": "Easy",
+  "category": "Embeddings & Similarity Search",
+  "tags": ["normalization", "l2 norm", "unit vectors", "cosine similarity"],
+  "description": "Implement L2 normalization for embedding vectors, which is a prerequisite for using dot product as a proxy for cosine similarity.\n\nImplement:\n```python\ndef l2_normalize(embeddings: np.ndarray, eps: float = 1e-10) -> np.ndarray:\n```\n\n- `embeddings`: shape (n, d) or (d,) — a batch of vectors or a single vector.\n- `eps`: small constant to avoid division by zero.\n- Returns: normalized embeddings with the same shape, where each vector has unit L2 norm.\n\nAlso implement:\n```python\ndef batch_cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:\n```\nCompute pairwise cosine similarity between all pairs: a is (n, d), b is (m, d), returns (n, m).",
+  "constraints": [
+    "Handle both 1D (d,) and 2D (n, d) inputs in l2_normalize.",
+    "After normalization, each vector should have norm 1.0 (within floating point precision).",
+    "batch_cosine_similarity should normalize both inputs before computing dot products.",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\ndef l2_normalize(embeddings: np.ndarray, eps: float = 1e-10) -> np.ndarray:\n    pass\n\ndef batch_cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef l2_normalize(embeddings: np.ndarray, eps: float = 1e-10) -> np.ndarray:\n    if embeddings.ndim == 1:\n        norm = np.linalg.norm(embeddings)\n        return embeddings / (norm + eps)\n    else:\n        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)  # (n, 1)\n        return embeddings / (norms + eps)\n\ndef batch_cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:\n    a_norm = l2_normalize(a)   # (n, d)\n    b_norm = l2_normalize(b)   # (m, d)\n    return a_norm @ b_norm.T   # (n, m)\n",
+  "explanation": "L2 normalization divides each vector by its L2 norm, producing unit vectors. This is essential for cosine similarity search because cosine_similarity(a, b) = dot(a_normalized, b_normalized). After normalization, a simple matrix multiplication gives all pairwise cosine similarities. The eps prevents division by zero for zero vectors. Handling both 1D and 2D inputs requires either branching on ndim or using keepdims and ensuring broadcasting works correctly.",
+  "test_cases": [
+    {
+      "name": "test_unit_norm_1d",
+      "code": "import numpy as np\nv = np.array([3.0, 4.0])\nnorm_v = l2_normalize(v)\nassert abs(np.linalg.norm(norm_v) - 1.0) < 1e-9\nnp.testing.assert_allclose(norm_v, [0.6, 0.8], rtol=1e-6)"
+    },
+    {
+      "name": "test_unit_norm_2d",
+      "code": "import numpy as np\nembeds = np.array([[3.0, 4.0], [0.0, 5.0], [1.0, 1.0]])\nnormed = l2_normalize(embeds)\nnorms = np.linalg.norm(normed, axis=1)\nnp.testing.assert_allclose(norms, [1.0, 1.0, 1.0], rtol=1e-6)"
+    },
+    {
+      "name": "test_cosine_similarity_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\na = np.random.randn(5, 16)\nb = np.random.randn(8, 16)\nsim = batch_cosine_similarity(a, b)\nassert sim.shape == (5, 8), f\"Expected (5,8), got {sim.shape}\""
+    },
+    {
+      "name": "test_cosine_similarity_identical",
+      "code": "import numpy as np\nv = np.array([[1.0, 2.0, 3.0]])\nsim = batch_cosine_similarity(v, v)\nassert abs(float(sim[0, 0]) - 1.0) < 1e-6, f\"Self-similarity should be 1.0, got {sim[0,0]}\""
+    },
+    {
+      "name": "test_cosine_similarity_orthogonal",
+      "code": "import numpy as np\na = np.array([[1.0, 0.0], [0.0, 1.0]])\nb = np.array([[0.0, 1.0], [1.0, 0.0]])\nsim = batch_cosine_similarity(a, b)\n# a[0] orthogonal to b[0], a[1] orthogonal to b[1]\nassert abs(float(sim[0, 0])) < 1e-9, f\"Expected 0 for orthogonal vectors, got {sim[0,0]}\"\nassert abs(float(sim[0, 1]) - 1.0) < 1e-6"
+    }
+  ],
+  "hints": [
+    "For 2D input, use axis=1 and keepdims=True when computing norms to enable broadcasting.",
+    "Add eps to the norm (not the vector) before dividing to avoid zero-division.",
+    "batch_cosine_similarity: normalize both, then compute a @ b.T.",
+    "The result matrix[i,j] = cosine_similarity(a[i], b[j])."
+  ],
+  "related_problems": ["11.1", "11.2", "11.10", "11.11"]
+}

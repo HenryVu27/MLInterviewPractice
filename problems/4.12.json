@@ -3,26 +3,44 @@
   "title": "Dropout",
   "difficulty": "Easy",
   "category": "Neural Network Fundamentals",
-  "tags": ["numpy", "from-scratch", "regularization", "dropout"],
-  "description": "Implement **Dropout** with **inverted dropout** scaling — the standard implementation used by PyTorch and TensorFlow.\n\n**Training mode:**\n1. Generate a binary mask: `mask ~ Bernoulli(1 - p)` (1 with probability `1-p`, 0 with probability `p`)\n2. Apply mask: `out = x * mask`\n3. **Inverted scaling:** divide by `(1 - p)` to keep the expected value unchanged:\n   `out = (x * mask) / (1 - p)`\n\n**Inference mode:**\n- Return x unchanged (no masking, no scaling)\n\n**Why inverted dropout?** Without scaling, the expected activation during training is `x * (1-p)`, but at inference it's `x`. This mismatch hurts. Inverted dropout corrects during training, so inference requires no modification.\n\n**Shapes:** Input/output: any shape",
+  "tags": ["dropout", "regularisation", "inverted dropout", "train", "eval", "stochastic"],
+  "description": "Implement **Inverted Dropout** with separate training and evaluation modes.\n\nDuring **training**, each neuron is independently zeroed out with probability `p` (the dropout rate). To maintain the expected output magnitude, the surviving activations are scaled up by `1/(1-p)`. This is called **inverted dropout** because the scaling happens at training time rather than test time.\n\nDuring **evaluation** (inference), all neurons are kept — no dropout, no scaling.\n\nImplement `dropout(x, p, training, seed=None)` where:\n- `x` is the input array (any shape)\n- `p` is the dropout probability (0 = no dropout, 1 = drop all)\n- `training` is a boolean\n- Returns the output array of the same shape as x",
   "constraints": [
-    "Use only numpy",
-    "p is the dropout probability (probability of zeroing a unit)",
-    "Inverted scaling: divide by (1-p) during training",
-    "Training=False: return input unchanged (inference mode)"
+    "Use numpy only",
+    "0 <= p < 1",
+    "Inverted dropout: scale surviving activations by 1/(1-p) during training",
+    "Eval mode: return x unchanged"
   ],
-  "starter_code": "import numpy as np\n\nclass Dropout:\n    def __init__(self, p: float = 0.5):\n        \"\"\"Initialize Dropout.\n\n        Args:\n            p: probability of zeroing a unit (dropout rate)\n        \"\"\"\n        pass\n\n    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:\n        \"\"\"Apply dropout.\n\n        Args:\n            x: input of any shape\n            training: True for dropout, False for inference (pass-through)\n        Returns:\n            same shape as input\n        \"\"\"\n        pass",
-  "solution_code": "import numpy as np\n\nclass Dropout:\n    def __init__(self, p: float = 0.5):\n        assert 0 <= p < 1, 'Dropout probability must be in [0, 1)'\n        self.p = p\n\n    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:\n        if not training:\n            return x\n        # Inverted dropout\n        mask = (np.random.rand(*x.shape) > self.p).astype(x.dtype)\n        return (x * mask) / (1 - self.p)",
-  "explanation": "**Key concepts:**\n\n1. **Dropout as regularization:** Randomly zeroing units prevents co-adaptation — neurons can't rely on specific other neurons being present. This forces more robust, distributed representations.\n\n2. **Inverted dropout:** Scale by 1/(1-p) during training. This means inference is exactly `f(x)` with no modification. Without inverted scaling, you'd need to scale weights by (1-p) at inference — tedious and error-prone.\n\n3. **Dropout rate p:** Typical values are 0.1-0.5. Higher p → stronger regularization but slower convergence. p=0.5 is common for fully-connected layers; p=0.1-0.2 for Transformers.\n\n4. **Mask shape:** Same shape as input. Independent per element, per sample, per training step.\n\n5. **When NOT to use dropout:** Very small datasets (too much noise), BatchNorm layers (they already regularize), or when using weight decay which provides similar regularization.\n\n**Interview angle:** Explain the connection between dropout and ensemble methods (dropout training ≈ training 2^N different networks and averaging at inference).",
+  "starter_code": "import numpy as np\n\ndef dropout(\n    x: np.ndarray,\n    p: float,\n    training: bool,\n    seed: int = None\n) -> np.ndarray:\n    \"\"\"\n    Apply inverted dropout.\n\n    Args:\n        x: Input array of any shape.\n        p: Probability of dropping a unit (0 <= p < 1).\n        training: If True, apply dropout; if False, return x unchanged.\n        seed: Optional random seed.\n\n    Returns:\n        Output array of the same shape as x.\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef dropout(\n    x: np.ndarray,\n    p: float,\n    training: bool,\n    seed: int = None\n) -> np.ndarray:\n    if not training or p == 0.0:\n        return x\n    rng = np.random.default_rng(seed)\n    mask = (rng.uniform(size=x.shape) >= p).astype(float)\n    return x * mask / (1.0 - p)\n",
+  "explanation": "1. **Dropout** randomly zeroes activations during training to prevent co-adaptation of neurons, acting as a regulariser.\n2. **Inverted dropout**: multiply surviving activations by `1/(1-p)` so the expected value of each activation is unchanged: `E[mask * x / (1-p)] = (1-p) * x / (1-p) = x`.\n3. **Eval mode**: simply return x — no scaling needed since we used inverted dropout at training time.\n4. **p=0.5** is a common default for hidden layers; p=0.1 to 0.2 for input layers or near the output.\n5. **Mask**: a binary mask sampled from Bernoulli(1-p) — each element is 1 with probability (1-p) and 0 with probability p.",
   "test_cases": [
-    {"name": "Output shape preserved", "code": "import numpy as np\nnp.random.seed(0)\ndrop = Dropout(p=0.3)\nx = np.random.randn(10, 20)\nout = drop.forward(x, training=True)\nassert out.shape == (10, 20)"},
-    {"name": "Expected value preserved with inverted dropout", "code": "import numpy as np\nnp.random.seed(1)\ndrop = Dropout(p=0.5)\nx = np.ones((1000, 100))\nout = drop.forward(x, training=True)\n# E[out] = x * (1-p) / (1-p) = x = 1.0\nassert abs(out.mean() - 1.0) < 0.05, f'Expected mean~1.0, got {out.mean():.3f}'"},
-    {"name": "Inference mode passes through unchanged", "code": "import numpy as np\nnp.random.seed(2)\ndrop = Dropout(p=0.5)\nx = np.random.randn(5, 8)\nout = drop.forward(x, training=False)\nassert np.array_equal(out, x), 'Inference mode should return x unchanged'"},
-    {"name": "Approximately p fraction zeroed", "code": "import numpy as np\nnp.random.seed(3)\ndrop = Dropout(p=0.4)\nx = np.ones((500, 200))\nout = drop.forward(x, training=True)\nfrac_zero = (out == 0).mean()\nassert abs(frac_zero - 0.4) < 0.03, f'Expected ~40% zeros, got {frac_zero:.2%}'"}
+    {
+      "name": "Training mode: output shape matches input",
+      "code": "import numpy as np\nx = np.random.randn(4, 8)\nout = dropout(x, p=0.5, training=True, seed=0)\nassert out.shape == x.shape, f'Expected {x.shape}, got {out.shape}'"
+    },
+    {
+      "name": "Eval mode: output equals input exactly",
+      "code": "import numpy as np\nx = np.random.randn(3, 6)\nout = dropout(x, p=0.5, training=False)\nassert np.array_equal(out, x), 'Eval mode should return input unchanged'"
+    },
+    {
+      "name": "Training: approximately correct fraction zeroed",
+      "code": "import numpy as np\nnp.random.seed(42)\nx = np.ones((1000, 100))\nout = dropout(x, p=0.3, training=True, seed=42)\nfrac_zero = np.mean(out == 0)\nassert abs(frac_zero - 0.3) < 0.03, f'Expected ~30% zeros, got {frac_zero:.2%}'"
+    },
+    {
+      "name": "Training: expected value is preserved",
+      "code": "import numpy as np\nnp.random.seed(0)\nx = np.ones((5000, 50)) * 2.0\nout = dropout(x, p=0.4, training=True, seed=0)\nassert abs(out.mean() - 2.0) < 0.1, f'Expected mean ~2.0 (inverted dropout), got {out.mean():.4f}'"
+    },
+    {
+      "name": "p=0 in training mode returns x unchanged",
+      "code": "import numpy as np\nx = np.array([1.0, 2.0, 3.0])\nout = dropout(x, p=0.0, training=True)\nassert np.array_equal(out, x), 'p=0 should return x unchanged'"
+    }
   ],
   "hints": [
-    "mask = (np.random.rand(*x.shape) > self.p) — each element is 1 with probability (1-p), 0 with probability p",
-    "Inverted scaling: return x * mask / (1 - p) during training; return x as-is during inference"
+    "Create a mask: `mask = (rng.uniform(size=x.shape) >= p)` — entries are True with probability (1-p).",
+    "Scale the output: `x * mask / (1 - p)` — this is inverted dropout.",
+    "In eval mode, return x directly without any modification.",
+    "The key property: `E[output] = x` both in training and eval mode (with inverted dropout)."
   ],
-  "related_problems": ["4.13", "4.9", "3.14"]
+  "related_problems": ["4.13", "4.7", "4.9"]
 }

@@ -1,0 +1,47 @@
+{
+  "id": "23.11",
+  "title": "Community Detection (Louvain-style Greedy)",
+  "difficulty": "Medium",
+  "category": "Knowledge Graphs",
+  "tags": ["community-detection", "modularity", "graph-clustering", "Louvain", "greedy"],
+  "description": "Implement a greedy modularity-based community detection algorithm inspired by the Louvain method.\n\nModularity Q measures the quality of a partition: Q = (1/2m) * sum_{ij} [A_ij - k_i*k_j/(2m)] * delta(c_i, c_j)\nwhere m = total edges, k_i = degree of node i, A_ij = adjacency, c_i = community of node i.\n\nImplement:\n1. `compute_modularity(A, labels)`: Compute modularity Q for a given partition.\n2. `modularity_gain(A, node, community, labels, m)`: Compute the modularity gain of moving `node` into `community`.\n3. `greedy_community_detection(A, max_iter)`: Greedy phase: for each node, try moving it to the community that maximizes modularity gain; repeat until no improvement. Returns community labels.",
+  "constraints": [
+    "A is a symmetric adjacency matrix (binary or weighted) of shape (n, n)",
+    "Use numpy only",
+    "Initialize: each node in its own community",
+    "max_iter is max number of passes over all nodes",
+    "Return integer community labels starting from 0"
+  ],
+  "starter_code": "import numpy as np\n\ndef compute_modularity(A, labels):\n    \"\"\"\n    Compute modularity Q for partition given by labels.\n    Returns float Q in [-0.5, 1].\n    \"\"\"\n    pass\n\ndef modularity_gain(A, node, target_community, labels, m):\n    \"\"\"\n    Compute change in modularity from moving node to target_community.\n    \"\"\"\n    pass\n\ndef greedy_community_detection(A, max_iter=10):\n    \"\"\"\n    Greedy modularity optimization.\n    Returns community label array of shape (n,).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef compute_modularity(A, labels):\n    n = A.shape[0]\n    m = A.sum() / 2.0\n    if m == 0:\n        return 0.0\n    k = A.sum(axis=1)\n    Q = 0.0\n    for i in range(n):\n        for j in range(n):\n            if labels[i] == labels[j]:\n                Q += A[i, j] - k[i] * k[j] / (2 * m)\n    return Q / (2 * m)\n\ndef modularity_gain(A, node, target_community, labels, m):\n    if m == 0:\n        return 0.0\n    k = A.sum(axis=1)\n    # Nodes in target community\n    in_community = np.where(labels == target_community)[0]\n    # Sum of weights from node to target community\n    k_i_in = A[node, in_community].sum()\n    # Sum of degrees in target community\n    sigma_tot = k[in_community].sum()\n    k_i = k[node]\n    gain = k_i_in - sigma_tot * k_i / (2 * m)\n    return gain / m\n\ndef greedy_community_detection(A, max_iter=10):\n    n = A.shape[0]\n    labels = np.arange(n, dtype=int)\n    m = A.sum() / 2.0\n    if m == 0:\n        return labels\n\n    for _ in range(max_iter):\n        improved = False\n        for node in range(n):\n            current_community = labels[node]\n            neighbors = np.where(A[node] > 0)[0]\n            neighbor_communities = set(labels[neighbors]) - {current_community}\n\n            best_gain = 0.0\n            best_community = current_community\n\n            for community in neighbor_communities:\n                # Temporarily remove node from current community\n                labels[node] = -1\n                gain = modularity_gain(A, node, community, labels, m)\n                labels[node] = current_community\n                if gain > best_gain:\n                    best_gain = gain\n                    best_community = community\n\n            if best_community != current_community:\n                labels[node] = best_community\n                improved = True\n\n        if not improved:\n            break\n\n    # Re-label communities as 0, 1, 2, ...\n    unique_communities = np.unique(labels)\n    remap = {old: new for new, old in enumerate(unique_communities)}\n    labels = np.array([remap[l] for l in labels])\n    return labels\n",
+  "explanation": "Modularity Q measures how much more edges fall within communities than expected by chance in a random graph with the same degree sequence.\n\nQ = (1/2m) * sum_{ij} [A_ij - k_i*k_j/(2m)] * delta(c_i, c_j)\n\nGreedy optimization: For each node, try moving it to a neighbor's community if it increases Q. Repeat until no improvement (local optimum).\n\nThe full Louvain algorithm adds a second phase that collapses communities into supernodes and repeats, achieving better global optima.\n\nApplications: Social network community detection, protein interaction networks, document clustering.",
+  "test_cases": [
+    {
+      "name": "test_modularity_two_cliques",
+      "code": "import numpy as np\n# Two separate cliques of 3 nodes each\nA = np.zeros((6,6))\nfor i in range(3):\n    for j in range(3):\n        if i!=j: A[i,j]=1\nfor i in range(3,6):\n    for j in range(3,6):\n        if i!=j: A[i,j]=1\nlabels = np.array([0,0,0,1,1,1])\nQ = compute_modularity(A, labels)\nassert Q > 0, 'Modularity should be positive for a good partition'\nprint('test_modularity_two_cliques passed')"
+    },
+    {
+      "name": "test_modularity_all_one_community",
+      "code": "import numpy as np\nA = np.array([[0,1,1],[1,0,1],[1,1,0]], dtype=float)\nlabels = np.array([0,0,0])\nQ = compute_modularity(A, labels)\nassert abs(Q) < 0.1  # All in one community, Q ~ 0\nprint('test_modularity_all_one_community passed')"
+    },
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nn = 8\nA = (np.random.rand(n,n) > 0.6).astype(float)\nA = ((A + A.T) > 0).astype(float)\nnp.fill_diagonal(A, 0)\nlabels = greedy_community_detection(A)\nassert labels.shape == (n,)\nassert labels.min() == 0\nprint('test_output_shape passed')"
+    },
+    {
+      "name": "test_two_separate_components",
+      "code": "import numpy as np\n# Two disconnected cliques of 4 nodes each\nA = np.zeros((8,8))\nfor i in range(4):\n    for j in range(4):\n        if i!=j: A[i,j]=1.0\nfor i in range(4,8):\n    for j in range(4,8):\n        if i!=j: A[i,j]=1.0\nlabels = greedy_community_detection(A)\nassert len(np.unique(labels)) == 2\nassert len(np.unique(labels[:4])) == 1\nassert len(np.unique(labels[4:])) == 1\nprint('test_two_separate_components passed')"
+    },
+    {
+      "name": "test_labels_are_contiguous_from_zero",
+      "code": "import numpy as np\nnp.random.seed(1)\nA = (np.random.rand(10,10) > 0.7).astype(float)\nA = ((A+A.T)>0).astype(float)\nnp.fill_diagonal(A, 0)\nlabels = greedy_community_detection(A)\nuniq = sorted(np.unique(labels).tolist())\nassert uniq == list(range(len(uniq))), 'Labels should be 0,1,2,...'\nprint('test_labels_are_contiguous_from_zero passed')"
+    }
+  ],
+  "hints": [
+    "m = A.sum()/2 (total edges for undirected graph); degree k[i] = A[i].sum().",
+    "Modularity gain for moving node i to community C: delta_Q = [k_{i->C} - sigma_tot * k_i / (2m)] / m.",
+    "Temporarily set labels[node] = -1 when computing gain (exclude node from its current community).",
+    "Re-map community IDs to 0, 1, 2, ... at the end using a dictionary."
+  ],
+  "related_problems": ["23.4", "23.9", "19.7"]
+}

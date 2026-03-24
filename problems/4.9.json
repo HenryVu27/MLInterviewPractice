@@ -3,26 +3,44 @@
   "title": "Batch Normalization",
   "difficulty": "Medium",
   "category": "Neural Network Fundamentals",
-  "tags": ["numpy", "from-scratch", "normalization", "batch-norm"],
-  "description": "Implement **Batch Normalization** with separate training and inference modes.\n\n**Training mode:**\n```\nmu_batch = x.mean(axis=0)                      # (D,) batch mean\nvar_batch = x.var(axis=0)                      # (D,) batch variance\nx_norm = (x - mu_batch) / sqrt(var_batch + eps)\nout = gamma * x_norm + beta\n\n# Update running stats (used at inference)\nrunning_mean = momentum * running_mean + (1-momentum) * mu_batch\nrunning_var  = momentum * running_var  + (1-momentum) * var_batch\n```\n\n**Inference mode:**\n```\nx_norm = (x - running_mean) / sqrt(running_var + eps)\nout = gamma * x_norm + beta\n```\n\n**Shapes:**\n- Input: (N, D) for fully-connected layers\n- gamma, beta: (D,)\n- running_mean, running_var: (D,)",
+  "tags": ["batch norm", "normalisation", "running mean", "running variance", "train", "eval"],
+  "description": "Implement **Batch Normalization** with both training and inference modes.\n\nGiven input `x` of shape `(n, d)` (batch of n samples, d features):\n\n**Training mode:**\n```\nmean = x.mean(axis=0)          # per-feature mean over batch\nvar = x.var(axis=0)            # per-feature var over batch (biased)\nx_hat = (x - mean) / sqrt(var + eps)\nout = gamma * x_hat + beta\n```\nUpdate running stats: `running_mean = momentum * running_mean + (1-momentum) * mean`\n\n**Inference mode:** Use `running_mean` and `running_var` instead of batch statistics.\n\nImplement `batch_norm(x, gamma, beta, running_mean, running_var, training, momentum=0.1, eps=1e-5)` that returns `(out, running_mean, running_var)`.",
   "constraints": [
-    "Use only numpy",
-    "Track running mean/variance during training (exponential moving average)",
-    "Inference uses running stats, NOT batch stats",
-    "gamma initialized to ones, beta to zeros, running_mean to zeros, running_var to ones"
+    "Use numpy only",
+    "training=True uses batch statistics and updates running stats",
+    "training=False uses running statistics (no update)",
+    "momentum follows the PyTorch convention: new_running = (1-momentum)*old + momentum*batch"
   ],
-  "starter_code": "import numpy as np\n\nclass BatchNorm:\n    def __init__(self, num_features: int, eps: float = 1e-5, momentum: float = 0.1):\n        \"\"\"Initialize BatchNorm.\n\n        Args:\n            num_features: D, the feature dimension\n            eps: stability constant\n            momentum: weight for new batch stats in running average\n        \"\"\"\n        pass\n\n    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:\n        \"\"\"Apply batch normalization.\n\n        Args:\n            x: (N, D) input\n            training: True for training mode, False for inference\n        Returns:\n            (N, D) normalized output\n        \"\"\"\n        pass",
-  "solution_code": "import numpy as np\n\nclass BatchNorm:\n    def __init__(self, num_features: int, eps: float = 1e-5, momentum: float = 0.1):\n        self.eps = eps\n        self.momentum = momentum\n        self.gamma = np.ones(num_features)\n        self.beta = np.zeros(num_features)\n        self.running_mean = np.zeros(num_features)\n        self.running_var = np.ones(num_features)\n\n    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:\n        if training:\n            mu = x.mean(axis=0)                           # (D,)\n            var = x.var(axis=0)                           # (D,)\n            x_norm = (x - mu) / np.sqrt(var + self.eps)  # (N, D)\n            # Update running stats\n            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mu\n            self.running_var  = (1 - self.momentum) * self.running_var  + self.momentum * var\n        else:\n            x_norm = (x - self.running_mean) / np.sqrt(self.running_var + self.eps)\n        return self.gamma * x_norm + self.beta",
-  "explanation": "**Key concepts:**\n\n1. **Training vs inference:** During training, normalize with batch statistics. During inference, use accumulated running statistics — because test batches may be small or size-1.\n\n2. **Exponential moving average:** `running = (1-m)*running + m*batch`. Momentum=0.1 means recent batches have more influence. This slowly adapts to the training distribution.\n\n3. **Why BatchNorm works:** Reduces internal covariate shift — the change in layer input distribution during training. Also has a slight regularization effect (noise from batch statistics).\n\n4. **Limitations:** Doesn't work well with batch size 1 (variance is 0). Breaks when different training batches have very different distributions (e.g., recurrent networks). LayerNorm is preferred for Transformers and RNNs.\n\n5. **Gamma/beta:** Learnable affine parameters that allow the network to 'undo' normalization if needed, giving the model maximum flexibility.\n\n**Complexity:** O(N*D) per forward pass.\n\n**Interview angle:** Explain why BatchNorm is a regularizer. Compare training vs inference behavior.",
+  "starter_code": "import numpy as np\n\ndef batch_norm(\n    x: np.ndarray,\n    gamma: np.ndarray,\n    beta: np.ndarray,\n    running_mean: np.ndarray,\n    running_var: np.ndarray,\n    training: bool,\n    momentum: float = 0.1,\n    eps: float = 1e-5\n) -> tuple[np.ndarray, np.ndarray, np.ndarray]:\n    \"\"\"\n    Apply Batch Normalization.\n\n    Args:\n        x: Input of shape (n, d).\n        gamma: Scale, shape (d,).\n        beta: Shift, shape (d,).\n        running_mean: Running mean estimate, shape (d,). Updated in-place during training.\n        running_var: Running variance estimate, shape (d,). Updated in-place during training.\n        training: If True, use batch stats; if False, use running stats.\n        momentum: Update rate for running statistics (PyTorch convention).\n        eps: Numerical stability constant.\n\n    Returns:\n        (out, running_mean, running_var)\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef batch_norm(\n    x: np.ndarray,\n    gamma: np.ndarray,\n    beta: np.ndarray,\n    running_mean: np.ndarray,\n    running_var: np.ndarray,\n    training: bool,\n    momentum: float = 0.1,\n    eps: float = 1e-5\n) -> tuple[np.ndarray, np.ndarray, np.ndarray]:\n    if training:\n        mean = x.mean(axis=0)\n        var = x.var(axis=0)\n        x_hat = (x - mean) / np.sqrt(var + eps)\n        # Update running statistics\n        running_mean = (1 - momentum) * running_mean + momentum * mean\n        running_var = (1 - momentum) * running_var + momentum * var\n    else:\n        x_hat = (x - running_mean) / np.sqrt(running_var + eps)\n    out = gamma * x_hat + beta\n    return out, running_mean, running_var\n",
+  "explanation": "1. **Training mode**: normalise using the current mini-batch's mean and variance. Simultaneously update running statistics with an exponential moving average.\n2. **Inference mode**: use the accumulated running mean and variance (which estimate the full dataset statistics). This ensures deterministic output at test time.\n3. **Momentum convention**: PyTorch uses `new = (1-m)*old + m*batch` (small momentum = slow update). Some frameworks use the complementary convention.\n4. **Biased variance**: BN uses biased variance (`x.var(ddof=0)`) for normalisation, but the running variance is also biased.\n5. **Why BN works**: reduces internal covariate shift, allows higher learning rates, acts as a regulariser.",
   "test_cases": [
-    {"name": "Training output approximately normalized", "code": "import numpy as np\nnp.random.seed(0)\nbn = BatchNorm(8)\nx = np.random.randn(32, 8) * 5 + 3\nout = bn.forward(x, training=True)\nassert np.allclose(out.mean(axis=0), 0.0, atol=1e-5)\nassert np.allclose(out.std(axis=0), 1.0, atol=1e-3)"},
-    {"name": "Running stats updated during training", "code": "import numpy as np\nnp.random.seed(1)\nbn = BatchNorm(4)\nfor _ in range(100):\n    x = np.random.randn(16, 4) + 5.0  # mean=5\n    bn.forward(x, training=True)\n# Running mean should be close to 5\nassert np.allclose(bn.running_mean, 5.0, atol=0.3), f'Running mean {bn.running_mean} far from 5'"},
-    {"name": "Inference uses running stats", "code": "import numpy as np\nnp.random.seed(2)\nbn = BatchNorm(3)\n# Train with mean=5 data\nfor _ in range(200):\n    x = np.random.randn(16, 3) + 5.0\n    bn.forward(x, training=True)\n# At inference with same distribution, output should be approx normalized\nx_test = np.random.randn(8, 3) + 5.0\nout = bn.forward(x_test, training=False)\n# Each feature should be roughly zero-mean after normalization\nassert np.all(np.abs(out.mean(axis=0)) < 0.5), f'Inference output not normalized: {out.mean(axis=0)}'"},
-    {"name": "Output shape preserved", "code": "import numpy as np\nbn = BatchNorm(16)\nx = np.random.randn(10, 16)\nout = bn.forward(x)\nassert out.shape == (10, 16)"}
+    {
+      "name": "Training mode normalises to zero mean, unit variance",
+      "code": "import numpy as np\nnp.random.seed(0)\nx = np.random.randn(32, 8) * 3 + 5\ngamma = np.ones(8)\nbeta = np.zeros(8)\nrm = np.zeros(8)\nrv = np.ones(8)\nout, _, _ = batch_norm(x, gamma, beta, rm, rv, training=True)\nassert np.allclose(out.mean(axis=0), 0, atol=1e-5), 'Batch mean should be 0'\nassert np.allclose(out.var(axis=0), 1, atol=1e-4), 'Batch var should be ~1'"
+    },
+    {
+      "name": "Running statistics are updated during training",
+      "code": "import numpy as np\nnp.random.seed(1)\nx = np.ones((10, 4)) * 3.0\ngamma = np.ones(4)\nbeta = np.zeros(4)\nrm = np.zeros(4)\nrv = np.ones(4)\n_, rm_new, rv_new = batch_norm(x, gamma, beta, rm, rv, training=True, momentum=0.1)\nassert not np.allclose(rm_new, 0), 'Running mean should be updated'\n# After one step with constant x=3, running mean should move toward 3\nassert np.all(rm_new > 0), 'Running mean should increase'"
+    },
+    {
+      "name": "Inference mode uses running stats",
+      "code": "import numpy as np\nx = np.array([[2.0, 4.0], [2.0, 4.0]])\ngamma = np.ones(2)\nbeta = np.zeros(2)\nrm = np.array([2.0, 4.0])\nrv = np.array([1.0, 1.0])\nout, _, _ = batch_norm(x, gamma, beta, rm, rv, training=False)\nassert np.allclose(out, 0, atol=1e-5), 'Input equal to running mean should give 0'"
+    },
+    {
+      "name": "Gamma and beta shift the output correctly",
+      "code": "import numpy as np\nnp.random.seed(3)\nx = np.random.randn(16, 4)\ngamma = np.array([2.0, 3.0, 1.0, 0.5])\nbeta = np.array([1.0, -1.0, 0.0, 2.0])\nrm = np.zeros(4)\nrv = np.ones(4)\nout, _, _ = batch_norm(x, gamma, beta, rm, rv, training=True)\nassert np.allclose(out.mean(axis=0), beta, atol=1e-5), 'Mean should equal beta'"
+    },
+    {
+      "name": "Output shape matches input shape",
+      "code": "import numpy as np\nx = np.random.randn(8, 16)\ngamma = np.ones(16)\nbeta = np.zeros(16)\nrm = np.zeros(16)\nrv = np.ones(16)\nout, rm_new, rv_new = batch_norm(x, gamma, beta, rm, rv, training=True)\nassert out.shape == (8, 16)\nassert rm_new.shape == (16,)\nassert rv_new.shape == (16,)"
+    }
   ],
   "hints": [
-    "Training: mu = x.mean(axis=0); var = x.var(axis=0). Inference: use self.running_mean and self.running_var",
-    "Running mean update: self.running_mean = (1-momentum)*running_mean + momentum*mu (EMA)"
+    "Training: use `x.mean(axis=0)` and `x.var(axis=0)` for per-feature statistics over the batch.",
+    "Inference: use `running_mean` and `running_var` directly.",
+    "PyTorch momentum convention: `running_mean = (1 - momentum) * running_mean + momentum * batch_mean`.",
+    "Remember to return the updated running statistics even in inference mode (unchanged)."
   ],
   "related_problems": ["4.8", "4.10", "4.11"]
 }

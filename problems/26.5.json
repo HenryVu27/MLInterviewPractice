@@ -3,18 +3,46 @@
   "title": "GAN Loss Functions",
   "difficulty": "Medium",
   "category": "Generative Models",
-  "tags": ["numpy", "GAN", "loss-functions", "WGAN", "hinge-loss"],
-  "description": "Implement four GAN loss function variants for the discriminator and generator.\n\nGiven `d_real` and `d_fake` (discriminator outputs, after sigmoid for standard GAN, raw logits for WGAN/hinge), compute:\n\n1. **Minimax (original):**\n   - D loss: `-mean(log(d_real) + log(1 - d_fake))`\n   - G loss: `mean(log(1 - d_fake))` (saturating)\n\n2. **Non-saturating:**\n   - D loss: same as minimax\n   - G loss: `-mean(log(d_fake))` (stronger gradients)\n\n3. **WGAN (Wasserstein):** (d_real and d_fake are raw critic outputs, no sigmoid)\n   - D loss: `-mean(d_real) + mean(d_fake)` (critic maximizes)\n   - G loss: `-mean(d_fake)`\n\n4. **Hinge:**\n   - D loss: `mean(relu(1 - d_real) + relu(1 + d_fake))`\n   - G loss: `-mean(d_fake)`\n\nReturn a tuple `(d_loss, g_loss)` for each variant.",
-  "constraints": ["Use numpy", "Clip inputs to [1e-7, 1-1e-7] before log for minimax and non-saturating", "ReLU for hinge: np.maximum(0, ...)", "Return (d_loss, g_loss) as floats for each function"],
-  "starter_code": "import numpy as np\n\ndef minimax_loss(d_real: np.ndarray, d_fake: np.ndarray) -> tuple[float, float]:\n    \"\"\"Original minimax GAN loss. d_real, d_fake in (0,1).\"\"\"\n    pass\n\ndef nonsaturating_loss(d_real: np.ndarray, d_fake: np.ndarray) -> tuple[float, float]:\n    \"\"\"Non-saturating GAN loss. d_real, d_fake in (0,1).\"\"\"\n    pass\n\ndef wgan_loss(d_real: np.ndarray, d_fake: np.ndarray) -> tuple[float, float]:\n    \"\"\"WGAN loss. d_real, d_fake are raw critic logits.\"\"\"\n    pass\n\ndef hinge_loss(d_real: np.ndarray, d_fake: np.ndarray) -> tuple[float, float]:\n    \"\"\"Hinge GAN loss. d_real, d_fake are raw logits.\"\"\"\n    pass",
-  "solution_code": "import numpy as np\n\ndef minimax_loss(d_real: np.ndarray, d_fake: np.ndarray) -> tuple[float, float]:\n    d_real = np.clip(d_real, 1e-7, 1 - 1e-7)\n    d_fake = np.clip(d_fake, 1e-7, 1 - 1e-7)\n    d_loss = -float(np.mean(np.log(d_real) + np.log(1 - d_fake)))\n    g_loss = float(np.mean(np.log(1 - d_fake)))\n    return d_loss, g_loss\n\ndef nonsaturating_loss(d_real: np.ndarray, d_fake: np.ndarray) -> tuple[float, float]:\n    d_real = np.clip(d_real, 1e-7, 1 - 1e-7)\n    d_fake = np.clip(d_fake, 1e-7, 1 - 1e-7)\n    d_loss = -float(np.mean(np.log(d_real) + np.log(1 - d_fake)))\n    g_loss = -float(np.mean(np.log(d_fake)))\n    return d_loss, g_loss\n\ndef wgan_loss(d_real: np.ndarray, d_fake: np.ndarray) -> tuple[float, float]:\n    d_loss = float(-np.mean(d_real) + np.mean(d_fake))\n    g_loss = float(-np.mean(d_fake))\n    return d_loss, g_loss\n\ndef hinge_loss(d_real: np.ndarray, d_fake: np.ndarray) -> tuple[float, float]:\n    d_loss = float(np.mean(np.maximum(0, 1 - d_real) + np.maximum(0, 1 + d_fake)))\n    g_loss = float(-np.mean(d_fake))\n    return d_loss, g_loss",
-  "explanation": "**Key concepts:**\n\n1. **Minimax (original):** Theoretically grounded but G saturates when D is confident. Minimizing log(1-D(G(z))) = 0 when D(G(z)) = 1, giving zero gradient.\n\n2. **Non-saturating:** Using -log(D(G(z))) gives gradient signal even when D is confident. Practically equivalent but much more stable early in training.\n\n3. **WGAN:** Uses Wasserstein-1 distance. The critic (D without sigmoid) computes `E[D(real)] - E[D(fake)]`. Requires weight clipping or gradient penalty to enforce 1-Lipschitz constraint. More stable training.\n\n4. **Hinge loss:** Widely used in image GANs (BigGAN, StyleGAN). The hinge clips contribution once D is sufficiently confident (D(real) > 1 or D(fake) < -1), stabilizing training.",
-  "test_cases": [
-    {"name": "Minimax D loss is positive", "code": "import numpy as np\nd_real = np.array([0.9, 0.8, 0.95])\nd_fake = np.array([0.1, 0.2, 0.05])\nd_loss, g_loss = minimax_loss(d_real, d_fake)\nassert d_loss > 0, f'D loss should be positive (negated), got {d_loss}'"},
-    {"name": "WGAN: D loss = -(mean_real - mean_fake)", "code": "import numpy as np\nd_real = np.array([2.0, 3.0])\nd_fake = np.array([1.0, 0.0])\nd_loss, g_loss = wgan_loss(d_real, d_fake)\nassert abs(d_loss - (-2.5 + 0.5)) < 1e-6, f'Got {d_loss}'"},
-    {"name": "Hinge loss is non-negative", "code": "import numpy as np\nd_real = np.random.randn(16)\nd_fake = np.random.randn(16)\nd_loss, _ = hinge_loss(d_real, d_fake)\nassert d_loss >= 0, 'Hinge D loss must be non-negative'"},
-    {"name": "Non-saturating G loss differs from minimax", "code": "import numpy as np\nd_real = np.array([0.6, 0.7])\nd_fake = np.array([0.3, 0.4])\n_, g_mm = minimax_loss(d_real, d_fake)\n_, g_ns = nonsaturating_loss(d_real, d_fake)\nassert g_mm != g_ns, 'Minimax and non-saturating G losses should differ'"}
+  "tags": ["gan", "loss-function", "minimax", "wgan", "hinge-loss", "wasserstein"],
+  "description": "Implement three GAN loss functions for both the discriminator (or critic) and generator:\n\n1. **Minimax (original GAN)**: Binary cross-entropy based. Inputs are sigmoid probabilities.\n   - D loss: `-mean(log(d_real) + log(1 - d_fake))`\n   - G loss (non-saturating): `-mean(log(d_fake))`\n\n2. **WGAN (Wasserstein)**: Uses raw critic scores (no sigmoid).\n   - Critic loss: `-mean(real_scores) + mean(fake_scores)`\n   - G loss: `-mean(fake_scores)`\n\n3. **Hinge loss**: Uses raw logits.\n   - D loss: `mean(relu(1 - real_scores)) + mean(relu(1 + fake_scores))`\n   - G loss: `-mean(fake_scores)`\n\nEach function returns a tuple `(d_loss, g_loss)` as floats.",
+  "constraints": [
+    "Minimax inputs d_real, d_fake are probabilities in (0, 1)",
+    "Clip probability inputs to [1e-7, 1-1e-7] before log",
+    "WGAN and hinge inputs are raw scores (unrestricted floats)",
+    "All functions return (d_loss, g_loss) as float scalars",
+    "numpy and stdlib only"
   ],
-  "hints": ["Minimax/NS: clip inputs before log", "WGAN D: -mean(d_real) + mean(d_fake)", "Hinge D: mean(relu(1-d_real) + relu(1+d_fake))"],
-  "related_problems": ["26.4", "26.6", "26.2"]
+  "starter_code": "import numpy as np\nfrom typing import Tuple\n\ndef minimax_loss(d_real: np.ndarray, d_fake: np.ndarray) -> Tuple[float, float]:\n    \"\"\"\n    Original minimax GAN loss. d_real, d_fake are probabilities in (0,1).\n    Returns (d_loss, g_loss).\n    \"\"\"\n    pass\n\ndef wgan_loss(real_scores: np.ndarray, fake_scores: np.ndarray) -> Tuple[float, float]:\n    \"\"\"\n    Wasserstein GAN loss. real_scores, fake_scores are raw critic outputs.\n    Returns (critic_loss, g_loss).\n    \"\"\"\n    pass\n\ndef hinge_loss(real_scores: np.ndarray, fake_scores: np.ndarray) -> Tuple[float, float]:\n    \"\"\"\n    Hinge GAN loss. real_scores, fake_scores are raw logits.\n    Returns (d_loss, g_loss).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\nfrom typing import Tuple\n\ndef minimax_loss(d_real: np.ndarray, d_fake: np.ndarray) -> Tuple[float, float]:\n    d_real = np.clip(d_real, 1e-7, 1 - 1e-7)\n    d_fake = np.clip(d_fake, 1e-7, 1 - 1e-7)\n    d_loss = float(-np.mean(np.log(d_real) + np.log(1 - d_fake)))\n    g_loss = float(-np.mean(np.log(d_fake)))  # non-saturating\n    return d_loss, g_loss\n\ndef wgan_loss(real_scores: np.ndarray, fake_scores: np.ndarray) -> Tuple[float, float]:\n    critic_loss = float(-np.mean(real_scores) + np.mean(fake_scores))\n    g_loss = float(-np.mean(fake_scores))\n    return critic_loss, g_loss\n\ndef hinge_loss(real_scores: np.ndarray, fake_scores: np.ndarray) -> Tuple[float, float]:\n    d_loss = float(np.mean(np.maximum(0, 1 - real_scores)) + np.mean(np.maximum(0, 1 + fake_scores)))\n    g_loss = float(-np.mean(fake_scores))\n    return d_loss, g_loss\n",
+  "explanation": "**Minimax GAN (Goodfellow 2014)**: D outputs probabilities via sigmoid. D minimizes BCE: wants D(real)->1, D(fake)->0. Non-saturating G loss: instead of maximizing log(1-D(G(z))) (which saturates when D is strong), minimize -log(D(G(z))) for better gradients.\n\n**WGAN (Arjovsky 2017)**: Critic outputs raw scores (no sigmoid). Estimates Wasserstein-1 distance as E[f(real)] - E[f(fake)]. Requires Lipschitz constraint (weight clipping or gradient penalty). More stable training and meaningful loss metric.\n\n**Hinge loss (Miyato 2018)**: Encourages real scores > 1 (penalize relu(1-real)) and fake scores < -1 (penalize relu(1+fake)). Zero loss when margins are satisfied. Widely used in BigGAN, StyleGAN.\n\n**Trade-offs**: Minimax can suffer mode collapse and vanishing gradients. WGAN fixes instability. Hinge provides margin-based discrimination and empirical stability.",
+  "test_cases": [
+    {
+      "name": "minimax_ideal_discriminator",
+      "code": "import numpy as np\n# Perfect D: d_real near 1, d_fake near 0\nd_real = np.array([0.99, 0.98, 0.97])\nd_fake = np.array([0.01, 0.02, 0.03])\nd_loss, g_loss = minimax_loss(d_real, d_fake)\nassert d_loss < 0.1  # near 0 for perfect D\nassert np.isfinite(d_loss) and np.isfinite(g_loss)"
+    },
+    {
+      "name": "wgan_separable_vs_mixed",
+      "code": "import numpy as np\n# Easy case: critic separates clearly\nreal_easy = np.array([3.0, 4.0, 5.0])\nfake_easy = np.array([-3.0, -4.0, -5.0])\nc_easy, _ = wgan_loss(real_easy, fake_easy)\n# Hard case: critic confused\nreal_hard = np.array([1.0, 1.0, 1.0])\nfake_hard = np.array([0.9, 1.0, 1.1])\nc_hard, _ = wgan_loss(real_hard, fake_hard)\nassert c_easy < c_hard  # lower critic loss when separable"
+    },
+    {
+      "name": "hinge_zero_at_margin",
+      "code": "import numpy as np\n# real > 1 and fake < -1 => both hinge terms are 0\nreal = np.array([2.0, 1.5, 3.0])\nfake = np.array([-2.0, -1.5, -3.0])\nd_loss, _ = hinge_loss(real, fake)\nassert d_loss == 0.0"
+    },
+    {
+      "name": "all_losses_are_scalars",
+      "code": "import numpy as np\nnp.random.seed(0)\nd_real = np.clip(np.random.rand(8), 0.05, 0.95)\nd_fake = np.clip(np.random.rand(8), 0.05, 0.95)\nscores_r = np.random.randn(8)\nscores_f = np.random.randn(8)\nfor pair in [minimax_loss(d_real, d_fake), wgan_loss(scores_r, scores_f), hinge_loss(scores_r, scores_f)]:\n    assert np.ndim(pair[0]) == 0 and np.ndim(pair[1]) == 0\n    assert np.isfinite(pair[0]) and np.isfinite(pair[1])"
+    },
+    {
+      "name": "wgan_g_wants_high_fake_scores",
+      "code": "import numpy as np\n_, g_low = wgan_loss(np.array([1.0]), np.array([-3.0]))\n_, g_high = wgan_loss(np.array([1.0]), np.array([3.0]))\nassert g_high < g_low  # G wants fake scores high"
+    }
+  ],
+  "hints": [
+    "Minimax: clip d_real and d_fake to [1e-7, 1-1e-7] before log to avoid log(0).",
+    "Non-saturating G loss for minimax is -mean(log(d_fake)), not mean(log(1-d_fake)).",
+    "WGAN critic loss = -mean(real_scores) + mean(fake_scores); G minimizes -mean(fake_scores).",
+    "Hinge D: relu(1 - real) + relu(1 + fake) per sample, then mean.",
+    "All three G losses agree in sign: lower when fake_scores are higher (G fools D/critic)."
+  ],
+  "related_problems": ["26.4", "26.6", "26.7"]
 }

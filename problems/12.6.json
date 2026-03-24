@@ -1,0 +1,50 @@
+{
+  "id": "12.6",
+  "title": "Maximal Marginal Relevance (MMR)",
+  "difficulty": "Medium",
+  "category": "Information Retrieval",
+  "tags": ["mmr", "diversity", "reranking", "information retrieval"],
+  "description": "Implement Maximal Marginal Relevance (MMR) for selecting a diverse yet relevant subset of documents.\n\nMMR iteratively selects documents that maximize relevance to the query while minimizing redundancy with already-selected documents:\n\n  MMR(d) = argmax_{d in R\\S} [lambda * sim(d, query) - (1 - lambda) * max_{d' in S} sim(d, d')]\n\nWhere:\n- R = candidate documents, S = already selected documents.\n- sim(d, query) = cosine similarity between document and query embeddings.\n- max_{d'} sim(d, d') = similarity to the most similar already-selected document.\n- lambda controls relevance vs diversity trade-off (lambda=1 = pure relevance, lambda=0 = pure diversity).\n\nImplement:\n```python\ndef mmr_rerank(query_embed, doc_embeds, doc_ids, top_k, lambda_param=0.5) -> list:\n```\nReturns list of selected doc_ids in selection order.",
+  "constraints": [
+    "query_embed: shape (d,).",
+    "doc_embeds: shape (n, d) — embeddings for candidate documents.",
+    "doc_ids: list of length n — identifiers for each candidate.",
+    "top_k <= n.",
+    "Normalize all embeddings before computing cosine similarities.",
+    "When no document is yet selected, the redundancy term is 0 (or -inf so the argmax selects based on relevance).",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\ndef mmr_rerank(\n    query_embed: np.ndarray,\n    doc_embeds: np.ndarray,\n    doc_ids: list,\n    top_k: int,\n    lambda_param: float = 0.5\n) -> list:\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef mmr_rerank(\n    query_embed: np.ndarray,\n    doc_embeds: np.ndarray,\n    doc_ids: list,\n    top_k: int,\n    lambda_param: float = 0.5\n) -> list:\n    # Normalize\n    def normalize(x):\n        n = np.linalg.norm(x, axis=-1, keepdims=True)\n        return x / (n + 1e-10)\n\n    q_norm = normalize(query_embed.reshape(1, -1)).flatten()\n    d_norm = normalize(doc_embeds)  # (n, d)\n    n = len(doc_ids)\n\n    # Precompute all cosine similarities to query\n    query_sims = d_norm @ q_norm  # (n,)\n    # Precompute all pairwise cosine similarities\n    sim_matrix = d_norm @ d_norm.T  # (n, n)\n\n    selected_indices = []\n    remaining = list(range(n))\n\n    for _ in range(min(top_k, n)):\n        if not selected_indices:\n            # First selection: pick highest relevance\n            best_idx = max(remaining, key=lambda i: query_sims[i])\n        else:\n            best_mmr = -np.inf\n            best_idx = remaining[0]\n            for i in remaining:\n                relevance = lambda_param * query_sims[i]\n                redundancy = (1 - lambda_param) * max(\n                    sim_matrix[i, j] for j in selected_indices\n                )\n                mmr_score = relevance - redundancy\n                if mmr_score > best_mmr:\n                    best_mmr = mmr_score\n                    best_idx = i\n        selected_indices.append(best_idx)\n        remaining.remove(best_idx)\n\n    return [doc_ids[i] for i in selected_indices]\n",
+  "explanation": "MMR balances relevance and diversity in document selection. At each step, it greedily picks the document with the best trade-off between (1) similarity to the query (relevance) and (2) dissimilarity to already-selected documents (diversity). The lambda parameter allows tuning: lambda=1 gives pure relevance-ranked results (same as cosine search), lambda=0 gives maximum diversity selection. MMR is used in RAG pipelines to avoid retrieving redundant passages, in search result diversification, and in summarization to pick diverse sentences. The greedy approach is O(n*k) with pre-computed similarities.",
+  "test_cases": [
+    {
+      "name": "test_lambda1_equals_similarity_ranking",
+      "code": "import numpy as np\nnp.random.seed(0)\nquery = np.array([1.0, 0.0, 0.0])\ndocs = np.array([[1.0, 0.0, 0.0], [0.8, 0.2, 0.0], [0.0, 1.0, 0.0]])\nids = ['a', 'b', 'c']\nresult = mmr_rerank(query, docs, ids, top_k=3, lambda_param=1.0)\nassert result[0] == 'a', f\"Highest similarity should be selected first: {result}\"\nassert result[1] == 'b', f\"Second highest similarity: {result}\""
+    },
+    {
+      "name": "test_lambda0_maximizes_diversity",
+      "code": "import numpy as np\nquery = np.array([1.0, 0.0])\n# All docs similar to query, but doc 'b' is very similar to doc 'a'\ndocs = np.array([[1.0, 0.0], [0.99, 0.01], [0.0, 1.0]])\nids = ['a', 'b', 'c']\nresult = mmr_rerank(query, docs, ids, top_k=2, lambda_param=0.0)\n# With lambda=0: pure diversity. After selecting 'a', 'b' is very redundant,\n# so 'c' (orthogonal) should be selected\nassert result[0] == 'a', f\"First should be 'a' (always highest relevance): {result}\"\nassert result[1] == 'c', f\"Second should be diverse 'c', not redundant 'b': {result}\""
+    },
+    {
+      "name": "test_returns_top_k",
+      "code": "import numpy as np\nnp.random.seed(1)\nquery = np.random.randn(8)\ndocs = np.random.randn(10, 8)\nids = list(range(10))\nresult = mmr_rerank(query, docs, ids, top_k=4)\nassert len(result) == 4, f\"Expected 4 results, got {len(result)}\"\nassert len(set(result)) == 4, \"Results should be unique\""
+    },
+    {
+      "name": "test_no_duplicates",
+      "code": "import numpy as np\nnp.random.seed(42)\nquery = np.random.randn(4)\ndocs = np.random.randn(8, 4)\nids = ['d0','d1','d2','d3','d4','d5','d6','d7']\nresult = mmr_rerank(query, docs, ids, top_k=5)\nassert len(result) == len(set(result)), f\"No duplicate doc_ids in result: {result}\""
+    },
+    {
+      "name": "test_single_doc",
+      "code": "import numpy as np\nquery = np.array([1.0, 0.0])\ndocs = np.array([[1.0, 0.0]])\nids = ['only']\nresult = mmr_rerank(query, docs, ids, top_k=1)\nassert result == ['only'], f\"Should return the only document: {result}\""
+    }
+  ],
+  "hints": [
+    "Precompute all query-document similarities and all pairwise document similarities upfront.",
+    "Maintain a set of remaining (unselected) candidates and shrink it each iteration.",
+    "For the first selection, there is no redundancy — just pick the highest query similarity.",
+    "redundancy = max similarity to any already-selected document.",
+    "MMR score = lambda * query_sim - (1 - lambda) * max_redundancy."
+  ],
+  "related_problems": ["11.14", "12.7", "12.9", "11.13"]
+}

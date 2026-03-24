@@ -1,0 +1,49 @@
+{
+  "id": "12.4",
+  "title": "Inverted Index",
+  "difficulty": "Medium",
+  "category": "Information Retrieval",
+  "tags": ["inverted index", "postings list", "information retrieval", "text search"],
+  "description": "Implement an inverted index — the core data structure of all keyword search engines.\n\nAn inverted index maps each term to a sorted list of document IDs that contain it (postings list). This enables efficient lookup and set operations for Boolean retrieval.\n\nImplement an `InvertedIndex` class:\n- `build(corpus)`: Given a list of tokenized documents, build the index.\n- `get_postings(term)`: Return sorted list of doc_ids containing the term.\n- `and_query(terms)`: Return sorted doc_ids containing ALL terms (intersection).\n- `or_query(terms)`: Return sorted doc_ids containing ANY term (union).\n- `term_frequency(term, doc_id)`: Return how many times term appears in doc_id.",
+  "constraints": [
+    "corpus: list of tokenized documents (list of list of strings).",
+    "doc_ids are integer indices (0-based).",
+    "Postings lists must be sorted in ascending doc_id order.",
+    "and_query uses sorted set intersection via merge.",
+    "or_query uses sorted set union via merge.",
+    "Use only Python stdlib."
+  ],
+  "starter_code": "from collections import defaultdict\n\nclass InvertedIndex:\n    def __init__(self):\n        self.index = {}         # term -> sorted list of doc_ids\n        self.tf = {}            # (term, doc_id) -> count\n\n    def build(self, corpus: list) -> None:\n        pass\n\n    def get_postings(self, term: str) -> list:\n        pass\n\n    def and_query(self, terms: list) -> list:\n        pass\n\n    def or_query(self, terms: list) -> list:\n        pass\n\n    def term_frequency(self, term: str, doc_id: int) -> int:\n        pass\n",
+  "solution_code": "from collections import defaultdict, Counter\n\nclass InvertedIndex:\n    def __init__(self):\n        self.index = {}         # term -> sorted list of doc_ids\n        self.tf = {}            # (term, doc_id) -> count\n\n    def build(self, corpus: list) -> None:\n        postings = defaultdict(set)\n        for doc_id, doc in enumerate(corpus):\n            tf_counts = Counter(doc)\n            for term, count in tf_counts.items():\n                postings[term].add(doc_id)\n                self.tf[(term, doc_id)] = count\n        # Sort postings lists\n        self.index = {term: sorted(doc_ids) for term, doc_ids in postings.items()}\n\n    def get_postings(self, term: str) -> list:\n        return self.index.get(term, [])\n\n    def and_query(self, terms: list) -> list:\n        if not terms:\n            return []\n        result = set(self.get_postings(terms[0]))\n        for term in terms[1:]:\n            result &= set(self.get_postings(term))\n        return sorted(result)\n\n    def or_query(self, terms: list) -> list:\n        if not terms:\n            return []\n        result = set()\n        for term in terms:\n            result |= set(self.get_postings(term))\n        return sorted(result)\n\n    def term_frequency(self, term: str, doc_id: int) -> int:\n        return self.tf.get((term, doc_id), 0)\n",
+  "explanation": "The inverted index is built by iterating over all documents and adding each document's ID to the postings list for each of its terms. Term frequencies are stored separately for scoring. Boolean query operations (AND/OR) are efficient on sorted postings lists: AND = intersection (only doc_ids in all lists), OR = union (any doc_id). For large-scale engines, these merges are done with linear-time merge algorithms on sorted lists rather than set operations, but set operations are simpler and correct. The inverted index is the backbone of systems like Elasticsearch (Lucene) and BM25 retrieval.",
+  "test_cases": [
+    {
+      "name": "test_build_postings",
+      "code": "idx = InvertedIndex()\ncorpus = [['cat', 'sat'], ['cat', 'mat'], ['dog', 'sat']]\nidx.build(corpus)\nassert idx.get_postings('cat') == [0, 1], f\"'cat' should be in docs 0,1: {idx.get_postings('cat')}\"\nassert idx.get_postings('sat') == [0, 2], f\"'sat' should be in docs 0,2: {idx.get_postings('sat')}\"\nassert idx.get_postings('xyz') == [], \"Unknown term should return []\""
+    },
+    {
+      "name": "test_and_query",
+      "code": "idx = InvertedIndex()\ncorpus = [['a', 'b', 'c'], ['a', 'b'], ['b', 'c'], ['a', 'c'], ['d']]\nidx.build(corpus)\nassert idx.and_query(['a', 'b']) == [0, 1], f\"AND(a,b) should be [0,1]: {idx.and_query(['a','b'])}\"\nassert idx.and_query(['a', 'b', 'c']) == [0], f\"AND(a,b,c) should be [0]: {idx.and_query(['a','b','c'])}\"\nassert idx.and_query(['a', 'd']) == [], f\"AND(a,d) should be []: {idx.and_query(['a','d'])}\""
+    },
+    {
+      "name": "test_or_query",
+      "code": "idx = InvertedIndex()\ncorpus = [['cat', 'dog'], ['fish'], ['bird', 'cat']]\nidx.build(corpus)\nassert idx.or_query(['cat', 'fish']) == [0, 1, 2], f\"OR(cat,fish): {idx.or_query(['cat','fish'])}\"\nassert idx.or_query(['bird']) == [2]"
+    },
+    {
+      "name": "test_term_frequency",
+      "code": "idx = InvertedIndex()\ncorpus = [['cat', 'cat', 'dog', 'cat'], ['dog']]\nidx.build(corpus)\nassert idx.term_frequency('cat', 0) == 3, f\"'cat' appears 3x in doc 0\"\nassert idx.term_frequency('dog', 0) == 1\nassert idx.term_frequency('cat', 1) == 0, \"'cat' not in doc 1\""
+    },
+    {
+      "name": "test_postings_sorted",
+      "code": "idx = InvertedIndex()\ncorpus = [['x'], ['y'], ['x', 'y'], ['z', 'x']]\nidx.build(corpus)\npostings_x = idx.get_postings('x')\nassert postings_x == sorted(postings_x), f\"Postings must be sorted: {postings_x}\"\nassert postings_x == [0, 2, 3]"
+    }
+  ],
+  "hints": [
+    "Use a defaultdict(set) to collect doc_ids per term during construction, then sort each set.",
+    "Store term frequencies as a dict keyed by (term, doc_id) tuple.",
+    "AND query: intersect postings lists using set &= operations (or merge algorithm).",
+    "OR query: union postings lists using set |= operations.",
+    "Return sorted() of the final set to maintain sorted order guarantee."
+  ],
+  "related_problems": ["12.1", "12.2", "12.5", "12.12"]
+}

@@ -3,27 +3,44 @@
   "title": "RMSNorm",
   "difficulty": "Medium",
   "category": "Neural Network Fundamentals",
-  "tags": ["numpy", "from-scratch", "normalization", "llama", "transformer"],
-  "description": "Implement **RMSNorm** (Root Mean Square Layer Normalization) — a simplified layer normalization used in LLaMA, Mistral, and other modern LLMs.\n\n**Formula:**\n```\nrms = sqrt(mean(x^2, axis=-1, keepdims=True) + eps)\nx_norm = x / rms\nout = gamma * x_norm\n```\n\n**Key difference from LayerNorm:**\n- No mean subtraction (no re-centering)\n- No beta offset parameter\n- Divides by RMS (root mean square) instead of standard deviation\n\n**Motivation:** The mean subtraction in LayerNorm is computationally redundant (the scale invariance is more important than shift invariance). RMSNorm is ~15% faster than LayerNorm while achieving similar performance.\n\n**Shapes:**\n- Input: (..., d_model)\n- gamma: (d_model,)\n- Output: same shape as input",
+  "tags": ["RMSNorm", "normalisation", "LLaMA", "root mean square", "transformers"],
+  "description": "Implement **RMSNorm** (Root Mean Square Layer Normalization), used in LLaMA and other modern LLMs.\n\nRMSNorm simplifies Layer Norm by removing the mean subtraction step:\n\n```\nrms = sqrt(mean(x^2, axis=-1, keepdims=True) + eps)\nx_hat = x / rms\nout = gamma * x_hat\n```\n\nwhere:\n- `rms` is the root mean square of the input across features\n- `gamma` is a learnable scale parameter of shape `(d,)` (no beta/shift parameter)\n- `eps` is a small constant for numerical stability (default 1e-6)\n\nImplement `rmsnorm(x, gamma, eps=1e-6)` where `x` has shape `(n, d)`.",
   "constraints": [
-    "Use only numpy",
-    "No mean subtraction — only divide by RMS",
-    "gamma initialized to ones, NO beta parameter",
-    "eps default 1e-6 (LLaMA uses 1e-6)"
+    "No mean subtraction (unlike Layer Norm)",
+    "No beta (shift) parameter",
+    "gamma has shape (d,)",
+    "Use numpy only"
   ],
-  "starter_code": "import numpy as np\n\nclass RMSNorm:\n    def __init__(self, d_model: int, eps: float = 1e-6):\n        \"\"\"Initialize RMSNorm.\n\n        Args:\n            d_model: feature dimension\n            eps: numerical stability constant\n        \"\"\"\n        pass\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        \"\"\"Apply RMSNorm.\n\n        Args:\n            x: (..., d_model) input\n        Returns:\n            (..., d_model) normalized output\n        \"\"\"\n        pass",
-  "solution_code": "import numpy as np\n\nclass RMSNorm:\n    def __init__(self, d_model: int, eps: float = 1e-6):\n        self.d_model = d_model\n        self.eps = eps\n        self.gamma = np.ones(d_model)\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        # RMS over the last dimension\n        rms = np.sqrt(np.mean(x ** 2, axis=-1, keepdims=True) + self.eps)\n        x_norm = x / rms\n        return self.gamma * x_norm",
-  "explanation": "**Key concepts:**\n\n1. **RMS normalization:** Divides each vector by its root-mean-square norm. This is scale-invariant but NOT translation-invariant (unlike LayerNorm which subtracts mean).\n\n2. **Why omit mean subtraction?** Empirically, the re-centering step in LayerNorm provides minimal benefit. The re-scaling is the critical component. Removing mean subtraction reduces computation.\n\n3. **Used in:** LLaMA 1/2/3, Mistral, Gemma, and most modern open-source LLMs. Also Qwen, DeepSeek, etc.\n\n4. **Single learnable parameter:** Only gamma (scale), no beta (shift). The model can still learn any scale but cannot learn a bias via normalization — any bias would need to come from the subsequent linear layer.\n\n5. **Eps choice:** LLaMA uses 1e-6 (vs 1e-5 for LayerNorm). Smaller eps is safe because RMS is less likely to be near zero than variance.\n\n**Interview angle:** When asked about LLM internals, know that most modern LLMs use Pre-RMSNorm rather than Post-LayerNorm. Explain the trade-off.",
+  "starter_code": "import numpy as np\n\ndef rmsnorm(\n    x: np.ndarray,\n    gamma: np.ndarray,\n    eps: float = 1e-6\n) -> np.ndarray:\n    \"\"\"\n    Apply RMSNorm.\n\n    Args:\n        x: Input of shape (n, d).\n        gamma: Scale parameter of shape (d,).\n        eps: Numerical stability constant.\n\n    Returns:\n        Normalised output of shape (n, d).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef rmsnorm(\n    x: np.ndarray,\n    gamma: np.ndarray,\n    eps: float = 1e-6\n) -> np.ndarray:\n    rms = np.sqrt(np.mean(x ** 2, axis=-1, keepdims=True) + eps)  # (n, 1)\n    x_hat = x / rms                                                  # (n, d)\n    return gamma * x_hat                                             # (n, d)\n",
+  "explanation": "1. **RMSNorm** was proposed as a computationally cheaper alternative to Layer Norm. It omits the mean subtraction, arguing that re-centering is less important than re-scaling.\n2. **Formula**: divide by the root mean square: `rms = sqrt(mean(x^2) + eps)`, then scale by gamma.\n3. **Computational savings**: avoids computing the mean, saving ~25% compute compared to Layer Norm.\n4. **Used in**: LLaMA, LLaMA 2/3, Mistral, Gemma, and many other modern LLMs.\n5. **When mean is zero**: if x already has zero mean, RMSNorm is equivalent to Layer Norm.",
   "test_cases": [
-    {"name": "Output shape preserved", "code": "import numpy as np\nnp.random.seed(0)\nrms_norm = RMSNorm(d_model=16)\nx = np.random.randn(4, 16)\nout = rms_norm.forward(x)\nassert out.shape == (4, 16)"},
-    {"name": "Unit RMS after normalization (with gamma=1)", "code": "import numpy as np\nnp.random.seed(1)\nrms_norm = RMSNorm(d_model=32)\nx = np.random.randn(6, 32) * 5\nout = rms_norm.forward(x)\n# RMS of each row should be ~1 (gamma=1)\nrow_rms = np.sqrt(np.mean(out**2, axis=-1))\nassert np.allclose(row_rms, 1.0, atol=1e-4), f'RMS should be 1, got {row_rms}'"},
-    {"name": "3D input (N, T, d_model)", "code": "import numpy as np\nnp.random.seed(2)\nrms_norm = RMSNorm(d_model=8)\nx = np.random.randn(3, 10, 8)\nout = rms_norm.forward(x)\nassert out.shape == (3, 10, 8)"},
-    {"name": "No beta parameter", "code": "import numpy as np\nrms_norm = RMSNorm(d_model=4)\nassert hasattr(rms_norm, 'gamma'), 'Should have gamma'\nassert not hasattr(rms_norm, 'beta'), 'Should NOT have beta'\nassert rms_norm.gamma.shape == (4,)\nassert np.all(rms_norm.gamma == 1.0)"},
-    {"name": "Scale equivariance", "code": "import numpy as np\nnp.random.seed(3)\nrms_norm = RMSNorm(d_model=8)\nx = np.random.randn(5, 8)\n# Scaling input by k should not change output (RMS normalization is scale-invariant)\nout1 = rms_norm.forward(x)\nout2 = rms_norm.forward(x * 10)\nassert np.allclose(out1, out2, atol=1e-5), 'RMSNorm should be scale-invariant'"}
+    {
+      "name": "Output shape matches input",
+      "code": "import numpy as np\nx = np.random.randn(4, 16)\ngamma = np.ones(16)\nout = rmsnorm(x, gamma)\nassert out.shape == (4, 16), f'Expected (4,16), got {out.shape}'"
+    },
+    {
+      "name": "RMS of output is 1 when gamma=1 and eps=0",
+      "code": "import numpy as np\nnp.random.seed(0)\nx = np.random.randn(5, 8) * 3\ngamma = np.ones(8)\nout = rmsnorm(x, gamma, eps=0)\nrms_out = np.sqrt(np.mean(out**2, axis=-1))\nassert np.allclose(rms_out, 1.0, atol=1e-5), f'RMS of output should be 1, got {rms_out}'"
+    },
+    {
+      "name": "Gamma scales the output RMS",
+      "code": "import numpy as np\nnp.random.seed(1)\nx = np.random.randn(3, 4) * 2\ngamma = np.full(4, 2.0)\nout = rmsnorm(x, gamma, eps=0)\nrms_out = np.sqrt(np.mean(out**2, axis=-1))\nassert np.allclose(rms_out, 2.0, atol=1e-5), 'RMS of output should equal |gamma|'"
+    },
+    {
+      "name": "Zero input with eps does not produce NaN",
+      "code": "import numpy as np\nx = np.zeros((3, 8))\ngamma = np.ones(8)\nout = rmsnorm(x, gamma, eps=1e-6)\nassert not np.any(np.isnan(out)), 'No NaN for zero input'\nassert np.allclose(out, 0), 'Zero input should give zero output'"
+    },
+    {
+      "name": "RMSNorm does not subtract mean",
+      "code": "import numpy as np\nx = np.ones((2, 4)) * 10.0\ngamma = np.ones(4)\nout = rmsnorm(x, gamma)\nassert np.all(out > 0), 'RMSNorm should preserve sign (no mean subtraction)'"
+    }
   ],
   "hints": [
-    "rms = sqrt(mean(x**2, axis=-1, keepdims=True) + eps); x_norm = x / rms; return gamma * x_norm",
-    "No beta, no mean subtraction — just RMS normalization followed by learned scale gamma"
+    "Compute `rms = np.sqrt(np.mean(x**2, axis=-1, keepdims=True) + eps)`.",
+    "Divide x by rms to get x_hat, then multiply by gamma.",
+    "RMSNorm does NOT subtract the mean — that is the key difference from Layer Norm.",
+    "There is no beta (shift) parameter in the original RMSNorm formulation."
   ],
   "related_problems": ["4.8", "4.9", "4.10"]
 }

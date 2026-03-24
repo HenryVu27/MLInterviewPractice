@@ -1,0 +1,49 @@
+{
+  "id": "11.15",
+  "title": "Two-Tower Model Scoring",
+  "difficulty": "Medium",
+  "category": "Embeddings & Similarity Search",
+  "tags": ["two-tower", "bi-encoder", "contrastive learning", "retrieval"],
+  "description": "Implement a Two-Tower (bi-encoder) model for computing relevance scores and contrastive training loss.\n\nIn a two-tower model, a query encoder and document encoder independently map inputs to embedding vectors. Relevance is scored by cosine similarity.\n\nImplement:\n```python\ndef two_tower_scores(query_embeds: np.ndarray, doc_embeds: np.ndarray) -> np.ndarray:\n```\nCompute all pairwise cosine similarities. Returns (n_queries, n_docs).\n\nAlso implement:\n```python\ndef in_batch_contrastive_loss(query_embeds: np.ndarray, doc_embeds: np.ndarray, temperature: float = 0.07) -> float:\n```\nIn-batch contrastive loss (InfoNCE / NT-Xent): for a batch of (query, positive_doc) pairs, treat all other docs in the batch as negatives. The i-th query's positive is the i-th document.",
+  "constraints": [
+    "query_embeds: shape (n, d), doc_embeds: shape (n, d) for contrastive loss (same n).",
+    "For two_tower_scores, query is (n, d), docs is (m, d), output is (n, m).",
+    "Normalize embeddings before computing dot products.",
+    "InfoNCE loss: for query i, positive is doc i. Loss = mean of -log(exp(sim_ii/T) / sum_j exp(sim_ij/T)).",
+    "Use temperature scaling.",
+    "Use only numpy and Python stdlib."
+  ],
+  "starter_code": "import numpy as np\n\ndef two_tower_scores(query_embeds: np.ndarray, doc_embeds: np.ndarray) -> np.ndarray:\n    pass\n\ndef in_batch_contrastive_loss(\n    query_embeds: np.ndarray,\n    doc_embeds: np.ndarray,\n    temperature: float = 0.07\n) -> float:\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef _l2_normalize(x: np.ndarray) -> np.ndarray:\n    norms = np.linalg.norm(x, axis=1, keepdims=True)\n    return x / (norms + 1e-10)\n\ndef two_tower_scores(query_embeds: np.ndarray, doc_embeds: np.ndarray) -> np.ndarray:\n    q_norm = _l2_normalize(query_embeds)  # (n, d)\n    d_norm = _l2_normalize(doc_embeds)    # (m, d)\n    return q_norm @ d_norm.T              # (n, m)\n\ndef in_batch_contrastive_loss(\n    query_embeds: np.ndarray,\n    doc_embeds: np.ndarray,\n    temperature: float = 0.07\n) -> float:\n    n = len(query_embeds)\n    # Compute similarity matrix\n    sim_matrix = two_tower_scores(query_embeds, doc_embeds)  # (n, n)\n    # Scale by temperature\n    sim_matrix = sim_matrix / temperature\n    # Numerically stable softmax per row\n    sim_matrix -= sim_matrix.max(axis=1, keepdims=True)\n    exp_sim = np.exp(sim_matrix)\n    log_probs = sim_matrix - np.log(exp_sim.sum(axis=1, keepdims=True))\n    # Positive pairs are on the diagonal\n    positive_log_probs = log_probs[np.arange(n), np.arange(n)]\n    loss = -positive_log_probs.mean()\n    return float(loss)\n",
+  "explanation": "The two-tower architecture independently encodes queries and documents, then scores relevance via cosine similarity. This enables pre-computation of all document embeddings offline. During training, in-batch negatives (InfoNCE/NT-Xent loss) treat every other document in the batch as a negative for the current query. The loss for query i: -log(exp(sim(q_i, d_i)/T) / sum_j exp(sim(q_i, d_j)/T)). Temperature T controls the sharpness of the distribution — lower T makes the model more discriminative but harder to train. This is the basis for models like DPR, E5, and GTE.",
+  "test_cases": [
+    {
+      "name": "test_scores_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nq = np.random.randn(4, 16)\nd = np.random.randn(7, 16)\nscores = two_tower_scores(q, d)\nassert scores.shape == (4, 7), f\"Expected (4,7), got {scores.shape}\""
+    },
+    {
+      "name": "test_scores_bounded",
+      "code": "import numpy as np\nnp.random.seed(1)\nq = np.random.randn(5, 8)\nd = np.random.randn(5, 8)\nscores = two_tower_scores(q, d)\nassert (scores >= -1.01).all() and (scores <= 1.01).all(), f\"Cosine sims must be in [-1,1]: {scores.min():.3f} to {scores.max():.3f}\""
+    },
+    {
+      "name": "test_contrastive_loss_nonneg",
+      "code": "import numpy as np\nnp.random.seed(42)\nn, d = 8, 16\nq = np.random.randn(n, d)\ndoc = np.random.randn(n, d)\nloss = in_batch_contrastive_loss(q, doc)\nassert loss >= 0, f\"Loss must be non-negative, got {loss}\"\nassert loss < 20, f\"Loss should be reasonable, got {loss}\""
+    },
+    {
+      "name": "test_perfect_alignment_low_loss",
+      "code": "import numpy as np\nnp.random.seed(3)\nn, d = 6, 8\n# Make query == doc for all pairs (perfect alignment)\nembeds = np.random.randn(n, d)\nloss_perfect = in_batch_contrastive_loss(embeds, embeds.copy(), temperature=0.1)\n# With small temperature and perfect alignment, loss should be near -log(1/n) for random\n# But perfect match on diagonal means low loss\nassert loss_perfect < np.log(n), f\"Perfect alignment should give low loss, got {loss_perfect:.4f}\""
+    },
+    {
+      "name": "test_self_similarity_is_one",
+      "code": "import numpy as np\nnp.random.seed(5)\nv = np.random.randn(4, 8)\nscores = two_tower_scores(v, v)\nfor i in range(4):\n    assert abs(scores[i, i] - 1.0) < 1e-6, f\"Self-similarity at [{i},{i}] should be 1.0, got {scores[i,i]}\""
+    }
+  ],
+  "hints": [
+    "L2-normalize both query and doc embeddings so dot product = cosine similarity.",
+    "two_tower_scores is just q_norm @ d_norm.T.",
+    "InfoNCE: for each row i, loss_i = -log(softmax(sim_row_i / T)[i]).",
+    "Use the log-sum-exp trick for numerical stability: subtract row max before exp.",
+    "The diagonal of the (n, n) similarity matrix contains the positive pair scores."
+  ],
+  "related_problems": ["11.1", "11.13", "11.14", "12.9"]
+}

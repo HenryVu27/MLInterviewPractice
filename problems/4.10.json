@@ -3,26 +3,44 @@
   "title": "Group Normalization",
   "difficulty": "Medium",
   "category": "Neural Network Fundamentals",
-  "tags": ["numpy", "from-scratch", "normalization", "group-norm"],
-  "description": "Implement **Group Normalization** — normalize within groups of channels, independent of batch size.\n\n**Algorithm:**\n1. Split the C channels into G groups of size (C // G)\n2. For each sample and each group, normalize over the channels in that group (and spatial dimensions if present)\n3. Apply learnable gamma and beta\n\n**For 2D input (N, C):**\n```\nReshape to (N, G, C//G)\nmu = mean over axis=2 → (N, G, 1)\nvar = var over axis=2 → (N, G, 1)\nx_norm = (x - mu) / sqrt(var + eps)\nReshape back to (N, C)\nout = gamma * x_norm + beta\n```\n\n**Why Group Norm?** Works well with small batches (even batch size 1). Used in detection/segmentation models where large batches are memory-constrained.\n\n**Shapes:** Input (N, C); gamma, beta: (C,); C must be divisible by G",
+  "tags": ["group norm", "normalisation", "channel groups", "computer vision"],
+  "description": "Implement **Group Normalization** which divides channels into groups and normalises within each group.\n\nGiven input `x` of shape `(n, c)` (batch of n samples, c channels), and `num_groups` G:\n1. Reshape x to `(n, G, c//G)`\n2. Compute mean and variance along the **last two dimensions** (over the group features) for each group independently\n3. Normalise: `x_hat = (x - mean) / sqrt(var + eps)`\n4. Reshape back to `(n, c)`\n5. Apply affine transform: `out = gamma * x_hat + beta` where gamma, beta have shape `(c,)`\n\nThis extends naturally to images: shape `(n, c, h, w)` would reshape to `(n, G, c//G, h, w)`, but here we simplify to `(n, c)`.\n\nImplement `group_norm(x, gamma, beta, num_groups, eps=1e-5)`.",
   "constraints": [
-    "Use only numpy",
-    "num_channels must be divisible by num_groups",
-    "Normalize over groups of channels (axis=2 in the reshaped view)",
-    "gamma=ones, beta=zeros of shape (C,)"
+    "c must be divisible by num_groups",
+    "Use numpy only",
+    "gamma and beta have shape (c,)",
+    "Raise ValueError if c % num_groups != 0"
   ],
-  "starter_code": "import numpy as np\n\nclass GroupNorm:\n    def __init__(self, num_groups: int, num_channels: int, eps: float = 1e-5):\n        \"\"\"Initialize Group Normalization.\n\n        Args:\n            num_groups: G, number of groups to divide channels into\n            num_channels: C, total number of channels\n            eps: numerical stability constant\n        \"\"\"\n        pass\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        \"\"\"Apply group normalization.\n\n        Args:\n            x: (N, C) input\n        Returns:\n            (N, C) normalized output\n        \"\"\"\n        pass",
-  "solution_code": "import numpy as np\n\nclass GroupNorm:\n    def __init__(self, num_groups: int, num_channels: int, eps: float = 1e-5):\n        assert num_channels % num_groups == 0, \\\n            f'num_channels ({num_channels}) must be divisible by num_groups ({num_groups})'\n        self.G = num_groups\n        self.C = num_channels\n        self.eps = eps\n        self.gamma = np.ones(num_channels)\n        self.beta = np.zeros(num_channels)\n\n    def forward(self, x: np.ndarray) -> np.ndarray:\n        N, C = x.shape\n        G = self.G\n        group_size = C // G\n\n        # Reshape to (N, G, group_size)\n        x_reshaped = x.reshape(N, G, group_size)\n\n        # Normalize over axis=2 (within each group)\n        mu = x_reshaped.mean(axis=2, keepdims=True)    # (N, G, 1)\n        var = x_reshaped.var(axis=2, keepdims=True)    # (N, G, 1)\n        x_norm = (x_reshaped - mu) / np.sqrt(var + self.eps)  # (N, G, group_size)\n\n        # Reshape back and apply affine\n        x_norm = x_norm.reshape(N, C)  # (N, C)\n        return self.gamma * x_norm + self.beta",
-  "explanation": "**Key concepts:**\n\n1. **Group normalization axis:** Unlike LayerNorm (all channels) or BatchNorm (across batch), GroupNorm normalizes within groups of consecutive channels, independently for each sample.\n\n2. **Batch-size independence:** Since normalization happens within each sample's channel groups, it works identically for any batch size — even batch size 1. Critical for object detection and segmentation.\n\n3. **Special cases:**\n   - G=C (one channel per group): equivalent to Instance Normalization\n   - G=1 (all channels in one group): equivalent to Layer Normalization (for 2D input)\n\n4. **Reshape trick:** x.reshape(N, G, C//G) groups consecutive channels. The mean/var over axis=2 gives per-group statistics.\n\n5. **Why not BatchNorm for small batches?** With N=1 or N=2, batch statistics are noisy and running stats don't converge well. GroupNorm avoids this.\n\n**Interview angle:** Describe the hierarchy: InstanceNorm → GroupNorm → LayerNorm as G decreases from C to 1.",
+  "starter_code": "import numpy as np\n\ndef group_norm(\n    x: np.ndarray,\n    gamma: np.ndarray,\n    beta: np.ndarray,\n    num_groups: int,\n    eps: float = 1e-5\n) -> np.ndarray:\n    \"\"\"\n    Apply Group Normalization.\n\n    Args:\n        x: Input of shape (n, c).\n        gamma: Scale parameter of shape (c,).\n        beta: Shift parameter of shape (c,).\n        num_groups: Number of groups G. Must divide c.\n        eps: Numerical stability constant.\n\n    Returns:\n        Normalised output of shape (n, c).\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef group_norm(\n    x: np.ndarray,\n    gamma: np.ndarray,\n    beta: np.ndarray,\n    num_groups: int,\n    eps: float = 1e-5\n) -> np.ndarray:\n    n, c = x.shape\n    if c % num_groups != 0:\n        raise ValueError(f'num_groups={num_groups} must divide c={c}')\n    G = num_groups\n    group_size = c // G\n\n    # Reshape to (n, G, group_size)\n    x_grouped = x.reshape(n, G, group_size)\n\n    # Compute mean and var over last axis (group features)\n    mean = x_grouped.mean(axis=-1, keepdims=True)  # (n, G, 1)\n    var = x_grouped.var(axis=-1, keepdims=True)    # (n, G, 1)\n\n    x_hat = (x_grouped - mean) / np.sqrt(var + eps)  # (n, G, group_size)\n    x_hat = x_hat.reshape(n, c)                        # (n, c)\n\n    return gamma * x_hat + beta\n",
+  "explanation": "1. **Group Norm** bridges Layer Norm (G=1) and Instance Norm (G=c). It was proposed for computer vision tasks where batch size may be small.\n2. **Reshape trick**: by reshaping to (n, G, c//G), we can use `mean(axis=-1)` to normalise within each group independently.\n3. **Special cases**: G=1 is equivalent to Layer Norm; G=c is equivalent to Instance Norm (normalise each channel independently).\n4. **Advantage over Batch Norm**: does not depend on batch size, so it works well for small batches (e.g., object detection with 1-2 images per GPU).",
   "test_cases": [
-    {"name": "Output shape preserved", "code": "import numpy as np\nnp.random.seed(0)\ngn = GroupNorm(num_groups=4, num_channels=16)\nx = np.random.randn(8, 16)\nout = gn.forward(x)\nassert out.shape == (8, 16)"},
-    {"name": "Each group is approximately normalized", "code": "import numpy as np\nnp.random.seed(1)\ngn = GroupNorm(num_groups=2, num_channels=4)\nx = np.random.randn(5, 4) * 10 + 3\nout = gn.forward(x)\n# Reshape to groups and check mean/var within each group\nout_grouped = out.reshape(5, 2, 2)\nassert np.allclose(out_grouped.mean(axis=2), 0.0, atol=1e-5)\nassert np.allclose(out_grouped.var(axis=2), 1.0, atol=1e-3)"},
-    {"name": "Raises error if C not divisible by G", "code": "import numpy as np\ntry:\n    GroupNorm(num_groups=3, num_channels=10)\n    assert False, 'Should raise AssertionError'\nexcept AssertionError:\n    pass"},
-    {"name": "G=1 behaves like LayerNorm", "code": "import numpy as np\nnp.random.seed(2)\nC = 8\ngn = GroupNorm(num_groups=1, num_channels=C)\nx = np.random.randn(6, C)\nout = gn.forward(x)\n# With G=1, normalizes over all channels per sample (= LayerNorm)\nassert np.allclose(out.mean(axis=1), 0.0, atol=1e-5)\nassert np.allclose(out.std(axis=1), 1.0, atol=1e-3)"}
+    {
+      "name": "Output shape matches input",
+      "code": "import numpy as np\nx = np.random.randn(4, 16)\ngamma = np.ones(16)\nbeta = np.zeros(16)\nout = group_norm(x, gamma, beta, num_groups=4)\nassert out.shape == (4, 16), f'Expected (4,16), got {out.shape}'"
+    },
+    {
+      "name": "Each group has zero mean after normalisation",
+      "code": "import numpy as np\nnp.random.seed(0)\nn, c, G = 4, 8, 2\nx = np.random.randn(n, c) * 5 + 3\ngamma = np.ones(c)\nbeta = np.zeros(c)\nout = group_norm(x, gamma, beta, num_groups=G)\n# Check mean of each group in output\ngroup_size = c // G\nfor i in range(G):\n    group_out = out[:, i*group_size:(i+1)*group_size]\n    assert np.allclose(group_out.mean(axis=-1), 0, atol=1e-5), f'Group {i} mean should be 0'"
+    },
+    {
+      "name": "num_groups=c is instance norm (each channel normalised independently)",
+      "code": "import numpy as np\nnp.random.seed(1)\nx = np.random.randn(3, 4) * 2 + 1\ngamma = np.ones(4)\nbeta = np.zeros(4)\nout = group_norm(x, gamma, beta, num_groups=4)\n# Each channel (group of size 1) has mean ~0 and var ~1 (per sample), but with size 1 var=0\n# Just check the shape is correct\nassert out.shape == (3, 4)"
+    },
+    {
+      "name": "Invalid num_groups raises ValueError",
+      "code": "import numpy as np\nx = np.random.randn(4, 10)\ngamma = np.ones(10)\nbeta = np.zeros(10)\ntry:\n    group_norm(x, gamma, beta, num_groups=3)  # 10 % 3 != 0\n    assert False, 'Should raise ValueError'\nexcept ValueError:\n    pass"
+    },
+    {
+      "name": "Gamma and beta are applied",
+      "code": "import numpy as np\nnp.random.seed(2)\nx = np.random.randn(5, 8)\ngamma = np.full(8, 3.0)\nbeta = np.full(8, -1.0)\nout = group_norm(x, gamma, beta, num_groups=2)\n# With gamma=3, beta=-1: per-group mean of output should be -1\nfor i in range(2):\n    group_out = out[:, i*4:(i+1)*4]\n    assert np.allclose(group_out.mean(axis=-1), -1.0, atol=1e-5), f'Group {i} mean should be beta=-1'"
+    }
   ],
   "hints": [
-    "Reshape x from (N, C) to (N, G, C//G), compute mean/var over axis=2 with keepdims=True, normalize, then reshape back to (N, C)",
-    "G=1 gives LayerNorm; G=C gives InstanceNorm — both are special cases of GroupNorm"
+    "Reshape x from (n, c) to (n, G, c//G), compute statistics over axis=-1, then reshape back.",
+    "`x.reshape(n, G, group_size)` where group_size = c // num_groups.",
+    "Use `keepdims=True` when computing mean and var so broadcasting works correctly.",
+    "Special case: G=1 should give the same result as Layer Norm."
   ],
   "related_problems": ["4.8", "4.9", "4.11"]
 }

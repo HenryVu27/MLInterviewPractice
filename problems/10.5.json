@@ -1,0 +1,46 @@
+{
+  "id": "10.5",
+  "title": "Sinusoidal Positional Encoding",
+  "difficulty": "Medium",
+  "category": "Attention & Transformers",
+  "tags": ["positional encoding", "sinusoidal", "transformers", "numpy"],
+  "description": "Implement the sinusoidal positional encoding from \"Attention Is All You Need\" (Vaswani et al., 2017).\n\nSince Transformers have no recurrence or convolution, positional information must be injected explicitly. The sinusoidal encoding assigns each position a unique pattern using sine and cosine functions at different frequencies:\n\n```\nPE[pos, 2i]   = sin(pos / 10000^(2i / d_model))\nPE[pos, 2i+1] = cos(pos / 10000^(2i / d_model))\n```\n\nWhere `pos` is the position index and `i` is the dimension index.\n\nReturn a matrix of shape `(max_len, d_model)` that can be added to the token embeddings.",
+  "constraints": [
+    "Use numpy only",
+    "Output shape: (max_len, d_model)",
+    "Even indices (2i) use sin, odd indices (2i+1) use cos",
+    "Division exponent: 2i / d_model (not (2i+1) for cos positions)",
+    "d_model should be even for clean pairing"
+  ],
+  "starter_code": "import numpy as np\n\ndef sinusoidal_positional_encoding(max_len, d_model):\n    \"\"\"Compute sinusoidal positional encodings.\n\n    Args:\n        max_len: Maximum sequence length\n        d_model: Model (embedding) dimension\n\n    Returns:\n        PE: (max_len, d_model) positional encoding matrix\n    \"\"\"\n    pass\n",
+  "solution_code": "import numpy as np\n\ndef sinusoidal_positional_encoding(max_len, d_model):\n    PE = np.zeros((max_len, d_model))\n    positions = np.arange(max_len)[:, None]  # (max_len, 1)\n    # i = 0, 1, ..., d_model//2 - 1\n    i = np.arange(0, d_model, 2)[None, :]   # (1, d_model//2)\n    div_term = np.power(10000.0, i / d_model)  # (1, d_model//2)\n    PE[:, 0::2] = np.sin(positions / div_term)\n    PE[:, 1::2] = np.cos(positions / div_term)\n    return PE\n",
+  "explanation": "Sinusoidal positional encodings give the Transformer information about token order without being learned. The key properties:\n\n1. Unique: each position gets a distinct pattern\n2. Bounded: values are in [-1, 1]\n3. Relative positions: PE[pos+k] can be expressed as a linear function of PE[pos], allowing the model to learn relative positions\n4. Generalizes to unseen lengths: the formula works for any position, unlike learned embeddings\n\nImplementation: create a (max_len, d_model) matrix. For each dimension pair (2i, 2i+1), compute the frequency 1/10000^(2i/d_model) and fill with sin and cos respectively.\n\nThe div_term computation can be vectorized: positions (max_len, 1) / div_term (1, d_model//2) broadcasts to (max_len, d_model//2).",
+  "test_cases": [
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nPE = sinusoidal_positional_encoding(100, 64)\nassert PE.shape == (100, 64), f'Expected (100, 64), got {PE.shape}'"
+    },
+    {
+      "name": "test_values_bounded",
+      "code": "import numpy as np\nPE = sinusoidal_positional_encoding(50, 32)\nassert np.all(PE >= -1.0 - 1e-6)\nassert np.all(PE <= 1.0 + 1e-6)"
+    },
+    {
+      "name": "test_specific_values",
+      "code": "import numpy as np\nPE = sinusoidal_positional_encoding(10, 4)\n# Position 0, dim 0: sin(0 / 10000^0) = sin(0) = 0\nassert abs(PE[0, 0]) < 1e-6, f'PE[0,0] should be 0, got {PE[0,0]}'\n# Position 0, dim 1: cos(0 / ...) = cos(0) = 1\nassert abs(PE[0, 1] - 1.0) < 1e-6, f'PE[0,1] should be 1, got {PE[0,1]}'"
+    },
+    {
+      "name": "test_unique_positions",
+      "code": "import numpy as np\nPE = sinusoidal_positional_encoding(20, 16)\n# Each position should have a unique encoding\nfor i in range(len(PE)):\n    for j in range(i+1, len(PE)):\n        assert not np.allclose(PE[i], PE[j]), f'Positions {i} and {j} have identical encodings'"
+    },
+    {
+      "name": "test_even_sin_odd_cos",
+      "code": "import numpy as np\nPE = sinusoidal_positional_encoding(5, 8)\n# dim 0 (even) should be sin, dim 1 (odd) should be cos\n# At position 1: sin(1/10000^0) = sin(1), cos(1/10000^0) = cos(1)\nassert abs(PE[1, 0] - np.sin(1.0)) < 1e-6\nassert abs(PE[1, 1] - np.cos(1.0)) < 1e-6"
+    }
+  ],
+  "hints": [
+    "positions = np.arange(max_len)[:, None] gives shape (max_len, 1) for broadcasting",
+    "div_term = 10000^(2i/d_model) for i in range(d_model//2)",
+    "PE[:, 0::2] = sin(positions / div_term), PE[:, 1::2] = cos(positions / div_term)"
+  ],
+  "related_problems": ["10.6", "10.7", "10.8"]
+}

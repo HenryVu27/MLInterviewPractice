@@ -1,0 +1,27 @@
+{
+  "id": "15.19",
+  "title": "Sequence Padding and Masking",
+  "difficulty": "Easy",
+  "category": "NLP",
+  "tags": ["nlp", "padding", "masking", "batching"],
+  "description": "Implement batch sequence padding and attention mask generation.\n\nGiven a list of variable-length token sequences:\n1. **Pad** all sequences to the same length (either max length in batch or a fixed `max_len`)\n2. **Generate attention masks:** 1 where token is real, 0 where padded\n\nPad with `pad_id` (default 0) on the right.\n\n**Example:**\n```\nsequences = [[1,2,3], [4,5], [6]]\npadded = [[1,2,3],[4,5,0],[6,0,0]]\nmasks  = [[1,1,1],[1,1,0],[1,0,0]]\n```",
+  "constraints": [
+    "Use numpy",
+    "Truncate sequences longer than max_len if provided",
+    "Return (padded_array, mask_array) both shape (batch_size, max_len)"
+  ],
+  "starter_code": "import numpy as np\n\ndef pad_sequences(\n    sequences: list[list[int]],\n    max_len: int = None,\n    pad_id: int = 0\n) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"Pad sequences and generate attention masks.\n\n    Args:\n        sequences: List of token id lists (variable length)\n        max_len: Maximum length to pad/truncate to (None = max in batch)\n        pad_id: Padding token id\n\n    Returns:\n        (padded, mask) both shape (batch_size, max_len)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef pad_sequences(\n    sequences: list[list[int]],\n    max_len: int = None,\n    pad_id: int = 0\n) -> tuple[np.ndarray, np.ndarray]:\n    if max_len is None:\n        max_len = max(len(s) for s in sequences)\n    batch_size = len(sequences)\n    padded = np.full((batch_size, max_len), pad_id, dtype=int)\n    mask = np.zeros((batch_size, max_len), dtype=int)\n    for i, seq in enumerate(sequences):\n        length = min(len(seq), max_len)\n        padded[i, :length] = seq[:length]\n        mask[i, :length] = 1\n    return padded, mask",
+  "explanation": "Padding is necessary to batch sequences of different lengths into a single tensor. The attention mask tells the model which positions are real tokens (1) vs padding (0), preventing the model from attending to padding positions. This is fundamental to Transformer-based models. Right-padding is standard; left-padding is used for causal LM batch inference.",
+  "test_cases": [
+    {"name": "Basic padding and mask", "code": "import numpy as np\nseqs = [[1,2,3],[4,5],[6]]\npadded, mask = pad_sequences(seqs)\nassert padded.shape == (3,3) and mask.shape == (3,3)\nassert padded[1,2] == 0 and mask[1,2] == 0"},
+    {"name": "Max len truncates", "code": "import numpy as np\nseqs = [[1,2,3,4,5]]\npadded, mask = pad_sequences(seqs, max_len=3)\nassert padded.shape == (1,3) and list(padded[0]) == [1,2,3]"},
+    {"name": "Real tokens have mask=1", "code": "import numpy as np\nseqs = [[7,8],[9]]\npadded, mask = pad_sequences(seqs, pad_id=0)\nassert mask[0,0]==1 and mask[0,1]==1 and mask[1,1]==0"},
+    {"name": "Custom pad_id", "code": "import numpy as np\nseqs = [[1,2],[3]]\npadded, mask = pad_sequences(seqs, pad_id=99)\nassert padded[1,1] == 99"}
+  ],
+  "hints": [
+    "Initialize with np.full(..., pad_id) then fill in real tokens",
+    "mask[i, :len(seq)] = 1 for each sequence"
+  ],
+  "related_problems": ["15.15", "15.16", "15.5"]
+}

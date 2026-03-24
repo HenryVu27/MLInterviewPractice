@@ -1,0 +1,20 @@
+{
+  "id": "16.12",
+  "title": "Histogram Equalization",
+  "difficulty": "Medium",
+  "category": "Computer Vision",
+  "tags": ["numpy", "from-scratch", "image-enhancement"],
+  "description": "Implement **histogram equalization** to enhance contrast in grayscale images.\n\nHistogram equalization redistributes pixel intensities so that the cumulative distribution function (CDF) becomes approximately linear (uniform distribution of intensities).\n\n**Algorithm:**\n1. Compute the histogram of pixel values (256 bins for uint8)\n2. Compute the CDF: `cdf[i] = sum(hist[0..i])`\n3. Normalize the CDF to [0, 255]: `cdf_min = cdf[cdf > 0].min()`\n4. Apply the mapping: `out[i,j] = round((cdf[img[i,j]] - cdf_min) / (H*W - cdf_min) * 255)`\n\nThis improves contrast in images with narrow intensity ranges.",
+  "constraints": ["Use numpy only", "Input: grayscale uint8 image (H, W)", "Output: uint8 image (H, W)", "Handle images where some intensity values have zero count"],
+  "starter_code": "import numpy as np\n\ndef histogram_equalization(image: np.ndarray) -> np.ndarray:\n    \"\"\"Apply histogram equalization to a grayscale image.\n    \n    Args:\n        image: Grayscale image, shape (H, W), dtype uint8\n    \n    Returns:\n        Equalized image, shape (H, W), dtype uint8\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef histogram_equalization(image: np.ndarray) -> np.ndarray:\n    assert image.dtype == np.uint8, 'Input must be uint8'\n    H, W = image.shape\n    hist, _ = np.histogram(image.flatten(), bins=256, range=(0, 256))\n    cdf = hist.cumsum()\n    cdf_min = cdf[cdf > 0].min()\n    total = H * W\n    lut = np.round((cdf - cdf_min) / (total - cdf_min) * 255).astype(np.uint8)\n    # Handle pixels where cdf == cdf_min (these map to 0)\n    lut[cdf == 0] = 0\n    return lut[image]",
+  "explanation": "**Key concepts:**\n\n1. **Histogram:** Count of each intensity value (0-255) across all pixels.\n\n2. **CDF:** Cumulative sum of the histogram. CDF[i] = number of pixels with intensity <= i.\n\n3. **Equalization mapping:** `new_val = round((CDF[v] - CDF_min) / (N - CDF_min) * 255)`. This maps each intensity v to a new value so the output has approximately uniform distribution.\n\n4. **Look-up table (LUT):** Build the 256-element mapping array once, then apply it with `lut[image]` for efficient O(H*W) remapping.\n\n5. **Practical use:** Enhances X-ray, satellite, and low-contrast images. CLAHE (Contrast Limited AHE) is an adaptive version that avoids over-amplification.\n\n**Complexity:** O(H*W) for histogram + O(256) for CDF + O(H*W) for lookup = O(H*W).",
+  "test_cases": [
+    {"name": "Output dtype is uint8", "code": "import numpy as np\nimg = np.random.randint(100, 150, (50, 50), dtype=np.uint8)\nout = histogram_equalization(img)\nassert out.dtype == np.uint8\nassert out.shape == (50, 50)"},
+    {"name": "Narrow range image: output range is wider", "code": "import numpy as np\nimg = np.random.randint(100, 130, (100, 100), dtype=np.uint8)\nout = histogram_equalization(img)\nassert out.max() - out.min() > img.max() - img.min(), 'Output range should be wider'"},
+    {"name": "Uniform image stays uniform", "code": "import numpy as np\nimg = np.full((10, 10), 128, dtype=np.uint8)\nout = histogram_equalization(img)\nassert out.shape == (10, 10)\nassert np.all(out == out[0, 0]), 'Uniform input should give uniform output'"},
+    {"name": "Already full range image: output similar range", "code": "import numpy as np\nnp.random.seed(0)\nimg = np.random.randint(0, 256, (100, 100), dtype=np.uint8)\nout = histogram_equalization(img)\nassert out.min() == 0 or out.max() == 255, 'Output should span full range'"}
+  ],
+  "hints": ["Use np.histogram(image.flatten(), bins=256, range=(0,256)) for the histogram", "CDF = hist.cumsum(); cdf_min = cdf[cdf > 0].min()", "Build a 256-element LUT then apply: return lut[image]"],
+  "related_problems": ["16.9", "16.11"]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "5.10",
+  "title": "Log-Softmax (Log-Sum-Exp Trick)",
+  "difficulty": "Easy",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "activation-functions", "numerical-stability"],
+  "description": "Implement numerically stable log-softmax using the log-sum-exp trick.\n\nNaive log-softmax:\n```\nlog_softmax(x)_i = x_i - log(sum(exp(x_j)))\n```\n\nNumerically stable form:\n```\nlog_softmax(x)_i = (x_i - max(x)) - log(sum(exp(x_j - max(x))))\n```\n\n**Example:**\n```\nlog_softmax([1, 2, 3]) ≈ [-2.408, -1.408, -0.408]\n```\n\n**Why this matters:** Computing log(softmax(x)) naively loses precision. The log-sum-exp trick works entirely in log space and is the basis for stable multi-class cross-entropy (NLL loss).",
+  "constraints": ["Use numpy only", "Must use the log-sum-exp trick (not log of softmax output)", "Handle both 1D and 2D inputs (softmax over last axis)", "All output values must be <= 0"],
+  "starter_code": "import numpy as np\n\ndef log_softmax(x: np.ndarray) -> np.ndarray:\n    \"\"\"Numerically stable log-softmax.\n    \n    Args:\n        x: Input array of shape (C,) or (N, C)\n    \n    Returns:\n        Log-probabilities, same shape as input\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef log_softmax(x: np.ndarray) -> np.ndarray:\n    x = np.asarray(x, dtype=float)\n    x_max = np.max(x, axis=-1, keepdims=True)\n    shifted = x - x_max\n    log_sum_exp = np.log(np.sum(np.exp(shifted), axis=-1, keepdims=True))\n    return shifted - log_sum_exp",
+  "explanation": "**Key concepts:**\n\n1. **Log-sum-exp trick**: log(sum(exp(x_i))) = max(x) + log(sum(exp(x_i - max(x)))). The shifted values are <= 0, so exp is in (0, 1] — no overflow.\n\n2. **Why not log(softmax)?**: Softmax can produce very small probabilities near 0. Taking log of those gives -inf. Working in log space throughout avoids this.\n\n3. **NLL Loss**: Cross-entropy = -log_softmax(logits)[true_class]. This is how PyTorch's CrossEntropyLoss works internally.\n\n4. **All outputs <= 0**: log of a probability in [0,1] is always <= 0.",
+  "test_cases": [
+    {"name": "Values match stable formula", "code": "x = np.array([1.0, 2.0, 3.0])\nresult = log_softmax(x)\nshift = x - np.max(x)\nexpected = shift - np.log(np.sum(np.exp(shift)))\nnp.testing.assert_allclose(result, expected, rtol=1e-9)"},
+    {"name": "All outputs are <= 0", "code": "x = np.random.randn(100)\nresult = log_softmax(x)\nassert np.all(result <= 1e-9)"},
+    {"name": "Exp of output sums to 1", "code": "x = np.array([1.0, 2.0, 3.0])\nresult = log_softmax(x)\nassert abs(np.sum(np.exp(result)) - 1.0) < 1e-9"},
+    {"name": "Stable for large inputs", "code": "x = np.array([1000.0, 1001.0, 1002.0])\nresult = log_softmax(x)\nassert not np.any(np.isnan(result))"},
+    {"name": "2D batch input", "code": "x = np.array([[1.0, 2.0, 3.0], [3.0, 1.0, 2.0]])\nresult = log_softmax(x)\nassert result.shape == (2, 3)\nassert np.all(result <= 1e-9)"}
+  ],
+  "hints": ["Subtract max before sum(exp) to keep values in range", "result = (x - max) - log(sum(exp(x - max)))"],
+  "related_problems": ["5.9", "5.12", "5.11"]
+}

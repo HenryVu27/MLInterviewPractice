@@ -1,0 +1,29 @@
+{
+  "id": "1.17",
+  "title": "Gram-Schmidt Orthogonalization",
+  "difficulty": "Medium",
+  "category": "Linear Algebra & Matrix Operations",
+  "tags": ["numpy", "from-scratch", "orthogonalization", "qr"],
+  "description": "Implement `gram_schmidt(A)` which takes a matrix A whose columns are linearly independent vectors and returns a matrix Q whose columns are an **orthonormal basis** for the column space of A.\n\n**Algorithm (modified Gram-Schmidt for stability):**\nFor each column vector v:\n1. Start with v as the candidate\n2. Subtract its projection onto each previously computed basis vector\n3. Normalize to unit length\n\n**Why this matters:** Gram-Schmidt is the conceptual foundation of QR decomposition. QR is used to solve least squares problems (`||Ax - b||^2`), and is numerically more stable than the normal equations `A^T A x = A^T b`.",
+  "constraints": [
+    "Use numpy; the outer loop over columns is acceptable",
+    "Raise ValueError if a vector becomes near-zero during orthogonalization (linearly dependent)",
+    "Return Q as a numpy array with orthonormal columns",
+    "Implement modified Gram-Schmidt (subtract projections one at a time) not classical"
+  ],
+  "starter_code": "import numpy as np\n\ndef gram_schmidt(A):\n    \"\"\"Orthogonalize the columns of A using modified Gram-Schmidt.\n\n    Args:\n        A: array of shape (m, n) with linearly independent columns (m >= n)\n\n    Returns:\n        Q: array of shape (m, n) with orthonormal columns\n\n    Raises:\n        ValueError: if columns are linearly dependent\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef gram_schmidt(A):\n    A = np.asarray(A, dtype=float)\n    m, n = A.shape\n    Q = np.zeros((m, n))\n\n    for j in range(n):\n        v = A[:, j].copy()\n        # Modified GS: subtract projection onto each q_i already computed\n        for i in range(j):\n            v = v - np.dot(v, Q[:, i]) * Q[:, i]\n        norm = np.sqrt(np.dot(v, v))\n        if norm < 1e-10:\n            raise ValueError(f\"Column {j} is linearly dependent on previous columns\")\n        Q[:, j] = v / norm\n\n    return Q",
+  "explanation": "**Key concepts:**\n\n1. **Classical vs Modified GS:** Classical GS subtracts all projections computed from the original vectors. Modified GS subtracts them one at a time from the running candidate. Both are mathematically equivalent but modified GS is more numerically stable.\n\n2. **Projection subtraction:** `v -= dot(v, q_i) * q_i` removes the component of v along q_i. After all previous basis vectors are subtracted, v is orthogonal to all of them.\n\n3. **QR connection:** Gram-Schmidt gives Q explicitly. The upper triangular R can be recovered as `R = Q^T A` (since A = QR, so Q^T A = Q^T QR = IR = R).\n\n4. **Least squares:** Solving `||Ax - b||^2` is equivalent to solving `Rx = Q^T b` (triangular, easy). This avoids forming `A^T A` which squares the condition number.\n\n5. **Numerical stability:** Repeated projections in classical GS accumulate rounding errors that erode orthogonality. Modified GS or Householder reflections (used in practice) are more stable.",
+  "test_cases": [
+    {"name": "Columns are orthonormal", "code": "import numpy as np\nA = np.array([[1., 1.], [1., 0.], [0., 1.]])\nQ = gram_schmidt(A)\nassert np.allclose(Q.T @ Q, np.eye(2), atol=1e-9)"},
+    {"name": "Standard basis unchanged", "code": "import numpy as np\nA = np.eye(3)\nQ = gram_schmidt(A)\nassert np.allclose(Q, np.eye(3), atol=1e-9)"},
+    {"name": "R = Q^T A is upper triangular", "code": "import numpy as np\nA = np.array([[1., 2.], [3., 4.], [5., 6.]])\nQ = gram_schmidt(A)\nR = Q.T @ A\nassert abs(R[1, 0]) < 1e-9, 'R should be upper triangular'"},
+    {"name": "Linear dependence raises", "code": "import numpy as np\ntry:\n    gram_schmidt(np.array([[1., 2.], [2., 4.]]))\n    assert False\nexcept ValueError:\n    pass"},
+    {"name": "Output shape", "code": "import numpy as np\nA = np.random.randn(5, 3)\nQ = gram_schmidt(A)\nassert Q.shape == (5, 3)"}
+  ],
+  "hints": [
+    "For each new vector, subtract its projections onto all previously computed orthonormal vectors",
+    "projection of v onto unit vector q is dot(v, q) * q"
+  ],
+  "related_problems": ["1.16", "1.10", "1.8"]
+}

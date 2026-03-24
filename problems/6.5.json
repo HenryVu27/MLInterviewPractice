@@ -1,0 +1,21 @@
+{
+  "id": "6.5",
+  "title": "RMSProp Optimizer",
+  "difficulty": "Medium",
+  "category": "Optimization Algorithms",
+  "tags": ["numpy", "from-scratch", "optimization", "adaptive-learning-rate"],
+  "description": "Implement RMSProp optimizer using EMA of squared gradients.\n\nRMSProp fixes Adagrad's decaying learning rate by using an exponential moving average (EMA) of squared gradients:\n```\nv = beta * v + (1 - beta) * grad^2\nw = w - (lr / sqrt(v + eps)) * grad\n```\n\nThis keeps the effective learning rate stationary over time.\n\n**Why this matters:** RMSProp was proposed by Hinton (Coursera lecture, 2012) and works very well for RNNs. It is the foundation of Adam (which adds first-moment estimation).",
+  "constraints": ["Use numpy only", "Implement as class with __init__(lr=0.001, beta=0.9, eps=1e-8) and step(params, grads)", "v initialized to zeros, updated with EMA formula", "Update params in-place"],
+  "starter_code": "import numpy as np\n\nclass RMSProp:\n    def __init__(self, lr: float = 0.001, beta: float = 0.9, eps: float = 1e-8):\n        \"\"\"RMSProp optimizer.\n        \n        Args:\n            lr: Learning rate\n            beta: EMA decay for squared gradients (default 0.9)\n            eps: Numerical stability constant (default 1e-8)\n        \"\"\"\n        pass\n    \n    def step(self, params: list[np.ndarray], grads: list[np.ndarray]) -> None:\n        \"\"\"Update parameters with RMSProp.\n        \n        Args:\n            params: List of parameter arrays\n            grads: List of gradient arrays\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass RMSProp:\n    def __init__(self, lr: float = 0.001, beta: float = 0.9, eps: float = 1e-8):\n        self.lr = lr\n        self.beta = beta\n        self.eps = eps\n        self.v = None\n    \n    def step(self, params: list[np.ndarray], grads: list[np.ndarray]) -> None:\n        if self.v is None:\n            self.v = [np.zeros_like(p) for p in params]\n        for v, p, g in zip(self.v, params, grads):\n            v *= self.beta\n            v += (1 - self.beta) * g ** 2\n            p -= (self.lr / (np.sqrt(v) + self.eps)) * g",
+  "explanation": "**Key concepts:**\n\n1. **EMA vs sum**: Adagrad sums all squared gradients (grows forever). RMSProp uses EMA with decay beta, so v stays bounded. It effectively uses a window of ~1/(1-beta) past gradients.\n\n2. **Non-stationary objectives**: Because v adapts to recent gradient magnitudes, RMSProp handles non-stationary objectives (e.g., in RL) better than Adagrad.\n\n3. **beta=0.9**: Weights the last 10 gradient steps. Common values: 0.9, 0.99, 0.999.\n\n4. **Adam**: Adds first-moment estimation (momentum) on top of RMSProp's second-moment estimation.",
+  "test_cases": [
+    {"name": "Minimizes quadratic", "code": "x = np.array([5.0])\nopt = RMSProp(lr=0.1, beta=0.9)\nfor _ in range(200):\n    g = np.array([2 * x[0]])\n    opt.step([x], [g])\nassert abs(x[0]) < 0.1, f'Expected near 0, got {x[0]}'"},
+    {"name": "v is bounded (EMA, not sum)", "code": "x = np.array([0.0])\nopt = RMSProp(lr=0.1, beta=0.9)\nfor _ in range(1000):\n    opt.step([x], [np.array([1.0])])\n# v should converge to (1-beta) * 1^2 / (1-beta) = 1.0\nassert opt.v[0][0] < 2.0, 'EMA of squared grad should stay bounded'"},
+    {"name": "v initialized to zeros", "code": "opt = RMSProp()\nx = np.array([1.0])\nopt.step([x], [np.array([2.0])])\nassert abs(opt.v[0][0] - 0.1 * 4.0) < 1e-9, 'v = 0.9*0 + 0.1*4 = 0.4'"},
+    {"name": "eps prevents division by zero", "code": "x = np.array([1.0])\nopt = RMSProp()\nopt.step([x], [np.zeros(1)])\nassert not np.isnan(x[0])"},
+    {"name": "Multiple parameters updated", "code": "w = np.array([3.0, -2.0])\nb = np.array([1.0])\nopt = RMSProp(lr=0.1)\nopt.step([w, b], [np.array([1.0, 1.0]), np.array([1.0])])\nassert w[0] < 3.0 and b[0] < 1.0"}
+  ],
+  "hints": ["v *= beta; v += (1-beta)*g**2; p -= lr/(sqrt(v)+eps)*g", "The effective LR stabilizes around lr/sqrt((1-beta^n)/(1-beta) * mean_sq_grad)"],
+  "related_problems": ["6.4", "6.6", "6.7"]
+}

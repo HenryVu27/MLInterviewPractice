@@ -1,0 +1,45 @@
+{
+  "id": "8.4",
+  "title": "Max Pooling 2D",
+  "difficulty": "Easy",
+  "category": "Convolutional Neural Networks",
+  "tags": ["max-pooling", "pooling", "downsampling", "numpy"],
+  "description": "Implement 2D max pooling.\n\nMax pooling takes the maximum value in each kernel-sized window, sliding with the given stride.\n\nInput: `x` of shape `(N, C, H, W)` (NCHW)\nOutput shape: `(N, C, H_out, W_out)` where:\n```\nH_out = (H - pool_h) // stride + 1\nW_out = (W - pool_w) // stride + 1\n```\n\n**Example:**\n```\nx = [[1,3,2,4], [5,6,7,8], [9,2,3,1], [4,5,6,7]]\nmax_pool2d(x, pool=2, stride=2) = [[6, 8], [9, 7]]\n```",
+  "constraints": [
+    "Use numpy only",
+    "Input in NCHW format",
+    "No padding (valid pooling)",
+    "Pooling is independent per channel"
+  ],
+  "starter_code": "import numpy as np\n\ndef max_pool2d(x: np.ndarray, pool_h: int, pool_w: int,\n               stride: int = None) -> np.ndarray:\n    \"\"\"2D max pooling.\n    \n    Args:\n        x: Input (N, C, H, W)\n        pool_h: Pooling window height\n        pool_w: Pooling window width\n        stride: Stride (defaults to pool_h if None)\n    \n    Returns:\n        Output (N, C, H_out, W_out)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef max_pool2d(x: np.ndarray, pool_h: int, pool_w: int,\n               stride: int = None) -> np.ndarray:\n    if stride is None:\n        stride = pool_h\n    N, C, H, W = x.shape\n    H_out = (H - pool_h) // stride + 1\n    W_out = (W - pool_w) // stride + 1\n    out = np.zeros((N, C, H_out, W_out), dtype=x.dtype)\n    for i in range(H_out):\n        for j in range(W_out):\n            h_start = i * stride\n            w_start = j * stride\n            patch = x[:, :, h_start:h_start+pool_h, w_start:w_start+pool_w]\n            out[:, :, i, j] = patch.reshape(N, C, -1).max(axis=2)\n    return out",
+  "explanation": "**Key concepts:**\n\n1. **Max pooling:** Takes the maximum over each pooling window. Provides translation invariance and reduces spatial dimensions.\n\n2. **Default stride = pool size:** Non-overlapping windows are standard (e.g., 2x2 pool with stride 2).\n\n3. **Per-channel:** Pooling is applied independently to each channel.\n\n4. **No learned parameters:** Unlike conv, pooling has no weights.\n\n5. **Gradient:** During backprop, gradient flows only to the position that had the maximum value (others get 0).",
+  "test_cases": [
+    {
+      "name": "Basic 2x2 max pool",
+      "code": "import numpy as np\nx = np.array([[[[1,3,2,4],[5,6,7,8],[9,2,3,1],[4,5,6,7]]]], dtype=float)\nout = max_pool2d(x, 2, 2)\nassert out.shape == (1, 1, 2, 2)\nassert np.array_equal(out[0,0], [[6,8],[9,7]])"
+    },
+    {
+      "name": "Output shape",
+      "code": "import numpy as np\nx = np.zeros((4, 8, 16, 16))\nout = max_pool2d(x, 2, 2, stride=2)\nassert out.shape == (4, 8, 8, 8)"
+    },
+    {
+      "name": "All same values",
+      "code": "import numpy as np\nx = np.full((1, 3, 4, 4), 5.0)\nout = max_pool2d(x, 2, 2)\nassert np.all(out == 5.0)"
+    },
+    {
+      "name": "Stride != pool size (overlapping)",
+      "code": "import numpy as np\nx = np.arange(16, dtype=float).reshape(1, 1, 4, 4)\nout = max_pool2d(x, 2, 2, stride=1)\nassert out.shape == (1, 1, 3, 3)"
+    },
+    {
+      "name": "Negative values handled correctly",
+      "code": "import numpy as np\nx = np.array([[[[-1,-2],[-3,-4]]]], dtype=float)\nout = max_pool2d(x, 2, 2)\nassert out[0,0,0,0] == -1.0"
+    }
+  ],
+  "hints": [
+    "Default stride equals pool size (non-overlapping)",
+    "Extract patch with x[:,:,i*stride:i*stride+pool_h, j*stride:j*stride+pool_w]",
+    "Take max over the flattened spatial dims: patch.reshape(N,C,-1).max(axis=2)"
+  ],
+  "related_problems": ["8.5", "8.6", "8.1"]
+}

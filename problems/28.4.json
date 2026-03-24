@@ -1,0 +1,20 @@
+{
+  "id": "28.4",
+  "title": "One-Hot Encoding",
+  "difficulty": "Easy",
+  "category": "Feature Engineering",
+  "tags": ["preprocessing", "categorical", "encoding"],
+  "description": "Implement One-Hot Encoding for categorical features.\n\nGiven a 1D array of categorical labels, convert to a binary matrix where each column represents one category.\n\nThe categories should be sorted alphabetically/numerically to ensure deterministic ordering.\n\n**Example:**\n```\nlabels = ['cat', 'dog', 'cat', 'bird']\n# categories: ['bird', 'cat', 'dog'] (sorted)\n# output shape: (4, 3)\n# result:\n# [[0, 1, 0],   # cat\n#  [0, 0, 1],   # dog\n#  [0, 1, 0],   # cat\n#  [1, 0, 0]]   # bird\n```\n\nAlso handle unseen categories at transform time by outputting all-zeros for that row.",
+  "constraints": ["Use numpy only", "Sort categories for deterministic column order", "Unseen categories produce all-zero rows"],
+  "starter_code": "import numpy as np\n\nclass OneHotEncoder:\n    def fit(self, labels: np.ndarray) -> 'OneHotEncoder':\n        \"\"\"Learn the set of categories.\"\"\"\n        pass\n    \n    def transform(self, labels: np.ndarray) -> np.ndarray:\n        \"\"\"Convert labels to one-hot matrix.\"\"\"\n        pass\n    \n    def fit_transform(self, labels: np.ndarray) -> np.ndarray:\n        pass",
+  "solution_code": "import numpy as np\n\nclass OneHotEncoder:\n    def fit(self, labels: np.ndarray) -> 'OneHotEncoder':\n        self.categories_ = np.array(sorted(set(labels)))\n        self.cat_to_idx_ = {c: i for i, c in enumerate(self.categories_)}\n        return self\n    \n    def transform(self, labels: np.ndarray) -> np.ndarray:\n        n = len(labels)\n        k = len(self.categories_)\n        out = np.zeros((n, k), dtype=float)\n        for i, label in enumerate(labels):\n            if label in self.cat_to_idx_:\n                out[i, self.cat_to_idx_[label]] = 1.0\n        return out\n    \n    def fit_transform(self, labels: np.ndarray) -> np.ndarray:\n        return self.fit(labels).transform(labels)",
+  "explanation": "**Key concepts:**\n\n1. **Why one-hot?** Nominal categories have no intrinsic order. One-hot avoids implying e.g. 'dog' > 'cat' that label encoding would suggest.\n\n2. **Dimensionality:** K categories produce K binary columns. Can cause high dimensionality for large cardinality features.\n\n3. **Sorted categories:** Ensures the same column order regardless of data order — important for reproducibility.\n\n4. **Dummy coding:** Drop one column to avoid multicollinearity in linear models (the 'dummy variable trap').",
+  "test_cases": [
+    {"name": "Basic encoding", "code": "enc = OneHotEncoder()\nX = enc.fit_transform(np.array(['cat', 'dog', 'cat', 'bird']))\nassert X.shape == (4, 3)\nassert X[0, 1] == 1.0 and X[1, 2] == 1.0 and X[3, 0] == 1.0"},
+    {"name": "Each row sums to 1", "code": "enc = OneHotEncoder()\nX = enc.fit_transform(np.array(['a', 'b', 'c', 'a']))\nassert np.all(X.sum(axis=1) == 1.0)"},
+    {"name": "Unseen category gives all zeros", "code": "enc = OneHotEncoder()\nenc.fit(np.array(['a', 'b', 'c']))\nX = enc.transform(np.array(['d', 'a']))\nassert np.all(X[0] == 0.0)\nassert X[1, 0] == 1.0"},
+    {"name": "Categories are sorted", "code": "enc = OneHotEncoder()\nenc.fit(np.array(['z', 'a', 'm']))\nassert list(enc.categories_) == ['a', 'm', 'z']"}
+  ],
+  "hints": ["sorted(set(labels)) gives sorted unique categories", "Dict mapping category -> index for O(1) lookup", "Initialize output to zeros, then set 1 for each label's column"],
+  "related_problems": ["28.5", "28.6", "28.9"]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "28.12",
+  "title": "Log Transform and Box-Cox",
+  "difficulty": "Easy",
+  "category": "Feature Engineering",
+  "tags": ["preprocessing", "log-transform", "box-cox", "normalization"],
+  "description": "Implement two power transforms for making data more Gaussian-like:\n\n1. **Log1p transform:** `log1p(x) = log(1 + x)`. Works on non-negative data. Compresses large values, spreads small values.\n\n2. **Box-Cox transform (simplified):** For lambda != 0: `(x^lambda - 1) / lambda`. For lambda == 0: `log(x)` (requires x > 0).\n\nAlso implement the inverse transforms:\n- `expm1(y) = exp(y) - 1` for log1p inverse\n- Box-Cox inverse: for lambda != 0: `(y * lambda + 1)^(1/lambda)`. For lambda == 0: `exp(y)`.\n\nImplement all four functions.",
+  "constraints": ["Use numpy only", "log1p and box_cox require x >= 0 (x > 0 for box_cox)", "No input validation needed — assume valid inputs"],
+  "starter_code": "import numpy as np\n\ndef log1p_transform(x: np.ndarray) -> np.ndarray:\n    \"\"\"Apply log(1+x) transform.\"\"\"\n    pass\n\ndef log1p_inverse(y: np.ndarray) -> np.ndarray:\n    \"\"\"Inverse of log1p: exp(y) - 1.\"\"\"\n    pass\n\ndef box_cox_transform(x: np.ndarray, lam: float) -> np.ndarray:\n    \"\"\"Apply Box-Cox transform with parameter lambda.\"\"\"\n    pass\n\ndef box_cox_inverse(y: np.ndarray, lam: float) -> np.ndarray:\n    \"\"\"Inverse of Box-Cox transform.\"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef log1p_transform(x: np.ndarray) -> np.ndarray:\n    return np.log1p(x)\n\ndef log1p_inverse(y: np.ndarray) -> np.ndarray:\n    return np.expm1(y)\n\ndef box_cox_transform(x: np.ndarray, lam: float) -> np.ndarray:\n    if abs(lam) < 1e-10:\n        return np.log(x)\n    return (np.power(x, lam) - 1.0) / lam\n\ndef box_cox_inverse(y: np.ndarray, lam: float) -> np.ndarray:\n    if abs(lam) < 1e-10:\n        return np.exp(y)\n    return np.power(y * lam + 1.0, 1.0 / lam)",
+  "explanation": "**Key concepts:**\n\n1. **Log1p:** log(1+x) is numerically stable for x near 0. More stable than log(x) which is -inf at x=0.\n\n2. **Box-Cox:** A family of transforms parameterized by lambda. lambda=1 gives x-1 (linear), lambda=0 gives log, lambda=0.5 gives sqrt-like.\n\n3. **When to use:** When model assumptions require normality (linear regression, LDA) or when features are heavily right-skewed.\n\n4. **Optimal lambda:** In practice, lambda is chosen by maximum likelihood or cross-validation.",
+  "test_cases": [
+    {"name": "log1p then inverse recovers original", "code": "x = np.array([0.0, 1.0, 10.0, 100.0])\nassert np.allclose(log1p_inverse(log1p_transform(x)), x)"},
+    {"name": "box_cox lambda=1 gives x-1", "code": "x = np.array([1.0, 2.0, 5.0])\nresult = box_cox_transform(x, 1.0)\nassert np.allclose(result, [0.0, 1.0, 4.0])"},
+    {"name": "box_cox lambda=0 gives log", "code": "x = np.array([1.0, np.e, np.e**2])\nresult = box_cox_transform(x, 0.0)\nassert np.allclose(result, [0.0, 1.0, 2.0])"},
+    {"name": "box_cox inverse recovers original", "code": "x = np.array([1.0, 2.0, 3.0])\nfor lam in [0.0, 0.5, 1.0, 2.0]:\n    y = box_cox_transform(x, lam)\n    x_rec = box_cox_inverse(y, lam)\n    assert np.allclose(x_rec, x), f'Failed for lam={lam}'"}
+  ],
+  "hints": ["np.log1p and np.expm1 are numerically stable built-ins", "box_cox: check abs(lam) < 1e-10 for the log case", "box_cox_inverse: (y*lam + 1)^(1/lam)"],
+  "related_problems": ["28.1", "28.2", "28.11"]
+}

@@ -1,0 +1,28 @@
+{
+  "id": "3.5",
+  "title": "K-Nearest Neighbors (KNN)",
+  "difficulty": "Easy",
+  "category": "Classic ML Algorithms",
+  "tags": ["numpy", "from-scratch", "classification", "distance"],
+  "description": "Implement **K-Nearest Neighbors** classifier using brute-force Euclidean distance and majority-vote prediction.\n\nAlgorithm:\n1. For each test point, compute Euclidean distance to all training points\n2. Find the K closest training points\n3. Predict the majority class among those K neighbors (ties broken by smallest class index)\n\n**Shapes:**\n- X_train: (n_train, n_features)\n- y_train: (n_train,) integer class labels\n- X_test: (n_test, n_features)\n- predict returns: (n_test,)\n\n**Why this matters:** KNN is a non-parametric baseline. Understanding its O(N*D) prediction cost motivates KD-trees, ball trees, and approximate nearest neighbor algorithms (FAISS, etc.).",
+  "constraints": [
+    "Use only numpy",
+    "Use Euclidean (L2) distance",
+    "Majority vote; tie-break by smallest class label",
+    "No sklearn or scipy — compute distances manually"
+  ],
+  "starter_code": "import numpy as np\n\nclass KNNClassifier:\n    def __init__(self, k: int = 3):\n        \"\"\"Initialize with number of neighbors k.\"\"\"\n        pass\n\n    def fit(self, X: np.ndarray, y: np.ndarray) -> None:\n        \"\"\"Store training data.\n\n        Args:\n            X: (n_train, n_features)\n            y: (n_train,) integer labels\n        \"\"\"\n        pass\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Predict class labels for test points.\n\n        Args:\n            X: (n_test, n_features)\n        Returns:\n            (n_test,) predicted labels\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass KNNClassifier:\n    def __init__(self, k: int = 3):\n        self.k = k\n        self.X_train = None\n        self.y_train = None\n\n    def fit(self, X: np.ndarray, y: np.ndarray) -> None:\n        self.X_train = X\n        self.y_train = y\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        # Vectorized pairwise distances: ||a-b||^2 = ||a||^2 + ||b||^2 - 2*a@b^T\n        X2 = np.sum(X ** 2, axis=1, keepdims=True)       # (n_test, 1)\n        Xtr2 = np.sum(self.X_train ** 2, axis=1)          # (n_train,)\n        cross = X @ self.X_train.T                         # (n_test, n_train)\n        dists = np.sqrt(np.maximum(X2 + Xtr2 - 2 * cross, 0.0))  # (n_test, n_train)\n\n        predictions = []\n        for i in range(X.shape[0]):\n            k_idx = np.argsort(dists[i])[:self.k]\n            k_labels = self.y_train[k_idx]\n            # Majority vote\n            counts = np.bincount(k_labels)\n            predictions.append(int(np.argmax(counts)))\n        return np.array(predictions)",
+  "explanation": "**Key concepts:**\n\n1. **Vectorized distance computation:** Use the identity ||a-b||^2 = ||a||^2 + ||b||^2 - 2a*b to compute all pairwise distances in one matrix multiply. Much faster than a double loop.\n\n2. **np.maximum(..., 0):** Floating point errors can make the squared distance slightly negative. Clamp to 0 before sqrt.\n\n3. **Majority vote with np.bincount:** Works for non-negative integer labels. argmax naturally breaks ties by smallest index.\n\n4. **Complexity:** O(N_test * N_train * D) — expensive for large datasets. This motivates approximate methods.\n\n5. **K choice:** Small K → high variance, noisy boundary. Large K → high bias, smoother boundary.\n\n**Interview follow-up:** How would you scale this? KD-trees (works well for D < 20), ball trees, or FAISS for high-D.",
+  "test_cases": [
+    {"name": "Perfectly separable 2D data", "code": "import numpy as np\nX_train = np.array([[1,1],[1,2],[5,5],[5,6]], dtype=float)\ny_train = np.array([0, 0, 1, 1])\nmodel = KNNClassifier(k=1)\nmodel.fit(X_train, y_train)\npreds = model.predict(np.array([[1.5, 1.5], [5.5, 5.5]]))\nassert list(preds) == [0, 1], f'Got {preds}'"},
+    {"name": "Majority vote with k=3", "code": "import numpy as np\nX_train = np.array([[0,0],[0.1,0],[0.2,0],[10,10]], dtype=float)\ny_train = np.array([0, 0, 0, 1])\nmodel = KNNClassifier(k=3)\nmodel.fit(X_train, y_train)\npred = model.predict(np.array([[0.15, 0.0]]))\nassert pred[0] == 0, f'Expected 0, got {pred[0]}'"},
+    {"name": "Output shape", "code": "import numpy as np\nnp.random.seed(0)\nX_train = np.random.randn(100, 4)\ny_train = np.random.randint(0, 3, 100)\nX_test = np.random.randn(20, 4)\nmodel = KNNClassifier(k=5)\nmodel.fit(X_train, y_train)\npreds = model.predict(X_test)\nassert preds.shape == (20,)"},
+    {"name": "High accuracy on well-separated clusters", "code": "import numpy as np\nnp.random.seed(7)\nX0 = np.random.randn(100, 2) + np.array([0, 0])\nX1 = np.random.randn(100, 2) + np.array([10, 10])\nX = np.vstack([X0, X1])\ny = np.array([0]*100 + [1]*100)\nmodel = KNNClassifier(k=3)\nmodel.fit(X, y)\nacc = np.mean(model.predict(X) == y)\nassert acc == 1.0, f'Accuracy {acc}'"}
+  ],
+  "hints": [
+    "Use ||a-b||^2 = ||a||^2 + ||b||^2 - 2a*b to vectorize distance computation across all test-train pairs",
+    "np.argsort(dists[i])[:k] gives the indices of the k smallest distances"
+  ],
+  "related_problems": ["3.6", "2.1", "2.2"]
+}

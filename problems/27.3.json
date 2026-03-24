@@ -1,0 +1,20 @@
+{
+  "id": "27.3",
+  "title": "Q-Learning (Tabular)",
+  "difficulty": "Medium",
+  "category": "RL Basics",
+  "tags": ["reinforcement-learning", "q-learning", "temporal-difference"],
+  "description": "Implement tabular Q-Learning on a simple 1D grid world.\n\nThe grid has states 0..N-1. From state s, action 0 moves left (s-1) and action 1 moves right (s+1). States are clamped to [0, N-1]. The goal state is N-1, giving reward +1. All other transitions give reward 0. Each episode starts at state 0 and ends when goal is reached.\n\nQ-Learning update (off-policy TD):\n```\nQ[s,a] += alpha * (r + gamma * max(Q[s',:]) - Q[s,a])\n```\n\nTrain for `n_episodes` episodes with epsilon-greedy policy. Return the Q-table of shape (n_states, 2).",
+  "constraints": ["Use numpy only", "Start each episode at state 0", "Episode terminates at state n_states-1", "Clamp state to [0, n_states-1]"],
+  "starter_code": "import numpy as np\n\ndef q_learning(n_states: int, n_episodes: int, alpha: float, gamma: float, epsilon: float) -> np.ndarray:\n    \"\"\"Tabular Q-Learning on 1D grid world.\n    \n    Returns:\n        Q: Q-table of shape (n_states, 2)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef q_learning(n_states: int, n_episodes: int, alpha: float, gamma: float, epsilon: float) -> np.ndarray:\n    Q = np.zeros((n_states, 2))\n    goal = n_states - 1\n    \n    for _ in range(n_episodes):\n        s = 0\n        while s != goal:\n            if np.random.random() < epsilon:\n                a = np.random.randint(2)\n            else:\n                a = np.argmax(Q[s])\n            \n            s_next = int(np.clip(s + (1 if a == 1 else -1), 0, goal))\n            r = 1.0 if s_next == goal else 0.0\n            \n            Q[s, a] += alpha * (r + gamma * np.max(Q[s_next]) - Q[s, a])\n            s = s_next\n    \n    return Q",
+  "explanation": "**Key concepts:**\n\n1. **Off-policy:** Q-learning learns the optimal policy regardless of the behavior policy (epsilon-greedy here).\n\n2. **Bellman optimality:** The update target is `r + gamma * max_a Q(s', a)`, approximating the Bellman optimality equation.\n\n3. **Convergence:** With decaying alpha and sufficient exploration, Q converges to Q*.\n\n4. **Grid world:** Simple 1D environment to verify correctness — the optimal policy always goes right.",
+  "test_cases": [
+    {"name": "Q-values increase towards goal", "code": "np.random.seed(42)\nQ = q_learning(5, 1000, 0.1, 0.9, 0.1)\nassert Q[3, 1] > Q[0, 1], 'Q-values should increase towards goal'"},
+    {"name": "Right action preferred near goal", "code": "np.random.seed(0)\nQ = q_learning(5, 2000, 0.1, 0.99, 0.1)\nassert np.argmax(Q[3]) == 1, 'Should prefer going right near goal'"},
+    {"name": "Q-table shape", "code": "np.random.seed(1)\nQ = q_learning(4, 100, 0.1, 0.9, 0.2)\nassert Q.shape == (4, 2), f'Expected shape (4,2), got {Q.shape}'"},
+    {"name": "Goal state never updated", "code": "np.random.seed(2)\nQ = q_learning(5, 500, 0.1, 0.9, 0.1)\nassert Q[4, 0] == 0.0 and Q[4, 1] == 0.0, 'Goal state never updated'"}
+  ],
+  "hints": ["s_next = clip(s + direction, 0, n_states-1)", "max Q(s') is np.max(Q[s_next])", "Episode starts at 0, ends at n_states-1"],
+  "related_problems": ["27.4", "27.7", "27.1"]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "14.10",
+  "title": "Center Loss",
+  "difficulty": "Medium",
+  "category": "Contrastive Learning",
+  "tags": ["contrastive-learning", "center-loss", "metric-learning", "face-recognition"],
+  "description": "Implement Center Loss, which penalizes the distance between each embedding and its class center.\n\n`L_center = 1/2 * sum_i ||z_i - c_{y_i}||^2`\n\nwhere `c_k` is the center (mean embedding) of class k.\n\nIn practice, centers are updated with a moving average. For this problem:\n1. Compute class centers from the current batch\n2. Compute center loss using those batch centers\n\nReturn the mean center loss per sample.",
+  "constraints": [
+    "Use numpy only",
+    "Compute centers from the current batch",
+    "Return scalar float (mean over samples)"
+  ],
+  "starter_code": "import numpy as np\n\ndef center_loss(embeddings: np.ndarray, labels: np.ndarray) -> float:\n    \"\"\"Compute center loss.\n\n    Args:\n        embeddings: shape (B, D)\n        labels: class labels, shape (B,)\n\n    Returns:\n        Mean center loss per sample\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef center_loss(embeddings: np.ndarray, labels: np.ndarray) -> float:\n    embeddings = np.asarray(embeddings, dtype=float)\n    labels = np.asarray(labels)\n    classes = np.unique(labels)\n    centers = {}\n    for c in classes:\n        mask = labels == c\n        centers[c] = embeddings[mask].mean(axis=0)\n    total = 0.0\n    for i, (z, y) in enumerate(zip(embeddings, labels)):\n        diff = z - centers[y]\n        total += 0.5 * np.dot(diff, diff)\n    return float(total / len(embeddings))",
+  "explanation": "Center loss was proposed for face recognition to complement softmax loss. It minimizes intra-class variation by pulling embeddings toward their class centers. Unlike contrastive or triplet loss, it does not explicitly push different classes apart (that is handled by softmax). The combination of softmax + center loss achieves compact intra-class clusters.",
+  "test_cases": [
+    {"name": "Embeddings equal to centers gives loss=0", "code": "import numpy as np\nemb = np.array([[1.0,0],[1.0,0],[0.0,1],[0.0,1]])\nlabels = np.array([0,0,1,1])\nassert abs(center_loss(emb, labels)) < 1e-9"},
+    {"name": "Spread within class has positive loss", "code": "import numpy as np\nemb = np.array([[0.0,0],[1.0,0],[0.0,1],[0.0,1]])\nlabels = np.array([0,0,1,1])\nassert center_loss(emb, labels) > 0"},
+    {"name": "Loss is non-negative", "code": "import numpy as np\nnp.random.seed(0)\nemb = np.random.randn(8, 4)\nlabels = np.array([0,0,1,1,2,2,3,3])\nassert center_loss(emb, labels) >= 0"},
+    {"name": "Single class all same embedding", "code": "import numpy as np\nemb = np.ones((4,3))\nlabels = np.zeros(4, dtype=int)\nassert abs(center_loss(emb, labels)) < 1e-9"}
+  ],
+  "hints": [
+    "Compute per-class mean embedding as center",
+    "Loss for sample i = 0.5 * ||z_i - center[label_i]||^2"
+  ],
+  "related_problems": ["14.1", "14.7", "14.11"]
+}

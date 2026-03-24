@@ -1,0 +1,29 @@
+{
+  "id": "1.10",
+  "title": "SVD via Eigendecomposition of A^T A",
+  "difficulty": "Hard",
+  "category": "Linear Algebra & Matrix Operations",
+  "tags": ["numpy", "from-scratch", "svd", "pca", "dimensionality-reduction"],
+  "description": "Implement a simplified **Singular Value Decomposition** (SVD) for an `(m, n)` matrix `A` by:\n\n1. Computing the eigenvectors/eigenvalues of `A^T A` (size n x n)\n2. Right singular vectors `V` = eigenvectors of `A^T A`\n3. Singular values `sigma_i = sqrt(eigenvalue_i)` (sorted descending)\n4. Left singular vectors `U_i = A V_i / sigma_i`\n\nReturn `U, S, Vt` such that `A ~= U @ np.diag(S) @ Vt`.\n\n**Why this matters:** SVD underlies PCA, LSA (Latent Semantic Analysis), matrix factorization for recommendations, and low-rank approximations. Understanding the A^T A connection is a classic interview question.",
+  "constraints": [
+    "Use numpy's eigh (for symmetric matrices) to get eigenvectors of A^T A",
+    "Sort singular values in descending order",
+    "Return only the top k components if k is specified",
+    "Numerical tolerance: singular values below 1e-10 should be treated as zero"
+  ],
+  "starter_code": "import numpy as np\n\ndef simple_svd(A, k=None):\n    \"\"\"Compute simplified SVD via eigendecomposition of A^T A.\n\n    Args:\n        A: array of shape (m, n)\n        k: number of top singular values/vectors to return (None = all)\n\n    Returns:\n        U: array of shape (m, r) — left singular vectors\n        S: array of shape (r,) — singular values (descending)\n        Vt: array of shape (r, n) — right singular vectors transposed\n        where r = min(k, rank(A))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef simple_svd(A, k=None):\n    A = np.asarray(A, dtype=float)\n    m, n = A.shape\n\n    # Eigendecomposition of A^T A (symmetric, so use eigh)\n    AtA = A.T @ A  # (n, n)\n    eigenvalues, V = np.linalg.eigh(AtA)  # ascending order\n\n    # Sort descending\n    idx = np.argsort(eigenvalues)[::-1]\n    eigenvalues = eigenvalues[idx]\n    V = V[:, idx]  # columns are right singular vectors\n\n    # Compute singular values\n    eigenvalues = np.clip(eigenvalues, 0, None)\n    S = np.sqrt(eigenvalues)\n\n    # Keep only nonzero singular values\n    nonzero = S > 1e-10\n    S = S[nonzero]\n    V = V[:, nonzero]\n\n    if k is not None:\n        k = min(k, len(S))\n        S = S[:k]\n        V = V[:, :k]\n\n    # Left singular vectors: U_i = A v_i / sigma_i\n    U = A @ V / S  # (m, r) — broadcast divides each column by its sigma\n\n    Vt = V.T  # (r, n)\n    return U, S, Vt",
+  "explanation": "**Key concepts:**\n\n1. **SVD definition:** Any matrix A (m x n) can be decomposed as `A = U S V^T` where U (m x m) and V (n x n) are orthogonal and S is diagonal with non-negative entries (singular values).\n\n2. **A^T A connection:** `A^T A = V S^2 V^T` — the eigenvectors of `A^T A` are the right singular vectors of A, and the eigenvalues are the squares of the singular values.\n\n3. **Why eigh vs eig?** `np.linalg.eigh` is specialized for symmetric (Hermitian) matrices, guaranteeing real eigenvalues and orthogonal eigenvectors, and is faster.\n\n4. **Low-rank approximation:** Keeping only the top k singular values gives the best rank-k approximation to A in the Frobenius norm (Eckart-Young theorem). Used in image compression and PCA.\n\n5. **PCA connection:** PCA is SVD on the centered data matrix. The principal components are the right singular vectors; the explained variance is proportional to `S_i^2`.\n\n6. **Numerical note:** This approach is less stable than numpy's full SVD (Golub-Reinsch algorithm) but is conceptually illuminating.",
+  "test_cases": [
+    {"name": "Reconstruction", "code": "import numpy as np\nA = np.array([[1., 2.], [3., 4.], [5., 6.]])\nU, S, Vt = simple_svd(A)\nA_reconstructed = U @ np.diag(S) @ Vt\nassert np.allclose(A, A_reconstructed, atol=1e-6)"},
+    {"name": "Singular values are positive and descending", "code": "import numpy as np\nA = np.random.randn(5, 3)\n_, S, _ = simple_svd(A)\nassert np.all(S >= 0)\nassert np.all(np.diff(S) <= 0)"},
+    {"name": "U columns are orthonormal", "code": "import numpy as np\nA = np.random.randn(6, 4)\nU, S, Vt = simple_svd(A)\nassert np.allclose(U.T @ U, np.eye(U.shape[1]), atol=1e-6)"},
+    {"name": "Vt rows are orthonormal", "code": "import numpy as np\nA = np.random.randn(6, 4)\nU, S, Vt = simple_svd(A)\nassert np.allclose(Vt @ Vt.T, np.eye(Vt.shape[0]), atol=1e-6)"},
+    {"name": "Top-k truncation", "code": "import numpy as np\nA = np.random.randn(8, 5)\n_, S_full, _ = simple_svd(A)\n_, S_k, _ = simple_svd(A, k=2)\nassert len(S_k) == 2\nassert np.allclose(S_k, S_full[:2], atol=1e-6)"}
+  ],
+  "hints": [
+    "A^T A is symmetric so use np.linalg.eigh — eigenvalues come out in ascending order, reverse them",
+    "Left singular vectors: U_i = A @ v_i / sigma_i — matrix form: U = (A @ V) / S"
+  ],
+  "related_problems": ["1.9", "1.16", "1.17"]
+}

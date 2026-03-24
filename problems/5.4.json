@@ -1,0 +1,21 @@
+{
+  "id": "5.4",
+  "title": "ReLU and Its Subgradient",
+  "difficulty": "Easy",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "activation-functions", "backpropagation"],
+  "description": "Implement ReLU (Rectified Linear Unit) and its subgradient.\n\nReLU is defined as:\n```\nReLU(x) = max(0, x)\n```\n\nThe subgradient (used in backpropagation):\n```\nReLU'(x) = 1 if x > 0, else 0\n```\n\nAt x=0, the function is not differentiable; by convention use 0.\n\n**Example:**\n```\nReLU([-2, 0, 3]) = [0, 0, 3]\nReLU'([-2, 0, 3]) = [0, 0, 1]\n```\n\n**Why this matters:** ReLU is the most widely used activation in deep learning. It avoids vanishing gradients (gradient = 1 for positive inputs) and is computationally cheap.",
+  "constraints": ["Use numpy only", "Return both ReLU(x) and its subgradient in a tuple", "Subgradient at x=0 should be 0", "Handle arrays of any shape"],
+  "starter_code": "import numpy as np\n\ndef relu_with_derivative(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"Compute ReLU and its subgradient.\n    \n    Args:\n        x: Input array of any shape\n    \n    Returns:\n        Tuple of (relu(x), relu_subgradient(x))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef relu_with_derivative(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n    x = np.asarray(x, dtype=float)\n    r = np.maximum(0.0, x)\n    dr = (x > 0).astype(float)\n    return r, dr",
+  "explanation": "**Key concepts:**\n\n1. **Simplicity**: ReLU is just a threshold at 0. Computationally trivial compared to sigmoid/tanh.\n\n2. **No vanishing gradient**: For x > 0, gradient is exactly 1. Gradient flows without attenuation through ReLU neurons.\n\n3. **Dying ReLU problem**: If a neuron's input is always negative, gradient is always 0 — the neuron stops learning. Leaky ReLU (5.5) and ELU (5.6) address this.\n\n4. **np.maximum vs np.max**: `np.maximum(0, x)` is element-wise; `np.max(x)` returns a scalar.",
+  "test_cases": [
+    {"name": "Basic positive and negative inputs", "code": "r, dr = relu_with_derivative(np.array([-2.0, 0.0, 3.0]))\nnp.testing.assert_array_equal(r, [0.0, 0.0, 3.0])\nnp.testing.assert_array_equal(dr, [0.0, 0.0, 1.0])"},
+    {"name": "All positive inputs pass through", "code": "r, dr = relu_with_derivative(np.array([1.0, 2.0, 5.0]))\nnp.testing.assert_array_equal(r, [1.0, 2.0, 5.0])\nnp.testing.assert_array_equal(dr, [1.0, 1.0, 1.0])"},
+    {"name": "All negative inputs zeroed", "code": "r, dr = relu_with_derivative(np.array([-1.0, -0.5, -3.0]))\nnp.testing.assert_array_equal(r, [0.0, 0.0, 0.0])\nnp.testing.assert_array_equal(dr, [0.0, 0.0, 0.0])"},
+    {"name": "2D array shape preserved", "code": "x = np.array([[1.0, -1.0], [-2.0, 3.0]])\nr, dr = relu_with_derivative(x)\nassert r.shape == (2, 2) and dr.shape == (2, 2)"},
+    {"name": "ReLU output is non-negative", "code": "x = np.random.randn(100)\nr, _ = relu_with_derivative(x)\nassert np.all(r >= 0)"}
+  ],
+  "hints": ["np.maximum(0, x) is the cleanest way to implement ReLU element-wise", "(x > 0).astype(float) gives the subgradient indicator"],
+  "related_problems": ["5.5", "5.6", "5.7"]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "28.5",
+  "title": "Label Encoding",
+  "difficulty": "Easy",
+  "category": "Feature Engineering",
+  "tags": ["preprocessing", "categorical", "encoding"],
+  "description": "Implement Label Encoding for categorical features.\n\nGiven a 1D array of categorical labels, convert each unique category to an integer index. Categories are assigned indices in sorted order (0, 1, 2, ...).\n\n**Example:**\n```\nlabels = ['cat', 'dog', 'cat', 'bird']\n# sorted categories: ['bird', 'cat', 'dog']\n# encoded: [1, 2, 1, 0]\n```\n\nHandle unseen categories at transform time by assigning index -1.\n\nImplement `fit`, `transform`, `inverse_transform`, and `fit_transform`.",
+  "constraints": ["Use numpy only", "Sorted categories for deterministic ordering", "Unseen categories get index -1"],
+  "starter_code": "import numpy as np\n\nclass LabelEncoder:\n    def fit(self, labels: np.ndarray) -> 'LabelEncoder':\n        \"\"\"Learn the mapping from categories to integers.\"\"\"\n        pass\n    \n    def transform(self, labels: np.ndarray) -> np.ndarray:\n        \"\"\"Encode labels as integers.\"\"\"\n        pass\n    \n    def inverse_transform(self, encoded: np.ndarray) -> np.ndarray:\n        \"\"\"Convert integer codes back to original labels.\"\"\"\n        pass\n    \n    def fit_transform(self, labels: np.ndarray) -> np.ndarray:\n        pass",
+  "solution_code": "import numpy as np\n\nclass LabelEncoder:\n    def fit(self, labels: np.ndarray) -> 'LabelEncoder':\n        self.classes_ = np.array(sorted(set(labels)))\n        self.cat_to_idx_ = {c: i for i, c in enumerate(self.classes_)}\n        return self\n    \n    def transform(self, labels: np.ndarray) -> np.ndarray:\n        return np.array([self.cat_to_idx_.get(l, -1) for l in labels], dtype=int)\n    \n    def inverse_transform(self, encoded: np.ndarray) -> np.ndarray:\n        result = []\n        for idx in encoded:\n            if 0 <= idx < len(self.classes_):\n                result.append(self.classes_[idx])\n            else:\n                result.append(None)\n        return np.array(result)\n    \n    def fit_transform(self, labels: np.ndarray) -> np.ndarray:\n        return self.fit(labels).transform(labels)",
+  "explanation": "**Key concepts:**\n\n1. **Integer encoding:** Assigns each category a unique integer. Simple and memory-efficient.\n\n2. **Ordinal assumption risk:** Label encoding implies ordinal relationship (e.g., bird=0 < cat=1 < dog=2). Use one-hot for nominal categories in linear models.\n\n3. **When to use:** Tree-based models (decision trees, random forests) can handle label-encoded categories correctly.\n\n4. **Inverse transform:** Needed to interpret model predictions back in original label space.",
+  "test_cases": [
+    {"name": "Basic encoding", "code": "enc = LabelEncoder()\nresult = enc.fit_transform(np.array(['cat', 'dog', 'cat', 'bird']))\nassert list(result) == [1, 2, 1, 0]"},
+    {"name": "Unseen category gives -1", "code": "enc = LabelEncoder()\nenc.fit(np.array(['a', 'b', 'c']))\nresult = enc.transform(np.array(['b', 'z']))\nassert result[0] == 1 and result[1] == -1"},
+    {"name": "Inverse transform", "code": "enc = LabelEncoder()\nenc.fit(np.array(['cat', 'dog', 'bird']))\nencoded = enc.transform(np.array(['cat', 'bird']))\ndecoded = enc.inverse_transform(encoded)\nassert list(decoded) == ['cat', 'bird']"},
+    {"name": "Classes are sorted", "code": "enc = LabelEncoder()\nenc.fit(np.array(['z', 'a', 'm']))\nassert list(enc.classes_) == ['a', 'm', 'z']"}
+  ],
+  "hints": ["sorted(set(labels)) gives sorted unique classes", "dict.get(key, -1) returns -1 for missing keys", "inverse_transform indexes into self.classes_"],
+  "related_problems": ["28.4", "28.6", "28.9"]
+}

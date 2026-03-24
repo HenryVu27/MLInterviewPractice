@@ -1,0 +1,28 @@
+{
+  "id": "13.3",
+  "title": "Precision, Recall, F1 (Multi-class)",
+  "difficulty": "Medium",
+  "category": "Evaluation Metrics",
+  "tags": ["classification", "metrics", "macro", "micro", "weighted"],
+  "description": "Implement macro, micro, and weighted F1 scores for multi-class classification.\n\n- **Macro:** Average F1 across classes (equal weight per class)\n- **Micro:** Aggregate TP/FP/FN globally then compute F1\n- **Weighted:** Average F1 weighted by class support (number of true samples)\n\n**Example:**\n```\ny_true = [0, 1, 2, 0, 1, 2]\ny_pred = [0, 2, 1, 0, 0, 2]\n```\nReturn a dict with keys `'macro'`, `'micro'`, `'weighted'`.",
+  "constraints": [
+    "Use numpy only",
+    "Handle classes with zero support",
+    "Return dict with keys 'macro', 'micro', 'weighted'"
+  ],
+  "starter_code": "import numpy as np\n\ndef multiclass_f1(y_true: np.ndarray, y_pred: np.ndarray) -> dict:\n    \"\"\"Compute macro, micro, and weighted F1 for multi-class classification.\n\n    Returns:\n        dict with keys 'macro', 'micro', 'weighted'\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef multiclass_f1(y_true: np.ndarray, y_pred: np.ndarray) -> dict:\n    y_true = np.asarray(y_true)\n    y_pred = np.asarray(y_pred)\n    classes = np.unique(y_true)\n    TPs, FPs, FNs, supports = [], [], [], []\n    for c in classes:\n        tp = np.sum((y_pred == c) & (y_true == c))\n        fp = np.sum((y_pred == c) & (y_true != c))\n        fn = np.sum((y_pred != c) & (y_true == c))\n        TPs.append(tp); FPs.append(fp); FNs.append(fn)\n        supports.append(np.sum(y_true == c))\n    TPs = np.array(TPs, dtype=float)\n    FPs = np.array(FPs, dtype=float)\n    FNs = np.array(FNs, dtype=float)\n    supports = np.array(supports, dtype=float)\n    prec = np.where(TPs + FPs > 0, TPs / (TPs + FPs), 0.0)\n    rec  = np.where(TPs + FNs > 0, TPs / (TPs + FNs), 0.0)\n    f1s  = np.where(prec + rec > 0, 2 * prec * rec / (prec + rec), 0.0)\n    macro = float(np.mean(f1s))\n    tp_sum = np.sum(TPs)\n    fp_sum = np.sum(FPs)\n    fn_sum = np.sum(FNs)\n    mp = tp_sum / (tp_sum + fp_sum) if (tp_sum + fp_sum) > 0 else 0.0\n    mr = tp_sum / (tp_sum + fn_sum) if (tp_sum + fn_sum) > 0 else 0.0\n    micro = float(2 * mp * mr / (mp + mr)) if (mp + mr) > 0 else 0.0\n    weighted = float(np.sum(f1s * supports) / np.sum(supports))\n    return {'macro': macro, 'micro': micro, 'weighted': weighted}",
+  "explanation": "Macro F1 treats all classes equally regardless of size. Micro F1 favors large classes since it aggregates counts globally. Weighted F1 balances these by scaling each class F1 by its support, making it useful for imbalanced datasets where you want large classes to count more.",
+  "test_cases": [
+    {"name": "Perfect prediction", "code": "import numpy as np\nresult = multiclass_f1(np.array([0,1,2]), np.array([0,1,2]))\nassert abs(result['macro'] - 1.0) < 1e-9 and abs(result['micro'] - 1.0) < 1e-9"},
+    {"name": "Keys present", "code": "import numpy as np\ny_true = np.array([0,0,1,1,2,2])\ny_pred = np.array([0,1,1,2,2,0])\nresult = multiclass_f1(y_true, y_pred)\nassert 'macro' in result and 'micro' in result and 'weighted' in result"},
+    {"name": "Values in [0,1]", "code": "import numpy as np\nresult = multiclass_f1(np.array([1,1,0,0,1]), np.array([1,0,0,0,1]))\nassert 0 <= result['macro'] <= 1 and 0 <= result['micro'] <= 1"},
+    {"name": "All wrong predictions", "code": "import numpy as np\nresult = multiclass_f1(np.array([0,1,2]), np.array([1,2,0]))\nassert result['micro'] == 0.0 and result['macro'] == 0.0"}
+  ],
+  "hints": [
+    "Compute per-class TP, FP, FN first",
+    "Micro aggregates all TPs before dividing",
+    "Weighted uses support (count of true labels per class)"
+  ],
+  "related_problems": ["13.2", "13.4", "13.1"]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "21.1",
+  "title": "Symmetric Quantization",
+  "difficulty": "Medium",
+  "category": "On-Device / Model Compression",
+  "tags": ["numpy", "quantization", "compression"],
+  "description": "Implement symmetric quantization: map floating-point weights to integers using a single scale factor.\n\nYour functions should:\n- `compute_scale_symmetric(tensor, n_bits)`: compute scale = max(abs(tensor)) / (2^(n_bits-1) - 1)\n- `quantize_symmetric(tensor, scale, n_bits)`: round(tensor / scale), clipped to [-2^(n_bits-1), 2^(n_bits-1)-1]\n- `dequantize_symmetric(q_tensor, scale)`: q_tensor * scale\n\n**Example (8-bit):**\n```\ntensor = np.array([-1.0, 0.5, 1.0])\nscale = 1.0 / 127  # ~0.00787\nq = quantize_symmetric(tensor, scale, 8)  # [-127, 63, 127]\nreconstructed = dequantize_symmetric(q, scale)  # ~[-1.0, 0.496, 1.0]\n```",
+  "constraints": ["Use only numpy", "n_bits is typically 8 (int8 range: -128 to 127)", "Quantized values must be integer dtype"],
+  "starter_code": "import numpy as np\n\ndef compute_scale_symmetric(tensor: np.ndarray, n_bits: int) -> float:\n    \"\"\"Compute symmetric quantization scale.\"\"\"\n    pass\n\ndef quantize_symmetric(tensor: np.ndarray, scale: float, n_bits: int) -> np.ndarray:\n    \"\"\"Quantize tensor to integer representation.\"\"\"\n    pass\n\ndef dequantize_symmetric(q_tensor: np.ndarray, scale: float) -> np.ndarray:\n    \"\"\"Dequantize integer tensor back to float.\"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef compute_scale_symmetric(tensor: np.ndarray, n_bits: int) -> float:\n    max_val = np.max(np.abs(tensor))\n    q_max = 2 ** (n_bits - 1) - 1\n    return float(max_val / q_max)\n\ndef quantize_symmetric(tensor: np.ndarray, scale: float, n_bits: int) -> np.ndarray:\n    q_min = -(2 ** (n_bits - 1))\n    q_max = 2 ** (n_bits - 1) - 1\n    q = np.round(tensor / scale)\n    return np.clip(q, q_min, q_max).astype(np.int32)\n\ndef dequantize_symmetric(q_tensor: np.ndarray, scale: float) -> np.ndarray:\n    return q_tensor.astype(np.float32) * scale",
+  "explanation": "**Key concepts:**\n\n1. **Scale**: Maps the floating-point range [-max_abs, max_abs] to the integer range [-2^(n-1)+1, 2^(n-1)-1]. Symmetric means zero maps to zero (no zero-point offset).\n2. **Quantization error**: The rounding introduces error bounded by `scale/2`.\n3. **Why symmetric**: Simpler hardware implementation — no bias to add on every multiply-accumulate.\n\n**INT8 range**: [-128, 127]. In practice, scale is chosen to use [-127, 127] to keep the range symmetric.",
+  "test_cases": [
+    {"name": "Scale computed correctly", "code": "import numpy as np\ntensor = np.array([-2.0, 1.0, 0.5])\nscale = compute_scale_symmetric(tensor, n_bits=8)\nassert abs(scale - 2.0/127) < 1e-6, f'Expected {2.0/127:.6f}, got {scale:.6f}'"},
+    {"name": "Max value quantizes to q_max", "code": "import numpy as np\ntensor = np.array([1.0])\nscale = compute_scale_symmetric(tensor, n_bits=8)\nq = quantize_symmetric(tensor, scale, n_bits=8)\nassert q[0] == 127, f'Max value should quantize to 127, got {q[0]}'"},
+    {"name": "Round-trip error is small", "code": "import numpy as np\nnp.random.seed(0)\ntensor = np.random.randn(100).astype(np.float32)\nscale = compute_scale_symmetric(tensor, n_bits=8)\nq = quantize_symmetric(tensor, scale, n_bits=8)\nreconstructed = dequantize_symmetric(q, scale)\nerror = np.max(np.abs(tensor - reconstructed))\nassert error < 0.05, f'Max error {error:.4f} too large'"},
+    {"name": "Quantized tensor is int32", "code": "import numpy as np\ntensor = np.array([0.5, -0.5, 1.0])\nscale = compute_scale_symmetric(tensor, n_bits=8)\nq = quantize_symmetric(tensor, scale, n_bits=8)\nassert q.dtype == np.int32, f'Expected int32, got {q.dtype}'"},
+    {"name": "Zero maps to zero", "code": "import numpy as np\ntensor = np.array([0.0, 1.0, -1.0])\nscale = compute_scale_symmetric(tensor, n_bits=8)\nq = quantize_symmetric(tensor, scale, n_bits=8)\nassert q[0] == 0, f'Zero should map to 0, got {q[0]}'"}
+  ],
+  "hints": ["scale = max(abs(tensor)) / (2^(n_bits-1) - 1)", "Use np.round then np.clip to [-2^(n-1), 2^(n-1)-1]"],
+  "related_problems": ["21.2", "21.3", "21.4"]
+}

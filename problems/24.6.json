@@ -1,0 +1,20 @@
+{
+  "id": "24.6",
+  "title": "Content-Based Filtering",
+  "difficulty": "Medium",
+  "category": "Recommendation Systems",
+  "tags": ["numpy", "content-based", "cosine-similarity"],
+  "description": "Implement content-based filtering to recommend items similar to a seed item.\n\nGiven a feature matrix where each row is an item's feature vector (e.g., genre one-hot, normalized attributes), compute cosine similarity between a seed item and all others. Return the top-K most similar items, excluding the seed itself.\n\n**Example:**\n```\nfeatures = np.array([[1,0,1],[1,1,0],[0,1,1],[1,0,0]])\ncontent_based_recommend(features, seed=0, k=2) -> [1, 3]\n```\n\nItem 0 has features [1,0,1]. Item 1 has [1,1,0] — shares feature 0. Item 3 has [1,0,0] — shares feature 0 but less overlap than item 1.",
+  "constraints": ["Use numpy", "Exclude the seed item from results", "Handle zero-norm vectors by assigning similarity 0", "Return item indices sorted by descending similarity"],
+  "starter_code": "import numpy as np\n\ndef content_based_recommend(features: np.ndarray, seed: int, k: int = 5) -> list[int]:\n    \"\"\"Recommend items similar to seed using cosine similarity on features.\n\n    Args:\n        features: (n_items, n_features) item feature matrix\n        seed: index of the seed item\n        k: number of recommendations\n\n    Returns:\n        List of k item indices (excluding seed) sorted by descending similarity\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef content_based_recommend(features: np.ndarray, seed: int, k: int = 5) -> list[int]:\n    seed_vec = features[seed].astype(float)\n    seed_norm = np.linalg.norm(seed_vec)\n    sims = []\n    for i in range(len(features)):\n        if i == seed:\n            continue\n        other = features[i].astype(float)\n        denom = seed_norm * np.linalg.norm(other)\n        sim = np.dot(seed_vec, other) / denom if denom > 0 else 0.0\n        sims.append((sim, i))\n    sims.sort(key=lambda x: -x[0])\n    return [idx for _, idx in sims[:k]]",
+  "explanation": "**Key concepts:**\n\n1. **Content-based vs CF:** Content-based relies only on item features, not user history. It can recommend items with no ratings (solves the item cold-start problem).\n\n2. **Cosine similarity:** Measures feature overlap regardless of magnitude. Ideal for sparse binary features like genre tags.\n\n3. **Limitation:** Only recommends items similar to what the user already likes — no serendipity. Also requires rich, accurate item features.\n\n4. **Extensions:** TF-IDF weighted text features, learned embeddings, or combining with CF in hybrid systems.",
+  "test_cases": [
+    {"name": "Returns k items excluding seed", "code": "import numpy as np\nfeatures = np.array([[1,0,1],[1,1,0],[0,1,1],[1,0,0]], dtype=float)\nrecs = content_based_recommend(features, seed=0, k=2)\nassert len(recs) == 2\nassert 0 not in recs, 'Seed should be excluded'"},
+    {"name": "Identical item ranked first", "code": "import numpy as np\nfeatures = np.array([[1,0,0],[1,0,0],[0,1,0]], dtype=float)\nrecs = content_based_recommend(features, seed=0, k=1)\nassert recs[0] == 1, f'Item 1 is identical to seed, got {recs}'"},
+    {"name": "Zero vector gets similarity 0", "code": "import numpy as np\nfeatures = np.array([[1,0,1],[0,0,0],[0,1,1]], dtype=float)\nrecs = content_based_recommend(features, seed=0, k=2)\nassert isinstance(recs, list) and len(recs) == 2"},
+    {"name": "K larger than n_items-1 returns all", "code": "import numpy as np\nfeatures = np.eye(4)\nrecs = content_based_recommend(features, seed=0, k=10)\nassert len(recs) == 3"}
+  ],
+  "hints": ["seed_vec = features[seed]; seed_norm = np.linalg.norm(seed_vec)", "cosine_sim = dot(seed_vec, other) / (seed_norm * norm(other))", "Skip index i == seed; sort by sim descending"],
+  "related_problems": ["24.1", "24.2", "24.9"]
+}

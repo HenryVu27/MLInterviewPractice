@@ -1,0 +1,29 @@
+{
+  "id": "2.3",
+  "title": "Pearson Correlation",
+  "difficulty": "Easy",
+  "category": "Probability & Statistics",
+  "tags": ["numpy", "from-scratch", "statistics", "correlation"],
+  "description": "Implement `pearson_correlation(x, y)` which computes the Pearson correlation coefficient between two variables:\n\n```\nr = cov(x, y) / (std(x) * std(y))\n  = sum((x_i - mean_x)(y_i - mean_y)) / sqrt(sum((x_i - mean_x)^2) * sum((y_i - mean_y)^2))\n```\n\nThe result is in `[-1, 1]`.\n\nAlso implement `correlation_matrix(X)` which returns the `(D, D)` pairwise correlation matrix for a dataset X of shape `(N, D)`.\n\n**Why this matters:** Correlation is scale-invariant and tells you the linear relationship strength between variables. It is used in feature selection, multicollinearity detection, and EDA.",
+  "constraints": [
+    "Do NOT use np.corrcoef",
+    "pearson_correlation returns 0.0 if either variable has zero variance",
+    "correlation_matrix uses numpy matrix operations (no loops over feature pairs)",
+    "Result clipped to [-1, 1]"
+  ],
+  "starter_code": "import numpy as np\n\ndef pearson_correlation(x, y):\n    \"\"\"Compute Pearson correlation coefficient between x and y.\n\n    Args:\n        x: 1-D array of length n\n        y: 1-D array of length n\n\n    Returns:\n        Scalar in [-1, 1]\n    \"\"\"\n    pass\n\n\ndef correlation_matrix(X):\n    \"\"\"Compute pairwise Pearson correlation matrix.\n\n    Args:\n        X: array of shape (N, D)\n\n    Returns:\n        C: symmetric array of shape (D, D), diagonal all 1s\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef pearson_correlation(x, y):\n    x = np.asarray(x, dtype=float)\n    y = np.asarray(y, dtype=float)\n    x_c = x - np.mean(x)\n    y_c = y - np.mean(y)\n    denom = np.sqrt(np.sum(x_c ** 2) * np.sum(y_c ** 2))\n    if denom < 1e-12:\n        return 0.0\n    return float(np.clip(np.sum(x_c * y_c) / denom, -1.0, 1.0))\n\n\ndef correlation_matrix(X):\n    X = np.asarray(X, dtype=float)\n    X_c = X - np.mean(X, axis=0)  # (N, D)\n    # Std for each feature\n    stds = np.sqrt(np.sum(X_c ** 2, axis=0))  # (D,)\n    # Replace zero stds with 1 to avoid division by zero\n    stds = np.where(stds == 0, 1.0, stds)\n    X_norm = X_c / stds  # (N, D)\n    N = X.shape[0]\n    C = X_norm.T @ X_norm / (N - 1)\n    return np.clip(C, -1.0, 1.0)",
+  "explanation": "**Key concepts:**\n\n1. **Correlation vs covariance:** Correlation is covariance normalized by both standard deviations. It is dimensionless and always in [-1, 1].\n\n2. **Interpretation:**\n   - r = 1: perfect positive linear relationship\n   - r = -1: perfect negative linear relationship\n   - r = 0: no linear relationship (may still have nonlinear)\n\n3. **Correlation matrix:** Normalize each column to unit variance first, then compute `X_norm^T X_norm / (N-1)`. The diagonal is always 1 (each feature is perfectly correlated with itself).\n\n4. **Limitation:** Pearson only measures linear dependence. Two variables can have r = 0 but be strongly nonlinearly related (e.g., y = x^2 symmetric around 0).\n\n5. **Multicollinearity:** In regression, highly correlated features (|r| > 0.8) can cause unstable coefficient estimates. The correlation matrix helps detect this.",
+  "test_cases": [
+    {"name": "Perfect positive correlation", "code": "import numpy as np\nassert abs(pearson_correlation([1, 2, 3], [2, 4, 6]) - 1.0) < 1e-9"},
+    {"name": "Perfect negative correlation", "code": "import numpy as np\nassert abs(pearson_correlation([1, 2, 3], [-1, -2, -3]) - (-1.0)) < 1e-9"},
+    {"name": "No correlation", "code": "import numpy as np\nassert abs(pearson_correlation([1, 2, 3, 4], [1, -1, 1, -1])) < 1e-9"},
+    {"name": "correlation_matrix diagonal is 1", "code": "import numpy as np\nX = np.random.randn(50, 4)\nC = correlation_matrix(X)\nassert np.allclose(np.diag(C), 1.0, atol=1e-9)"},
+    {"name": "correlation_matrix is symmetric", "code": "import numpy as np\nX = np.random.randn(30, 3)\nC = correlation_matrix(X)\nassert np.allclose(C, C.T)"}
+  ],
+  "hints": [
+    "Center both x and y, then r = dot(x_c, y_c) / sqrt(dot(x_c, x_c) * dot(y_c, y_c))",
+    "For correlation_matrix: normalize columns to unit std, then C = X_norm.T @ X_norm / (N-1)"
+  ],
+  "related_problems": ["2.1", "2.2", "2.8"]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "2.4",
+  "title": "KL Divergence",
+  "difficulty": "Medium",
+  "category": "Probability & Statistics",
+  "tags": ["numpy", "from-scratch", "information-theory", "distributions"],
+  "description": "Implement `kl_divergence(p, q)` which computes the Kullback-Leibler divergence from distribution Q to distribution P (both discrete):\n\n```\nKL(P || Q) = sum_i P(i) * log(P(i) / Q(i))\n```\n\nwhere the convention is `0 * log(0) = 0` (0 log 0 = 0 by continuity) and `KL = +inf` if Q(i) = 0 but P(i) > 0.\n\n**Example:**\n```\np = [0.4, 0.6]\nq = [0.5, 0.5]\nKL(p||q) ~= 0.4*log(0.4/0.5) + 0.6*log(0.6/0.5) ~= 0.0201\n```\n\n**Why this matters:** KL divergence is used as a loss in VAEs, knowledge distillation, RL policy optimization (PPO), and anywhere you need to measure how one distribution differs from another.",
+  "constraints": [
+    "p and q must be valid probability distributions (non-negative, sum to 1) — validate this",
+    "Use natural log (np.log) unless specified otherwise",
+    "Handle 0*log(0) = 0 correctly",
+    "Return np.inf if q[i] = 0 but p[i] > 0"
+  ],
+  "starter_code": "import numpy as np\n\ndef kl_divergence(p, q):\n    \"\"\"Compute KL divergence KL(P || Q) for discrete distributions.\n\n    Args:\n        p: 1-D array-like — reference distribution P\n        q: 1-D array-like — comparison distribution Q\n\n    Returns:\n        Scalar KL divergence (>= 0, or np.inf if q has zeros where p > 0)\n\n    Raises:\n        ValueError: if p or q are not valid probability distributions\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef kl_divergence(p, q):\n    p = np.asarray(p, dtype=float)\n    q = np.asarray(q, dtype=float)\n\n    if not (np.all(p >= 0) and np.allclose(np.sum(p), 1.0, atol=1e-6)):\n        raise ValueError(\"p is not a valid probability distribution\")\n    if not (np.all(q >= 0) and np.allclose(np.sum(q), 1.0, atol=1e-6)):\n        raise ValueError(\"q is not a valid probability distribution\")\n\n    # Where p > 0 and q = 0: KL = +inf\n    if np.any((p > 0) & (q == 0)):\n        return np.inf\n\n    # Compute term-by-term; 0 * log(0/q) = 0\n    mask = p > 0\n    kl = np.sum(p[mask] * np.log(p[mask] / q[mask]))\n    return float(kl)",
+  "explanation": "**Key concepts:**\n\n1. **Asymmetry:** KL(P||Q) != KL(Q||P) in general. KL(P||Q) measures how many extra nats/bits are needed to encode P using a code optimized for Q.\n\n2. **Non-negativity:** KL(P||Q) >= 0 always (Gibbs' inequality). KL = 0 iff P = Q.\n\n3. **Support constraint:** If Q(i) = 0 but P(i) > 0, KL = +inf. This means Q must assign positive probability everywhere P does.\n\n4. **0 * log(0) = 0:** This is the standard convention, justified by the limit as p -> 0 of p log p = 0.\n\n5. **ML applications:**\n   - VAE: minimize KL(q(z|x) || p(z)) as the regularization term\n   - Knowledge distillation: minimize KL(teacher_softmax || student_softmax)\n   - PPO: clip ratio |pi_new/pi_old| to bound KL between policies\n\n6. **Forward vs reverse KL:** Forward KL(P||Q) is mode-covering; reverse KL(Q||P) is mode-seeking. This matters in variational inference.",
+  "test_cases": [
+    {"name": "Identical distributions give 0", "code": "import numpy as np\np = [0.3, 0.4, 0.3]\nassert abs(kl_divergence(p, p)) < 1e-9"},
+    {"name": "Known KL value", "code": "import numpy as np\np = [0.4, 0.6]\nq = [0.5, 0.5]\nexpected = 0.4 * np.log(0.4/0.5) + 0.6 * np.log(0.6/0.5)\nassert abs(kl_divergence(p, q) - expected) < 1e-9"},
+    {"name": "q=0 where p>0 gives inf", "code": "import numpy as np\np = [0.5, 0.5]\nq = [1.0, 0.0]\nassert kl_divergence(p, q) == np.inf"},
+    {"name": "p has zero entries", "code": "import numpy as np\np = [0.0, 1.0]\nq = [0.3, 0.7]\nassert abs(kl_divergence(p, q) - np.log(1.0/0.7)) < 1e-9"},
+    {"name": "Invalid p raises", "code": "import numpy as np\ntry:\n    kl_divergence([0.3, 0.3], [0.5, 0.5])\n    assert False\nexcept ValueError:\n    pass"}
+  ],
+  "hints": [
+    "Use a mask for p > 0 to avoid computing 0 * log(0)",
+    "Check for the case where q = 0 but p > 0 before computing log"
+  ],
+  "related_problems": ["2.5", "2.6", "2.7"]
+}

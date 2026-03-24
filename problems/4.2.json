@@ -1,0 +1,28 @@
+{
+  "id": "4.2",
+  "title": "MLP Forward Pass",
+  "difficulty": "Easy",
+  "category": "Neural Network Fundamentals",
+  "tags": ["numpy", "from-scratch", "mlp", "forward-pass", "relu"],
+  "description": "Implement the **forward pass of a Multi-Layer Perceptron (MLP)** with ReLU hidden activations and configurable output activation.\n\n**Architecture:**\n```\nx → [Linear → ReLU] × (L-1) → [Linear → output_activation] → y\n```\n\nEach layer l: `a_l = activation(W_l @ a_{l-1} + b_l)`\n\nYour MLP should accept a list of layer sizes, e.g., `[4, 8, 8, 3]` means:\n- Input: 4 features\n- Hidden layer 1: 8 units, ReLU\n- Hidden layer 2: 8 units, ReLU\n- Output: 3 units, linear (or softmax for classification)\n\n**Shapes:**\n- X: (N, input_size)\n- Output: (N, output_size)\n\nInitialize weights with Xavier initialization and biases to zero.",
+  "constraints": [
+    "Use only numpy",
+    "Hidden layers use ReLU",
+    "Output activation: 'linear' or 'softmax'",
+    "Xavier init: W ~ Uniform(-sqrt(6/(fan_in+fan_out)), +sqrt(6/(fan_in+fan_out)))"
+  ],
+  "starter_code": "import numpy as np\n\nclass MLP:\n    def __init__(self, layer_sizes: list[int], output_activation: str = 'linear'):\n        \"\"\"Initialize MLP with given layer sizes.\n\n        Args:\n            layer_sizes: list of sizes [input, hidden1, ..., output]\n            output_activation: 'linear' or 'softmax'\n        \"\"\"\n        pass\n\n    def forward(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Forward pass through the full network.\n\n        Args:\n            X: (N, input_size)\n        Returns:\n            (N, output_size)\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass MLP:\n    def __init__(self, layer_sizes: list[int], output_activation: str = 'linear'):\n        self.layer_sizes = layer_sizes\n        self.output_activation = output_activation\n        self.weights = []\n        self.biases = []\n\n        # Xavier initialization\n        for i in range(len(layer_sizes) - 1):\n            fan_in = layer_sizes[i]\n            fan_out = layer_sizes[i + 1]\n            limit = np.sqrt(6 / (fan_in + fan_out))\n            W = np.random.uniform(-limit, limit, (fan_in, fan_out))\n            b = np.zeros(fan_out)\n            self.weights.append(W)\n            self.biases.append(b)\n\n    def forward(self, X: np.ndarray) -> np.ndarray:\n        a = X\n        n_layers = len(self.weights)\n        for i, (W, b) in enumerate(zip(self.weights, self.biases)):\n            z = a @ W + b          # (N, out_size)\n            if i < n_layers - 1:\n                a = np.maximum(0, z)  # ReLU for hidden layers\n            else:\n                # Output activation\n                if self.output_activation == 'softmax':\n                    z_shifted = z - z.max(axis=1, keepdims=True)\n                    exp_z = np.exp(z_shifted)\n                    a = exp_z / exp_z.sum(axis=1, keepdims=True)\n                else:  # linear\n                    a = z\n        return a",
+  "explanation": "**Key concepts:**\n\n1. **Layer-by-layer forward pass:** Each layer applies a linear transform W @ x + b, then an activation. Output of one layer is input to the next.\n\n2. **Xavier initialization:** Keeps activation variance roughly constant across layers. Limit = sqrt(6 / (fan_in + fan_out)) for uniform. Avoids exploding/vanishing signals at initialization.\n\n3. **ReLU in hidden layers:** Modern default. Fast, no vanishing gradient for positive values. Dying ReLU problem (neurons stuck at 0) is addressed by He init (see 4.7) and variants like Leaky ReLU.\n\n4. **Softmax output:** For multi-class classification. Sum to 1, so interpretable as probabilities. Numerically stable with max-subtraction.\n\n5. **Matrix form a @ W:** With W shape (in, out), the batch computation is (N, in) @ (in, out) = (N, out). This processes all N samples at once.\n\n**Interview angle:** Why stack layers? Each layer adds a new level of abstraction. The universal approximation theorem says a 2-layer MLP with enough hidden units can approximate any function.",
+  "test_cases": [
+    {"name": "Output shape correct", "code": "import numpy as np\nnp.random.seed(0)\nmodel = MLP([4, 8, 3], output_activation='linear')\nX = np.random.randn(10, 4)\nout = model.forward(X)\nassert out.shape == (10, 3), f'Expected (10, 3), got {out.shape}'"},
+    {"name": "Softmax output sums to 1", "code": "import numpy as np\nnp.random.seed(1)\nmodel = MLP([4, 8, 3], output_activation='softmax')\nX = np.random.randn(20, 4)\nout = model.forward(X)\nassert np.allclose(out.sum(axis=1), 1.0), 'Softmax rows must sum to 1'\nassert np.all(out >= 0)"},
+    {"name": "Single-layer (no hidden) works", "code": "import numpy as np\nnp.random.seed(2)\nmodel = MLP([3, 2], output_activation='linear')\nX = np.random.randn(5, 3)\nout = model.forward(X)\nassert out.shape == (5, 2)"},
+    {"name": "ReLU activations are non-negative in hidden layers", "code": "import numpy as np\nnp.random.seed(3)\n# Verify hidden layer activations are ReLU'd\nmodel = MLP([2, 5, 1])\nmodel.weights[0] = np.ones((2, 5)) * -1  # force negative pre-activations\nmodel.biases[0] = np.zeros(5)\nX = np.ones((3, 2))  # inputs all 1 -> pre-activation = -2 for all hidden units\nhidden_z = X @ model.weights[0] + model.biases[0]  # all -2\nout = model.forward(X)  # Should be 0 due to ReLU\nassert np.all(out == 0.0), f'ReLU should zero out negative hidden values, got {out}'"}
+  ],
+  "hints": [
+    "Iterate through (W, b) pairs: z = a @ W + b, then a = relu(z) for hidden layers and the specified activation for the output layer",
+    "Xavier uniform limit: sqrt(6 / (fan_in + fan_out))"
+  ],
+  "related_problems": ["4.1", "4.3", "4.6", "4.7"]
+}

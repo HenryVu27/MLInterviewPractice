@@ -1,0 +1,21 @@
+{
+  "id": "5.7",
+  "title": "GELU (Gaussian Error Linear Unit)",
+  "difficulty": "Medium",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "activation-functions", "transformers"],
+  "description": "Implement GELU activation using the tanh approximation.\n\nThe exact GELU:\n```\nGELU(x) = x * Phi(x)\n```\nwhere Phi is the standard Gaussian CDF.\n\nThe tanh approximation (used in GPT/BERT):\n```\nGELU(x) ≈ 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))\n```\n\n**Example:**\n```\nGELU(0) = 0\nGELU(1) ≈ 0.8413\nGELU(-1) ≈ -0.1587\n```\n\n**Why this matters:** GELU is the default activation in BERT, GPT-2/3/4, and most modern Transformers. It outperforms ReLU on NLP tasks.",
+  "constraints": ["Use numpy only", "Implement the tanh approximation (not exact CDF)", "Also implement the derivative of the tanh approximation", "Return both the value and derivative"],
+  "starter_code": "import numpy as np\n\ndef gelu_with_derivative(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"Compute GELU (tanh approximation) and its derivative.\n    \n    Args:\n        x: Input array of any shape\n    \n    Returns:\n        Tuple of (gelu(x), gelu_derivative(x))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef gelu_with_derivative(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n    x = np.asarray(x, dtype=float)\n    c = np.sqrt(2.0 / np.pi)\n    inner = c * (x + 0.044715 * x ** 3)\n    tanh_inner = np.tanh(inner)\n    g = 0.5 * x * (1.0 + tanh_inner)\n    # derivative via chain rule\n    dtanh = 1.0 - tanh_inner ** 2\n    dinner = c * (1.0 + 3.0 * 0.044715 * x ** 2)\n    dg = 0.5 * (1.0 + tanh_inner) + 0.5 * x * dtanh * dinner\n    return g, dg",
+  "explanation": "**Key concepts:**\n\n1. **Intuition**: GELU weights inputs by the probability they are positive under a standard Gaussian. Positive inputs pass through; negative inputs are gated proportionally.\n\n2. **Tanh approximation**: The exact CDF requires scipy. The tanh approximation was proposed in the original GELU paper and is what PyTorch/JAX use by default.\n\n3. **Constants**: sqrt(2/pi) ≈ 0.7979, 0.044715 is empirically chosen for the cubic correction term.\n\n4. **Derivative via chain rule**: d/dx [0.5*x*(1+tanh(inner))] = 0.5*(1+tanh) + 0.5*x*(1-tanh^2)*d(inner)/dx.",
+  "test_cases": [
+    {"name": "GELU(0) = 0", "code": "g, _ = gelu_with_derivative(np.array([0.0]))\nassert abs(float(g)) < 1e-9"},
+    {"name": "Approximate matches known value at x=1", "code": "g, _ = gelu_with_derivative(np.array([1.0]))\nassert abs(float(g) - 0.8413) < 0.01, f'Expected ~0.8413, got {float(g):.4f}'"},
+    {"name": "Negative input gives small negative output", "code": "g, _ = gelu_with_derivative(np.array([-1.0]))\nassert -0.2 < float(g) < 0.0"},
+    {"name": "Derivative matches numerical gradient", "code": "x = np.array([0.5, -0.5, 1.5])\nh = 1e-5\nc = np.sqrt(2/np.pi)\nf = lambda v: 0.5 * v * (1 + np.tanh(c*(v + 0.044715*v**3)))\nnum_grad = (f(x+h) - f(x-h)) / (2*h)\n_, dg = gelu_with_derivative(x)\nnp.testing.assert_allclose(dg, num_grad, rtol=1e-4)"},
+    {"name": "Shape preserved", "code": "x = np.random.randn(4, 5)\ng, dg = gelu_with_derivative(x)\nassert g.shape == x.shape and dg.shape == x.shape"}
+  ],
+  "hints": ["Use np.sqrt(2.0 / np.pi) for the constant c", "Apply chain rule: d/dx[0.5*x*(1+tanh(inner))] = 0.5*(1+tanh) + 0.5*x*(1-tanh^2)*inner'"],
+  "related_problems": ["5.4", "5.5", "5.8"]
+}

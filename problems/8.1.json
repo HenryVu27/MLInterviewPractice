@@ -1,0 +1,46 @@
+{
+  "id": "8.1",
+  "title": "Conv2D Forward Pass",
+  "difficulty": "Medium",
+  "category": "Convolutional Neural Networks",
+  "tags": ["conv2d", "convolution", "stride", "padding", "numpy"],
+  "description": "Implement a 2D convolution forward pass from scratch using nested loops.\n\nInput: `x` of shape `(N, C_in, H, W)` (NCHW format)\nKernel: `W` of shape `(C_out, C_in, kH, kW)`\nBias: `b` of shape `(C_out,)`\n\nOutput shape: `(N, C_out, H_out, W_out)` where:\n```\nH_out = (H + 2*padding - kH) // stride + 1\nW_out = (W + 2*padding - kW) // stride + 1\n```\n\n**Example:**\n```\nx: (1, 1, 4, 4), kernel: (1, 1, 3, 3), stride=1, padding=0\nOutput: (1, 1, 2, 2)\n```",
+  "constraints": [
+    "Use numpy only",
+    "Input in NCHW format",
+    "Support stride and padding (zero-pad)",
+    "Use explicit nested loops (no np.convolve)",
+    "padding adds zeros symmetrically"
+  ],
+  "starter_code": "import numpy as np\n\ndef conv2d(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n           stride: int = 1, padding: int = 0) -> np.ndarray:\n    \"\"\"2D convolution forward pass.\n    \n    Args:\n        x: Input (N, C_in, H, W)\n        W: Kernel (C_out, C_in, kH, kW)\n        b: Bias (C_out,)\n        stride: Convolution stride\n        padding: Zero-padding amount on each side\n    \n    Returns:\n        Output (N, C_out, H_out, W_out)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef conv2d(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n           stride: int = 1, padding: int = 0) -> np.ndarray:\n    N, C_in, H, W_in = x.shape\n    C_out, C_in_k, kH, kW = W.shape\n    assert C_in == C_in_k\n    if padding > 0:\n        x = np.pad(x, ((0,0),(0,0),(padding,padding),(padding,padding)))\n    H_pad, W_pad = x.shape[2], x.shape[3]\n    H_out = (H_pad - kH) // stride + 1\n    W_out = (W_pad - kW) // stride + 1\n    out = np.zeros((N, C_out, H_out, W_out), dtype=x.dtype)\n    for n in range(N):\n        for co in range(C_out):\n            for i in range(H_out):\n                for j in range(W_out):\n                    h_start = i * stride\n                    w_start = j * stride\n                    patch = x[n, :, h_start:h_start+kH, w_start:w_start+kW]\n                    out[n, co, i, j] = float(np.sum(patch * W[co])) + b[co]\n    return out",
+  "explanation": "**Key concepts:**\n\n1. **NCHW layout:** Batch x Channels x Height x Width. Kernel is (out_ch, in_ch, kH, kW).\n\n2. **Zero padding:** `np.pad` adds zeros around the spatial dimensions, allowing 'same' convolution when `padding = kH//2`.\n\n3. **Output size formula:** `(H + 2P - kH) // stride + 1`. Ensures the kernel fits within the padded input.\n\n4. **Inner loop:** For each output position (i, j), extract a patch and take dot product with the kernel (sum over all input channels and spatial positions).\n\n5. **Bias:** Added once per output channel (broadcast over spatial positions).",
+  "test_cases": [
+    {
+      "name": "Single filter, no padding",
+      "code": "import numpy as np\nx = np.ones((1, 1, 4, 4))\nW = np.ones((1, 1, 3, 3))\nb = np.zeros(1)\nout = conv2d(x, W, b, stride=1, padding=0)\nassert out.shape == (1, 1, 2, 2)\nassert np.all(out == 9.0)"
+    },
+    {
+      "name": "Output size with stride=2",
+      "code": "import numpy as np\nx = np.zeros((1, 1, 6, 6))\nW = np.zeros((1, 1, 3, 3))\nb = np.zeros(1)\nout = conv2d(x, W, b, stride=2, padding=0)\nassert out.shape == (1, 1, 2, 2)"
+    },
+    {
+      "name": "Same padding preserves spatial size",
+      "code": "import numpy as np\nx = np.ones((1, 1, 5, 5))\nW = np.ones((1, 1, 3, 3))\nb = np.zeros(1)\nout = conv2d(x, W, b, stride=1, padding=1)\nassert out.shape == (1, 1, 5, 5)"
+    },
+    {
+      "name": "Multiple channels and filters",
+      "code": "import numpy as np\nnp.random.seed(0)\nx = np.random.randn(2, 3, 8, 8)\nW = np.random.randn(4, 3, 3, 3)\nb = np.zeros(4)\nout = conv2d(x, W, b, stride=1, padding=0)\nassert out.shape == (2, 4, 6, 6)"
+    },
+    {
+      "name": "Bias is added correctly",
+      "code": "import numpy as np\nx = np.zeros((1, 1, 3, 3))\nW = np.zeros((2, 1, 3, 3))\nb = np.array([1.0, 2.0])\nout = conv2d(x, W, b, stride=1, padding=0)\nassert out.shape == (1, 2, 1, 1)\nassert out[0, 0, 0, 0] == 1.0\nassert out[0, 1, 0, 0] == 2.0"
+    }
+  ],
+  "hints": [
+    "Use np.pad with ((0,0),(0,0),(p,p),(p,p)) for NCHW padding",
+    "H_out = (H + 2*padding - kH) // stride + 1",
+    "Extract patch with x[n, :, i*stride:i*stride+kH, j*stride:j*stride+kW]"
+  ],
+  "related_problems": ["8.2", "8.3", "8.4"]
+}

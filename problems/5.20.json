@@ -1,0 +1,21 @@
+{
+  "id": "5.20",
+  "title": "Hinge Loss (SVM-style)",
+  "difficulty": "Easy",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "loss-functions", "svm"],
+  "description": "Implement Hinge loss used in Support Vector Machines for binary classification.\n\nFor a single sample with label y in {-1, +1} and score f:\n```\nHinge(y, f) = max(0, 1 - y*f)\n```\n\nFor a batch:\n```\nL = (1/N) * sum_i max(0, 1 - y_i * f_i)\n```\n\nSubgradient w.r.t. f_i:\n```\ndL/df_i = -y_i/N   if y_i * f_i < 1 (margin violated)\n         = 0        if y_i * f_i >= 1 (margin satisfied)\n```\n\n**Why this matters:** Hinge loss is the training objective for SVMs. It only penalizes predictions that violate the margin, creating sparsity in the support vectors.",
+  "constraints": ["Use numpy only", "Labels must be in {-1, +1} (not {0, 1})", "Return (loss scalar, gradient w.r.t. scores f)"],
+  "starter_code": "import numpy as np\n\ndef hinge_loss(y_true: np.ndarray, scores: np.ndarray) -> tuple[float, np.ndarray]:\n    \"\"\"Hinge loss for binary classification.\n    \n    Args:\n        y_true: True labels, shape (N,), values in {-1, +1}\n        scores: Raw prediction scores, shape (N,), any real value\n    \n    Returns:\n        Tuple of (hinge_loss scalar, gradient w.r.t. scores of shape (N,))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef hinge_loss(y_true: np.ndarray, scores: np.ndarray) -> tuple[float, np.ndarray]:\n    N = len(y_true)\n    margins = 1.0 - y_true * scores  # (N,)\n    loss = float(np.mean(np.maximum(0.0, margins)))\n    # Subgradient: -y/N where margin > 0, else 0\n    grad = np.where(margins > 0, -y_true / N, 0.0)\n    return loss, grad",
+  "explanation": "**Key concepts:**\n\n1. **Margin**: The hinge triggers when y*f < 1, i.e., the prediction doesn't satisfy the margin. Perfectly classified samples with large margin contribute zero loss.\n\n2. **Sparsity**: Only support vectors (samples on or inside the margin) have non-zero gradients. This is the key property that makes SVMs efficient.\n\n3. **vs Logistic**: Logistic loss has gradient for all samples; hinge loss ignores well-classified examples.\n\n4. **Squared hinge**: Some formulations use max(0, 1-y*f)^2 for a smoother loss.",
+  "test_cases": [
+    {"name": "Correct with large margin gives zero loss", "code": "y = np.array([1.0, -1.0])\nf = np.array([2.0, -2.0])\nloss, grad = hinge_loss(y, f)\nassert loss == 0.0\nnp.testing.assert_array_equal(grad, [0.0, 0.0])"},
+    {"name": "Wrong prediction gives positive loss", "code": "y = np.array([1.0])\nf = np.array([-1.0])\nloss, _ = hinge_loss(y, f)\nassert loss == 2.0"},
+    {"name": "Exact margin (y*f=1) gives zero loss", "code": "y = np.array([1.0, -1.0])\nf = np.array([1.0, -1.0])\nloss, _ = hinge_loss(y, f)\nassert loss == 0.0"},
+    {"name": "Gradient is -y/N for violated margin", "code": "y = np.array([1.0, -1.0])\nf = np.array([0.0, 0.0])\n_, grad = hinge_loss(y, f)\nassert abs(grad[0] - (-1.0/2)) < 1e-9\nassert abs(grad[1] - (1.0/2)) < 1e-9"},
+    {"name": "Mixed batch gradient shape", "code": "N = 10\ny = np.random.choice([-1.0, 1.0], N)\nf = np.random.randn(N)\nloss, grad = hinge_loss(y, f)\nassert grad.shape == (N,)"}
+  ],
+  "hints": ["margins = 1 - y*f; loss = mean(max(0, margins))", "Gradient is -y/N where margin > 0, else 0 — use np.where"],
+  "related_problems": ["5.11", "5.12"]
+}

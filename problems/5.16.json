@@ -1,0 +1,21 @@
+{
+  "id": "5.16",
+  "title": "Focal Loss",
+  "difficulty": "Medium",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "loss-functions", "object-detection", "class-imbalance"],
+  "description": "Implement Focal Loss for class-imbalanced binary classification (from RetinaNet).\n\nFocal loss:\n```\nFL(p, y) = -alpha_t * (1 - p_t)^gamma * log(p_t)\n```\n\nwhere:\n- `p_t = p` if `y=1`, else `p_t = 1-p`\n- `alpha_t = alpha` if `y=1`, else `alpha_t = 1-alpha`\n- `gamma >= 0` is the focusing parameter\n\nWith gamma=0 and alpha=0.25, this reduces to weighted BCE.\n\n**Why this matters:** In object detection (RetinaNet), easy background examples dominate training. Focal loss downweights easy examples via (1-p_t)^gamma, forcing the model to focus on hard negatives.",
+  "constraints": ["Use numpy only", "alpha (default 0.25) and gamma (default 2.0) must be configurable", "Clip predictions to [1e-7, 1-1e-7]", "Return (loss scalar, gradient w.r.t. y_pred)"],
+  "starter_code": "import numpy as np\n\ndef focal_loss(y_true: np.ndarray, y_pred: np.ndarray, alpha: float = 0.25, gamma: float = 2.0) -> tuple[float, np.ndarray]:\n    \"\"\"Focal loss for binary classification.\n    \n    Args:\n        y_true: Binary labels, shape (N,), values in {0, 1}\n        y_pred: Predicted probabilities, shape (N,), values in (0, 1)\n        alpha: Balancing factor (default 0.25)\n        gamma: Focusing parameter (default 2.0)\n    \n    Returns:\n        Tuple of (focal_loss scalar, gradient w.r.t. y_pred of shape (N,))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef focal_loss(y_true: np.ndarray, y_pred: np.ndarray, alpha: float = 0.25, gamma: float = 2.0) -> tuple[float, np.ndarray]:\n    eps = 1e-7\n    p = np.clip(y_pred, eps, 1.0 - eps)\n    y = y_true\n    p_t = np.where(y == 1, p, 1 - p)\n    alpha_t = np.where(y == 1, alpha, 1 - alpha)\n    focal_weight = alpha_t * (1 - p_t) ** gamma\n    loss = -np.mean(focal_weight * np.log(p_t))\n    # Gradient via chain rule\n    N = len(y)\n    sign = np.where(y == 1, 1.0, -1.0)  # dp_t/dp\n    d_log_pt = sign / p_t\n    d_fw = -alpha_t * gamma * (1 - p_t) ** (gamma - 1) * sign\n    grad = -(focal_weight * d_log_pt + d_fw * np.log(p_t)) / N\n    return float(loss), grad",
+  "explanation": "**Key concepts:**\n\n1. **Modulating factor**: (1-p_t)^gamma. When p_t is high (easy example), the factor is near 0, suppressing the loss. When p_t is low (hard example), the factor approaches 1.\n\n2. **Alpha balancing**: alpha_t balances positive/negative class frequency. Typical value: alpha=0.25 for positives (rare), 0.75 for negatives (common).\n\n3. **gamma=0**: Focal loss reduces to alpha-weighted BCE.\n\n4. **Gradient**: Apply chain rule to FL = -alpha_t*(1-p_t)^gamma*log(p_t). Both terms contribute: d/dp[fw*log(pt)] = fw * d(log(pt)) + d(fw) * log(pt).",
+  "test_cases": [
+    {"name": "gamma=0 matches weighted BCE", "code": "y = np.array([1.0, 0.0, 1.0])\np = np.array([0.7, 0.2, 0.9])\nfl, _ = focal_loss(y, p, alpha=0.5, gamma=0.0)\nbce = -np.mean(0.5 * (y * np.log(np.clip(p,1e-7,1-1e-7)) + (1-y)*np.log(np.clip(1-p,1e-7,1-1e-7))))\nassert abs(fl - bce) < 1e-6"},
+    {"name": "Easy correct predictions have low loss", "code": "y = np.array([1.0])\np_easy = np.array([0.99])\np_hard = np.array([0.51])\nloss_easy, _ = focal_loss(y, p_easy)\nloss_hard, _ = focal_loss(y, p_hard)\nassert loss_easy < loss_hard"},
+    {"name": "Gradient shape matches input", "code": "y = np.array([1.0, 0.0, 1.0, 0.0])\np = np.array([0.8, 0.2, 0.6, 0.4])\nloss, grad = focal_loss(y, p)\nassert grad.shape == y.shape"},
+    {"name": "No NaN or Inf in output", "code": "y = np.array([1.0, 0.0])\np = np.array([0.0, 1.0])\nloss, grad = focal_loss(y, p)\nassert not np.isnan(loss) and not np.any(np.isnan(grad))"},
+    {"name": "Higher gamma downweights easy examples more", "code": "y = np.array([1.0])\np = np.array([0.9])\nl1, _ = focal_loss(y, p, gamma=1.0)\nl2, _ = focal_loss(y, p, gamma=2.0)\nassert l2 < l1, 'Higher gamma should further downweight easy (high p_t) examples'"}
+  ],
+  "hints": ["Compute p_t = p where y=1, else 1-p using np.where", "Gradient requires chain rule: d/dp[fw * log(pt)] involves both fw*d(log(pt)) and d(fw)*log(pt)"],
+  "related_problems": ["5.11", "5.12"]
+}

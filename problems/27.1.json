@@ -1,0 +1,20 @@
+{
+  "id": "27.1",
+  "title": "Multi-Armed Bandit (Epsilon-Greedy)",
+  "difficulty": "Easy",
+  "category": "RL Basics",
+  "tags": ["reinforcement-learning", "bandit", "exploration"],
+  "description": "Implement an epsilon-greedy agent for the K-armed bandit problem.\n\nYou maintain estimated Q-values for each arm. At each step:\n- With probability epsilon, choose a random arm (explore)\n- Otherwise, choose the arm with highest estimated value (exploit)\n\nUpdate the Q-value of the chosen arm using the incremental mean formula:\n```\nQ(a) <- Q(a) + (1/N(a)) * (r - Q(a))\n```\n\nReturn the total accumulated reward after T steps.\n\n**Example:**\n```\nnp.random.seed(0)\ntrue_means = [1.0, 2.0, 0.5]\nreward = epsilon_greedy_bandit(true_means, epsilon=0.1, T=1000)\n# reward ~ 1900 (close to optimal arm * T)\n```",
+  "constraints": ["Use numpy only", "Arms produce Gaussian rewards: r ~ N(true_mean, 1)", "Return total reward as float"],
+  "starter_code": "import numpy as np\n\ndef epsilon_greedy_bandit(true_means: list, epsilon: float, T: int) -> float:\n    \"\"\"Run epsilon-greedy bandit.\n    \n    Args:\n        true_means: True reward means for each arm\n        epsilon: Exploration probability\n        T: Number of steps\n    \n    Returns:\n        Total accumulated reward\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef epsilon_greedy_bandit(true_means: list, epsilon: float, T: int) -> float:\n    k = len(true_means)\n    Q = np.zeros(k)\n    N = np.zeros(k)\n    total_reward = 0.0\n    \n    for _ in range(T):\n        if np.random.random() < epsilon:\n            a = np.random.randint(k)\n        else:\n            a = np.argmax(Q)\n        \n        r = np.random.normal(true_means[a], 1.0)\n        N[a] += 1\n        Q[a] += (r - Q[a]) / N[a]\n        total_reward += r\n    \n    return total_reward",
+  "explanation": "**Key concepts:**\n\n1. **Exploration vs exploitation:** Epsilon controls the trade-off. Small epsilon = mostly greedy.\n\n2. **Incremental mean:** `Q += (r - Q) / N` is equivalent to computing the running mean without storing all rewards.\n\n3. **Regret:** The gap between optimal reward and actual reward. Epsilon-greedy has linear regret in the worst case.\n\n4. **Convergence:** Q-values converge to true means as N grows for each arm.",
+  "test_cases": [
+    {"name": "Best arm is selected most often", "code": "np.random.seed(42)\ntrue_means = [0.0, 5.0, 1.0]\nreward = epsilon_greedy_bandit(true_means, epsilon=0.1, T=2000)\nassert reward > 7000, f'Expected reward > 7000, got {reward:.1f}'"},
+    {"name": "Pure exploitation returns float", "code": "np.random.seed(0)\ntrue_means = [1.0, 2.0]\nreward = epsilon_greedy_bandit(true_means, epsilon=0.0, T=500)\nassert isinstance(reward, float)"},
+    {"name": "Single arm bandit", "code": "np.random.seed(1)\nreward = epsilon_greedy_bandit([3.0], epsilon=0.1, T=100)\nassert 100 < reward < 600, f'Expected ~300 total reward, got {reward}'"},
+    {"name": "Returns float type", "code": "np.random.seed(7)\nresult = epsilon_greedy_bandit([1.0, 2.0, 3.0], epsilon=0.2, T=100)\nassert isinstance(result, float)"}
+  ],
+  "hints": ["Initialize Q and N arrays to zero", "argmax breaks ties by returning first index", "Gaussian reward: np.random.normal(mean, 1.0)"],
+  "related_problems": ["27.2", "27.3", "27.11"]
+}

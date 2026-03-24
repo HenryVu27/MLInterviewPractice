@@ -1,0 +1,21 @@
+{
+  "id": "20.14",
+  "title": "Label Smoothing",
+  "difficulty": "Easy",
+  "category": "Training Infrastructure",
+  "tags": ["numpy", "regularization", "labels"],
+  "description": "Implement label smoothing, a regularization technique that softens hard one-hot targets.\n\nYour function `label_smoothing(y, n_classes, alpha)` should:\n- Convert integer labels to one-hot encoding\n- Apply smoothing: `smoothed = (1 - alpha) * one_hot + alpha / n_classes`\n- Return smoothed label distribution of shape `(n_samples, n_classes)`\n\nAlso implement `label_smoothing_loss(logits, y, n_classes, alpha)` that computes cross-entropy with smoothed labels:\n- `loss = -sum(smoothed_labels * log_softmax(logits)) / n_samples`\n\n**Example:**\n```\ny = [2], n_classes=3, alpha=0.1\none_hot = [0, 0, 1]\nsmoothed = [0.033, 0.033, 0.933]  # 0.9*one_hot + 0.1/3\n```",
+  "constraints": ["Use only numpy", "alpha must be in [0, 1)", "Use numerically stable log-softmax"],
+  "starter_code": "import numpy as np\n\ndef label_smoothing(y: np.ndarray, n_classes: int, alpha: float) -> np.ndarray:\n    \"\"\"Convert integer labels to smoothed label distributions.\n    \n    Args:\n        y: Integer labels (n_samples,)\n        n_classes: Total number of classes\n        alpha: Smoothing factor in [0, 1)\n    \n    Returns:\n        Smoothed label matrix (n_samples, n_classes)\n    \"\"\"\n    pass\n\ndef label_smoothing_loss(logits: np.ndarray, y: np.ndarray, n_classes: int, alpha: float) -> float:\n    \"\"\"Cross-entropy loss with label smoothing.\n    \n    Args:\n        logits: Raw model outputs (n_samples, n_classes)\n        y: Integer labels (n_samples,)\n    \n    Returns:\n        Scalar loss value\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef label_smoothing(y: np.ndarray, n_classes: int, alpha: float) -> np.ndarray:\n    n = len(y)\n    one_hot = np.zeros((n, n_classes))\n    one_hot[np.arange(n), y] = 1.0\n    return (1 - alpha) * one_hot + alpha / n_classes\n\ndef label_smoothing_loss(logits: np.ndarray, y: np.ndarray, n_classes: int, alpha: float) -> float:\n    shifted = logits - logits.max(axis=1, keepdims=True)\n    log_probs = shifted - np.log(np.sum(np.exp(shifted), axis=1, keepdims=True))\n    smoothed = label_smoothing(y, n_classes, alpha)\n    loss = -np.sum(smoothed * log_probs) / len(y)\n    return float(loss)",
+  "explanation": "**Key concepts:**\n\n1. **Why smooth**: Hard one-hot targets push the model to output infinite logits for the true class. Smoothing prevents overconfidence and improves calibration.\n2. **Formula**: The smoothed target allocates `alpha/K` probability mass to all classes uniformly, and `(1-alpha)` to the true class.\n3. **Effect on loss**: The model is penalized for being too confident even when correct.\n\n**Used in**: Inception v3, transformer translation models. Typical alpha: 0.1.",
+  "test_cases": [
+    {"name": "Smoothed labels sum to 1", "code": "import numpy as np\ny = np.array([0, 1, 2])\nsmoothed = label_smoothing(y, n_classes=3, alpha=0.1)\nassert np.allclose(smoothed.sum(axis=1), 1.0), 'Each row must sum to 1'"},
+    {"name": "True class has highest probability", "code": "import numpy as np\ny = np.array([2])\nsmoothed = label_smoothing(y, n_classes=4, alpha=0.1)\nassert np.argmax(smoothed[0]) == 2, 'True class should have highest probability'"},
+    {"name": "Alpha=0 gives one-hot", "code": "import numpy as np\ny = np.array([1, 0])\nsmoothed = label_smoothing(y, n_classes=3, alpha=0.0)\nassert np.allclose(smoothed, [[0,1,0],[1,0,0]])"},
+    {"name": "Non-true-class values equal alpha/K", "code": "import numpy as np\ny = np.array([0])\nalpha = 0.1\nn_classes = 5\nsmoothed = label_smoothing(y, n_classes, alpha)\nfor c in range(1, n_classes):\n    assert abs(smoothed[0, c] - alpha/n_classes) < 1e-9"},
+    {"name": "label_smoothing_loss positive and finite", "code": "import numpy as np\nnp.random.seed(0)\nlogits = np.random.randn(10, 4)\ny = np.array([0,1,2,3,0,1,2,3,0,1])\nloss = label_smoothing_loss(logits, y, n_classes=4, alpha=0.1)\nassert loss > 0 and np.isfinite(loss), f'Loss should be positive and finite, got {loss}'"}
+  ],
+  "hints": ["one_hot[np.arange(n), y] = 1.0 for vectorized one-hot encoding", "Log-softmax: x_i - log(sum(exp(x))) -- subtract max for numerical stability"],
+  "related_problems": ["20.11", "20.9", "20.6"]
+}

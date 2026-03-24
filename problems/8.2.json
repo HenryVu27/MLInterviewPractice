@@ -1,0 +1,46 @@
+{
+  "id": "8.2",
+  "title": "Conv2D with im2col",
+  "difficulty": "Hard",
+  "category": "Convolutional Neural Networks",
+  "tags": ["conv2d", "im2col", "matrix-multiplication", "optimization"],
+  "description": "Implement convolution using the **im2col** trick, which converts the convolution into a single matrix multiplication.\n\n**im2col** extracts all kernel-sized patches from the input and arranges them as columns of a matrix:\n- Input `x`: (N, C_in, H, W)\n- After im2col: `X_col` of shape `(N, C_in*kH*kW, H_out*W_out)`\n- Kernel reshaped: `W_col` of shape `(C_out, C_in*kH*kW)`\n- Output = `W_col @ X_col[n]` + bias, reshaped to `(N, C_out, H_out, W_out)`\n\nImplement `im2col(x, kH, kW, stride, padding)` and `conv2d_im2col(x, W, b, stride, padding)`.",
+  "constraints": [
+    "Use numpy only",
+    "Input in NCHW format",
+    "im2col output shape: (N, C_in*kH*kW, H_out*W_out)",
+    "No nested Python loops in the final matmul step",
+    "Must match results of naive conv2d within 1e-6"
+  ],
+  "starter_code": "import numpy as np\n\ndef im2col(x: np.ndarray, kH: int, kW: int,\n           stride: int = 1, padding: int = 0) -> np.ndarray:\n    \"\"\"Convert input patches to columns.\n    \n    Args:\n        x: Input (N, C, H, W)\n        kH, kW: Kernel height and width\n        stride: Convolution stride\n        padding: Zero-padding\n    \n    Returns:\n        Column matrix (N, C*kH*kW, H_out*W_out)\n    \"\"\"\n    pass\n\ndef conv2d_im2col(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n                  stride: int = 1, padding: int = 0) -> np.ndarray:\n    \"\"\"Conv2D using im2col + matmul.\n    \n    Returns:\n        Output (N, C_out, H_out, W_out)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef im2col(x: np.ndarray, kH: int, kW: int,\n           stride: int = 1, padding: int = 0) -> np.ndarray:\n    N, C, H, W = x.shape\n    if padding > 0:\n        x = np.pad(x, ((0,0),(0,0),(padding,padding),(padding,padding)))\n    H_pad, W_pad = x.shape[2], x.shape[3]\n    H_out = (H_pad - kH) // stride + 1\n    W_out = (W_pad - kW) // stride + 1\n    cols = np.zeros((N, C * kH * kW, H_out * W_out), dtype=x.dtype)\n    col_idx = 0\n    for i in range(H_out):\n        for j in range(W_out):\n            patch = x[:, :, i*stride:i*stride+kH, j*stride:j*stride+kW]\n            cols[:, :, col_idx] = patch.reshape(N, -1)\n            col_idx += 1\n    return cols\n\ndef conv2d_im2col(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n                  stride: int = 1, padding: int = 0) -> np.ndarray:\n    N, C_in, H, W_in = x.shape\n    C_out, _, kH, kW = W.shape\n    H_out = (H + 2*padding - kH) // stride + 1\n    W_out = (W_in + 2*padding - kW) // stride + 1\n    X_col = im2col(x, kH, kW, stride, padding)  # (N, C_in*kH*kW, H_out*W_out)\n    W_col = W.reshape(C_out, -1)                 # (C_out, C_in*kH*kW)\n    out = np.tensordot(W_col, X_col, axes=[[1],[1]])  # (C_out, N, H_out*W_out)\n    out = out.transpose(1, 0, 2)                # (N, C_out, H_out*W_out)\n    out = out.reshape(N, C_out, H_out, W_out)\n    out += b.reshape(1, C_out, 1, 1)\n    return out",
+  "explanation": "**Key concepts:**\n\n1. **im2col:** Extracts every kernel-sized patch from x and flattens it into a column. Result: `(N, C*kH*kW, H_out*W_out)`. This converts conv into GEMM.\n\n2. **GEMM:** Reshape kernel to `(C_out, C_in*kH*kW)` and multiply with im2col output. One matmul replaces all the loops.\n\n3. **Memory trade-off:** im2col duplicates input data (patches overlap), using more memory but enabling highly optimized BLAS routines.\n\n4. **This is how cuDNN works** under the hood for small kernels (Winograd and FFT are used for larger ones).\n\n5. **tensordot vs einsum:** Both work; `np.tensordot(W_col, X_col, axes=[[1],[1]])` contracts over the `C_in*kH*kW` dimension.",
+  "test_cases": [
+    {
+      "name": "Matches naive conv2d on simple input",
+      "code": "import numpy as np\nnp.random.seed(42)\nx = np.random.randn(1, 1, 5, 5)\nW = np.random.randn(1, 1, 3, 3)\nb = np.zeros(1)\n# Naive conv\nfrom itertools import product\nout_naive = np.zeros((1,1,3,3))\nfor i,j in product(range(3),range(3)):\n    out_naive[0,0,i,j] = np.sum(x[0,0,i:i+3,j:j+3]*W[0,0]) + b[0]\nout_im2col = conv2d_im2col(x, W, b)\nassert np.allclose(out_im2col, out_naive, atol=1e-6)"
+    },
+    {
+      "name": "im2col output shape correct",
+      "code": "import numpy as np\nx = np.zeros((2, 3, 8, 8))\ncols = im2col(x, kH=3, kW=3, stride=1, padding=0)\nassert cols.shape == (2, 3*3*3, 6*6)"
+    },
+    {
+      "name": "Multiple filters",
+      "code": "import numpy as np\nnp.random.seed(0)\nx = np.random.randn(2, 3, 8, 8)\nW = np.random.randn(4, 3, 3, 3)\nb = np.zeros(4)\nout = conv2d_im2col(x, W, b, stride=1, padding=0)\nassert out.shape == (2, 4, 6, 6)"
+    },
+    {
+      "name": "With padding",
+      "code": "import numpy as np\nx = np.ones((1, 1, 5, 5))\nW = np.ones((1, 1, 3, 3))\nb = np.zeros(1)\nout = conv2d_im2col(x, W, b, stride=1, padding=1)\nassert out.shape == (1, 1, 5, 5)"
+    },
+    {
+      "name": "With stride=2",
+      "code": "import numpy as np\nx = np.zeros((1, 1, 6, 6))\nW = np.zeros((1, 1, 3, 3))\nb = np.zeros(1)\nout = conv2d_im2col(x, W, b, stride=2)\nassert out.shape == (1, 1, 2, 2)"
+    }
+  ],
+  "hints": [
+    "im2col loops over output positions (i,j) and stacks flattened patches",
+    "Reshape W to (C_out, C_in*kH*kW) for matrix multiply",
+    "Result shape after matmul is (C_out, N, H_out*W_out), transpose then reshape"
+  ],
+  "related_problems": ["8.1", "8.3"]
+}

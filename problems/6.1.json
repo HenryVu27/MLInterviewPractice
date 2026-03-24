@@ -1,0 +1,21 @@
+{
+  "id": "6.1",
+  "title": "Vanilla SGD",
+  "difficulty": "Easy",
+  "category": "Optimization Algorithms",
+  "tags": ["numpy", "from-scratch", "optimization"],
+  "description": "Implement Vanilla Stochastic Gradient Descent (SGD) optimizer.\n\nUpdate rule:\n```\nw = w - lr * grad\n```\n\nImplement as a class with `__init__(lr)` and `step(params, grads)` that updates params in-place.\n\n**Example:** Minimizing f(x) = x^2 from x=10:\n```\nSGD(lr=0.1).step([x], [grad])  # x -= 0.1 * 2x\n```\n\n**Why this matters:** SGD is the foundation of all deep learning optimization. Every more sophisticated optimizer modifies SGD with momentum, adaptive learning rates, or weight decay.",
+  "constraints": ["Use numpy only", "Update params in-place", "step(params, grads) takes lists of numpy arrays", "params and grads have matching structure"],
+  "starter_code": "import numpy as np\n\nclass SGD:\n    def __init__(self, lr: float = 0.01):\n        \"\"\"Vanilla SGD optimizer.\n        \n        Args:\n            lr: Learning rate\n        \"\"\"\n        pass\n    \n    def step(self, params: list[np.ndarray], grads: list[np.ndarray]) -> None:\n        \"\"\"Update parameters in-place.\n        \n        Args:\n            params: List of parameter arrays\n            grads: List of gradient arrays (same structure as params)\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass SGD:\n    def __init__(self, lr: float = 0.01):\n        self.lr = lr\n    \n    def step(self, params: list[np.ndarray], grads: list[np.ndarray]) -> None:\n        for p, g in zip(params, grads):\n            p -= self.lr * g",
+  "explanation": "**Key concepts:**\n\n1. **In-place update**: `p -= lr * g` modifies the array in memory. This avoids creating new arrays and allows external references to see the update.\n\n2. **Stochastic**: The 'S' in SGD — gradients are computed on a mini-batch, not the full dataset. This adds noise but enables escape from local minima.\n\n3. **Learning rate sensitivity**: Too large: diverges. Too small: slow convergence. In practice, requires tuning or a schedule.\n\n4. **No state**: Vanilla SGD has no memory of past gradients. This makes it simple but slow on noisy or ill-conditioned objectives.",
+  "test_cases": [
+    {"name": "Minimizes quadratic f(x)=x^2 from x=10", "code": "x = np.array([10.0])\nsgd = SGD(lr=0.1)\nfor _ in range(100):\n    grad = np.array([2 * x[0]])\n    sgd.step([x], [grad])\nassert x[0] < 0.01, f'Expected convergence near 0, got {x[0]}'"},
+    {"name": "Update is in-place", "code": "x = np.array([5.0])\noriginal_id = id(x)\nsgd = SGD(lr=0.1)\nsgd.step([x], [np.array([1.0])])\nassert id(x) == original_id, 'step should update in-place'"},
+    {"name": "Multiple parameters updated", "code": "w = np.array([1.0, 2.0])\nb = np.array([0.5])\nsgd = SGD(lr=0.5)\nsgd.step([w, b], [np.array([1.0, 1.0]), np.array([1.0])])\nnp.testing.assert_allclose(w, [0.5, 1.5])\nnp.testing.assert_allclose(b, [0.0])"},
+    {"name": "Correct update magnitude", "code": "x = np.array([3.0])\nsgd = SGD(lr=0.2)\nsgd.step([x], [np.array([5.0])])\nassert abs(x[0] - (3.0 - 0.2*5.0)) < 1e-9"},
+    {"name": "Zero gradient leaves params unchanged", "code": "x = np.array([7.0])\nsgd = SGD(lr=0.1)\nsgd.step([x], [np.zeros(1)])\nassert x[0] == 7.0"}
+  ],
+  "hints": ["p -= self.lr * g updates in-place", "zip(params, grads) pairs each parameter with its gradient"],
+  "related_problems": ["6.2", "6.3", "6.6"]
+}

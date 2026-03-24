@@ -1,0 +1,44 @@
+{
+  "id": "7.2",
+  "title": "L1 Regularization (Lasso)",
+  "difficulty": "Easy",
+  "category": "Regularization & Generalization",
+  "tags": ["regularization", "l1", "lasso", "sparsity", "subgradient"],
+  "description": "Implement L1 regularization which promotes sparsity in weights.\n\nL1 penalty:\n```\nL_reg = lambda * sum(|w|)\n```\n\nImplement:\n1. `l1_penalty(weights, lam)` - compute the L1 penalty\n2. `l1_grad(weights, lam)` - subgradient of L1 penalty (sign of each weight, 0 at exactly 0)\n\n**Example:**\n```\nweights = np.array([1.0, -2.0, 0.0, 3.0])\nlam = 0.1\nl1_penalty(weights, lam) -> 0.6\nl1_grad(weights, lam)    -> [0.1, -0.1, 0.0, 0.1]\n```",
+  "constraints": [
+    "Use numpy only",
+    "At w=0, the subgradient should be 0 (not +1 or -1)",
+    "No 1/2 factor convention for L1 (unlike L2)"
+  ],
+  "starter_code": "import numpy as np\n\ndef l1_penalty(weights: np.ndarray, lam: float) -> float:\n    \"\"\"Compute L1 regularization penalty.\"\"\"\n    pass\n\ndef l1_grad(weights: np.ndarray, lam: float) -> np.ndarray:\n    \"\"\"Compute subgradient of L1 penalty (0 at w=0).\"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef l1_penalty(weights: np.ndarray, lam: float) -> float:\n    return lam * float(np.sum(np.abs(weights)))\n\ndef l1_grad(weights: np.ndarray, lam: float) -> np.ndarray:\n    return lam * np.sign(weights)",
+  "explanation": "**Key concepts:**\n\n1. **L1 penalty:** `lambda * ||w||_1 = lambda * sum(|w_i|)`. Unlike L2, no 1/2 factor.\n\n2. **Subgradient:** The absolute value function is not differentiable at 0, so we use the subgradient: `sign(w)`. NumPy's `np.sign` returns 0 for inputs of exactly 0, which is the standard convention.\n\n3. **Sparsity:** L1 regularization drives many weights exactly to zero (sparse solution), unlike L2 which just makes weights small. This is why LASSO performs feature selection.\n\n4. **Geometric intuition:** L1 ball has corners on the axes, so optimal solutions tend to land on corners (sparse).",
+  "test_cases": [
+    {
+      "name": "Basic penalty",
+      "code": "import numpy as np\nw = np.array([1.0, -2.0, 0.0, 3.0])\npenalty = l1_penalty(w, 0.1)\nassert abs(penalty - 0.6) < 1e-9, f'Expected 0.6, got {penalty}'"
+    },
+    {
+      "name": "Subgradient with zero",
+      "code": "import numpy as np\nw = np.array([1.0, -2.0, 0.0, 3.0])\ngrad = l1_grad(w, 0.1)\nexpected = np.array([0.1, -0.1, 0.0, 0.1])\nassert np.allclose(grad, expected), f'Expected {expected}, got {grad}'"
+    },
+    {
+      "name": "All zeros",
+      "code": "import numpy as np\nw = np.zeros(4)\nassert l1_penalty(w, 1.0) == 0.0\nassert np.all(l1_grad(w, 1.0) == 0.0)"
+    },
+    {
+      "name": "Penalty is sum of abs values times lam",
+      "code": "import numpy as np\nw = np.array([0.5, -0.5])\npenalty = l1_penalty(w, 1.0)\nassert abs(penalty - 1.0) < 1e-9"
+    },
+    {
+      "name": "2D weights",
+      "code": "import numpy as np\nW = np.array([[1.0, -1.0], [2.0, -2.0]])\npenalty = l1_penalty(W, 0.5)\nassert abs(penalty - 3.0) < 1e-9"
+    }
+  ],
+  "hints": [
+    "np.abs gives elementwise absolute value",
+    "np.sign gives +1, 0, or -1 for each element",
+    "L1 subgradient at 0 is typically chosen as 0"
+  ],
+  "related_problems": ["7.1", "7.3", "2.1"]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "7.1",
+  "title": "L2 Regularization (Weight Decay)",
+  "difficulty": "Easy",
+  "category": "Regularization & Generalization",
+  "tags": ["regularization", "l2", "weight-decay", "gradient"],
+  "description": "Implement L2 regularization (weight decay) for neural network training.\n\nL2 regularization adds a penalty term to the loss:\n```\nL_total = L_data + (lambda/2) * sum(w^2)\n```\n\nImplement two functions:\n1. `l2_penalty(weights, lam)` - compute the L2 penalty term\n2. `l2_grad(weights, lam)` - compute the gradient contribution from L2 regularization\n\n**Example:**\n```\nweights = np.array([1.0, -2.0, 3.0])\nlam = 0.1\nl2_penalty(weights, lam) -> 0.7   # (0.1/2) * (1 + 4 + 9)\nl2_grad(weights, lam)   -> [0.1, -0.2, 0.3]  # lam * weights\n```",
+  "constraints": [
+    "Use numpy only",
+    "lambda is the regularization strength (positive scalar)",
+    "Penalty uses the (lambda/2) * ||w||^2 convention",
+    "Gradient is lam * w"
+  ],
+  "starter_code": "import numpy as np\n\ndef l2_penalty(weights: np.ndarray, lam: float) -> float:\n    \"\"\"Compute L2 regularization penalty.\n    \n    Args:\n        weights: 1D or nD weight array\n        lam: regularization strength\n    \n    Returns:\n        Scalar penalty value\n    \"\"\"\n    pass\n\ndef l2_grad(weights: np.ndarray, lam: float) -> np.ndarray:\n    \"\"\"Compute gradient of L2 penalty w.r.t. weights.\n    \n    Args:\n        weights: weight array\n        lam: regularization strength\n    \n    Returns:\n        Gradient array, same shape as weights\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef l2_penalty(weights: np.ndarray, lam: float) -> float:\n    return 0.5 * lam * float(np.sum(weights ** 2))\n\ndef l2_grad(weights: np.ndarray, lam: float) -> np.ndarray:\n    return lam * weights",
+  "explanation": "**Key concepts:**\n\n1. **Penalty term:** `(lambda/2) * ||w||^2`. The 1/2 factor is a convention that makes the gradient clean: d/dw [(lambda/2) * w^2] = lambda * w.\n\n2. **Gradient:** Simply `lambda * w`. During training, this is added to the data gradient before the parameter update, effectively shrinking weights toward zero each step.\n\n3. **Weight decay equivalence:** SGD with L2 regularization is equivalent to weight decay: `w <- w - lr*(grad + lam*w)` = `w*(1 - lr*lam) - lr*grad`.\n\n4. **Effect:** Discourages large weights, reduces overfitting, improves generalization.",
+  "test_cases": [
+    {
+      "name": "Basic penalty computation",
+      "code": "import numpy as np\nw = np.array([1.0, -2.0, 3.0])\npenalty = l2_penalty(w, 0.1)\nassert abs(penalty - 0.7) < 1e-9, f'Expected 0.7, got {penalty}'"
+    },
+    {
+      "name": "Gradient computation",
+      "code": "import numpy as np\nw = np.array([1.0, -2.0, 3.0])\ngrad = l2_grad(w, 0.1)\nexpected = np.array([0.1, -0.2, 0.3])\nassert np.allclose(grad, expected), f'Expected {expected}, got {grad}'"
+    },
+    {
+      "name": "Zero weights give zero penalty",
+      "code": "import numpy as np\nw = np.zeros(5)\nassert l2_penalty(w, 1.0) == 0.0\nassert np.all(l2_grad(w, 1.0) == 0.0)"
+    },
+    {
+      "name": "2D weight matrix",
+      "code": "import numpy as np\nW = np.array([[1.0, 2.0], [3.0, 4.0]])\npenalty = l2_penalty(W, 1.0)\nassert abs(penalty - 15.0) < 1e-9, f'Expected 15.0, got {penalty}'\ngrad = l2_grad(W, 0.5)\nassert np.allclose(grad, 0.5 * W)"
+    },
+    {
+      "name": "Penalty scales with lambda",
+      "code": "import numpy as np\nw = np.array([2.0, 2.0])\np1 = l2_penalty(w, 1.0)\np2 = l2_penalty(w, 2.0)\nassert abs(p2 - 2 * p1) < 1e-9"
+    }
+  ],
+  "hints": [
+    "The penalty is (lam/2) * sum of squares of all weights",
+    "The gradient is just lam times the weight vector",
+    "np.sum(w**2) computes the sum of squares efficiently"
+  ],
+  "related_problems": ["7.2", "7.3", "2.1"]
+}

@@ -1,0 +1,28 @@
+{
+  "id": "3.4",
+  "title": "Softmax Regression",
+  "difficulty": "Medium",
+  "category": "Classic ML Algorithms",
+  "tags": ["numpy", "from-scratch", "classification", "softmax"],
+  "description": "Implement **Softmax Regression** (multi-class logistic regression) with cross-entropy loss and gradient descent.\n\n**Forward pass:**\n- Logits: `Z = X @ W + b`  shape (N, C)\n- Probabilities: `P = softmax(Z)`  shape (N, C)\n- Loss: `L = -(1/N) * sum(log(P[i, y_i]))`\n\n**Gradients:**\n- `dL/dZ = (1/N) * (P - Y_onehot)`  shape (N, C)\n- `dL/dW = X.T @ dL/dZ`  shape (D, C)\n- `dL/db = sum(dL/dZ, axis=0)`  shape (C,)\n\nYour class should implement:\n- `fit(X, y, lr, epochs)`\n- `predict_proba(X)` returning (N, C)\n- `predict(X)` returning (N,) class indices\n\n**Shapes:** X: (N, D), y: (N,) integer class labels 0..C-1",
+  "constraints": [
+    "Use only numpy",
+    "Softmax must be numerically stable (subtract max before exp)",
+    "Vectorized gradients — no loops over samples",
+    "W initialized to zeros, b initialized to zeros"
+  ],
+  "starter_code": "import numpy as np\n\nclass SoftmaxRegression:\n    def __init__(self, n_features: int, n_classes: int):\n        \"\"\"Initialize weights W: (n_features, n_classes), bias b: (n_classes,).\"\"\"\n        pass\n\n    def softmax(self, Z: np.ndarray) -> np.ndarray:\n        \"\"\"Numerically stable softmax over last axis.\n\n        Args:\n            Z: (N, C) logits\n        Returns:\n            (N, C) probabilities\n        \"\"\"\n        pass\n\n    def fit(self, X: np.ndarray, y: np.ndarray, lr: float = 0.1, epochs: int = 500) -> None:\n        \"\"\"Train via gradient descent on cross-entropy loss.\"\"\"\n        pass\n\n    def predict_proba(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return class probabilities, shape (N, C).\"\"\"\n        pass\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return predicted class indices, shape (N,).\"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass SoftmaxRegression:\n    def __init__(self, n_features: int, n_classes: int):\n        self.W = np.zeros((n_features, n_classes))\n        self.b = np.zeros(n_classes)\n        self.n_classes = n_classes\n\n    def softmax(self, Z: np.ndarray) -> np.ndarray:\n        # Subtract max per row for numerical stability\n        Z_shifted = Z - Z.max(axis=1, keepdims=True)\n        exp_Z = np.exp(Z_shifted)\n        return exp_Z / exp_Z.sum(axis=1, keepdims=True)\n\n    def fit(self, X: np.ndarray, y: np.ndarray, lr: float = 0.1, epochs: int = 500) -> None:\n        N = X.shape[0]\n        C = self.n_classes\n        # One-hot encode y\n        Y = np.zeros((N, C))\n        Y[np.arange(N), y] = 1.0\n\n        for _ in range(epochs):\n            P = self.predict_proba(X)       # (N, C)\n            dZ = (1 / N) * (P - Y)         # (N, C)\n            dW = X.T @ dZ                  # (D, C)\n            db = dZ.sum(axis=0)            # (C,)\n            self.W -= lr * dW\n            self.b -= lr * db\n\n    def predict_proba(self, X: np.ndarray) -> np.ndarray:\n        Z = X @ self.W + self.b\n        return self.softmax(Z)\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        return np.argmax(self.predict_proba(X), axis=1)",
+  "explanation": "**Key concepts:**\n\n1. **Softmax numerical stability:** Subtracting max(Z) per row before exp prevents overflow. The result is mathematically identical because the constant cancels in numerator and denominator.\n\n2. **Cross-entropy gradient simplification:** The gradient of CE loss through softmax simplifies beautifully to (P - Y_onehot) / N. This is the same form as logistic regression.\n\n3. **One-hot encoding:** Y[i, y_i] = 1. Used in the gradient computation to isolate the correct class probability.\n\n4. **Weight matrix shape:** W is (D, C) — each column is the weight vector for one class. b is (C,).\n\n**Complexity:** O(N * D * C) per epoch.\n\n**Interview angle:** Explain why softmax + CE loss has such a clean gradient. Discuss connection to maximum likelihood estimation.",
+  "test_cases": [
+    {"name": "Softmax sums to 1", "code": "import numpy as np\nmodel = SoftmaxRegression(4, 3)\nZ = np.random.randn(10, 3)\nP = model.softmax(Z)\nassert np.allclose(P.sum(axis=1), 1.0), 'Each row must sum to 1'\nassert np.all(P >= 0), 'All probs must be non-negative'"},
+    {"name": "Softmax numerical stability (large values)", "code": "import numpy as np\nmodel = SoftmaxRegression(2, 3)\nZ = np.array([[1000.0, 1001.0, 1002.0]])\nP = model.softmax(Z)\nassert not np.any(np.isnan(P)), 'Should not produce NaN for large logits'\nassert np.allclose(P.sum(), 1.0)"},
+    {"name": "Predict shape and valid labels", "code": "import numpy as np\nnp.random.seed(0)\nX = np.random.randn(50, 4)\ny = np.random.randint(0, 3, 50)\nmodel = SoftmaxRegression(4, 3)\nmodel.fit(X, y, lr=0.1, epochs=100)\npreds = model.predict(X)\nassert preds.shape == (50,)\nassert set(np.unique(preds)).issubset({0, 1, 2})"},
+    {"name": "Learns separable 3-class problem", "code": "import numpy as np\nnp.random.seed(42)\nX = np.vstack([np.random.randn(50, 2) + np.array([3, 0]),\n               np.random.randn(50, 2) + np.array([-3, 0]),\n               np.random.randn(50, 2) + np.array([0, 4])])\ny = np.array([0]*50 + [1]*50 + [2]*50)\nmodel = SoftmaxRegression(2, 3)\nmodel.fit(X, y, lr=0.5, epochs=500)\nacc = np.mean(model.predict(X) == y)\nassert acc > 0.90, f'Accuracy {acc:.2f} too low'"}
+  ],
+  "hints": [
+    "Subtract Z.max(axis=1, keepdims=True) before np.exp to avoid overflow",
+    "The gradient w.r.t. logits Z is simply (P - Y_onehot) / N — derive it by differentiating cross-entropy through softmax"
+  ],
+  "related_problems": ["3.3", "4.2", "5.1"]
+}

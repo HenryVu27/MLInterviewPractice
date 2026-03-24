@@ -1,0 +1,21 @@
+{
+  "id": "5.1",
+  "title": "Sigmoid Activation Function",
+  "difficulty": "Easy",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "activation-functions", "numerical-stability"],
+  "description": "Implement the numerically stable sigmoid function.\n\nThe sigmoid function is defined as:\n```\nsigmoid(x) = 1 / (1 + exp(-x))\n```\n\nA naive implementation suffers from overflow when x is very negative (exp(+large) overflows). Use the stable form:\n- For x >= 0: `1 / (1 + exp(-x))`\n- For x < 0: `exp(x) / (1 + exp(x))`\n\n**Example:**\n```\nsigmoid(0)   = 0.5\nsigmoid(2)   ≈ 0.8808\nsigmoid(-2)  ≈ 0.1192\n```\n\n**Why this matters:** Sigmoid is used in binary classification output layers, LSTM gates, and attention mechanisms. Numerical stability is critical in production systems.",
+  "constraints": ["Use numpy only", "Must be numerically stable for inputs in range [-1000, 1000]", "Handle both scalar and array inputs", "No overflow (np.inf) or NaN in output"],
+  "starter_code": "import numpy as np\n\ndef sigmoid(x: np.ndarray) -> np.ndarray:\n    \"\"\"Numerically stable sigmoid function.\n    \n    Args:\n        x: Input array of any shape\n    \n    Returns:\n        Array of same shape with values in (0, 1)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef sigmoid(x: np.ndarray) -> np.ndarray:\n    x = np.asarray(x, dtype=float)\n    pos_mask = x >= 0\n    result = np.empty_like(x)\n    result[pos_mask] = 1.0 / (1.0 + np.exp(-x[pos_mask]))\n    exp_x = np.exp(x[~pos_mask])\n    result[~pos_mask] = exp_x / (1.0 + exp_x)\n    return result",
+  "explanation": "**Key concepts:**\n\n1. **Naive overflow**: `exp(-x)` overflows to inf when x is very negative (e.g., x=-1000), making the result NaN.\n\n2. **Stable split**: For x >= 0 use `1/(1+exp(-x))` — exp(-x) is small and safe. For x < 0 use `exp(x)/(1+exp(x))` — exp(x) is small and safe.\n\n3. **Equivalence**: Both forms compute the same value algebraically; the split just avoids the dangerous computation.\n\n4. **Alternative**: `np.clip(x, -500, 500)` then naive formula also works in practice and is simpler to write.",
+  "test_cases": [
+    {"name": "Standard values", "code": "result = sigmoid(np.array([0.0, 2.0, -2.0]))\nnp.testing.assert_allclose(result, [0.5, 0.88079708, 0.11920292], rtol=1e-6)"},
+    {"name": "Large positive (no overflow)", "code": "result = sigmoid(np.array([1000.0]))\nassert not np.isnan(result[0]) and not np.isinf(result[0])\nassert result[0] > 0.999"},
+    {"name": "Large negative (no overflow)", "code": "result = sigmoid(np.array([-1000.0]))\nassert not np.isnan(result[0]) and not np.isinf(result[0])\nassert result[0] < 1e-6"},
+    {"name": "Output range (0, 1)", "code": "x = np.linspace(-100, 100, 1000)\nresult = sigmoid(x)\nassert np.all(result > 0) and np.all(result < 1)"},
+    {"name": "Scalar input", "code": "result = sigmoid(np.array(0.0))\nassert abs(float(result) - 0.5) < 1e-9"}
+  ],
+  "hints": ["Split the computation based on sign of x to avoid overflow in exp()", "For x >= 0: exp(-x) is always in (0, 1], safe to compute; for x < 0: exp(x) is always in (0, 1], safe to compute"],
+  "related_problems": ["5.2", "5.11", "3.3"]
+}

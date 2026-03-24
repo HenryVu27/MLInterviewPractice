@@ -1,0 +1,46 @@
+{
+  "id": "8.12",
+  "title": "Squeeze-and-Excitation Block",
+  "difficulty": "Medium",
+  "category": "Convolutional Neural Networks",
+  "tags": ["squeeze-excitation", "channel-attention", "SENet", "numpy"],
+  "description": "Implement the Squeeze-and-Excitation (SE) block (Hu et al., 2018), which adds channel attention to CNN feature maps.\n\nThe SE block:\n1. **Squeeze:** Global average pool to get channel descriptor: `z = GAP(x)` -> shape (N, C)\n2. **Excitation:** Two FC layers with bottleneck: `s = sigmoid(W2 * relu(W1 * z))` -> shape (N, C)\n3. **Scale:** Multiply feature maps by channel weights: `out = x * s.reshape(N, C, 1, 1)`\n\nReduction ratio `r` controls bottleneck size: FC1 maps C -> C//r, FC2 maps C//r -> C.\n\n**Example:** For C=64, r=16: FC1 is 64->4, FC2 is 4->64.",
+  "constraints": [
+    "Use numpy only",
+    "Input NCHW format",
+    "Global average pooling in squeeze step",
+    "Sigmoid activation in excitation output",
+    "Output shape same as input"
+  ],
+  "starter_code": "import numpy as np\n\ndef se_block(x: np.ndarray, W1: np.ndarray, b1: np.ndarray,\n             W2: np.ndarray, b2: np.ndarray) -> np.ndarray:\n    \"\"\"Squeeze-and-Excitation block.\n    \n    Args:\n        x: Input (N, C, H, W)\n        W1: FC1 weights (C//r, C)\n        b1: FC1 bias (C//r,)\n        W2: FC2 weights (C, C//r)\n        b2: FC2 bias (C,)\n    \n    Returns:\n        Scaled output (N, C, H, W)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef se_block(x: np.ndarray, W1: np.ndarray, b1: np.ndarray,\n             W2: np.ndarray, b2: np.ndarray) -> np.ndarray:\n    N, C, H, W = x.shape\n    # Squeeze: Global Average Pooling\n    z = x.mean(axis=(2, 3))  # (N, C)\n    # Excitation: FC1 -> ReLU -> FC2 -> Sigmoid\n    h = np.maximum(0, z @ W1.T + b1)  # (N, C//r)\n    s = 1.0 / (1.0 + np.exp(-(h @ W2.T + b2)))  # (N, C)\n    # Scale\n    return x * s.reshape(N, C, 1, 1)",
+  "explanation": "**Key concepts:**\n\n1. **Squeeze:** GAP collapses spatial info to a single vector per channel, capturing global distribution.\n\n2. **Excitation:** Two-layer MLP learns channel interdependencies and outputs per-channel weights in [0, 1].\n\n3. **Gating:** Multiply each channel's feature map by its learned weight (attention). Channels with weight near 0 are suppressed; near 1 are emphasized.\n\n4. **Reduction ratio r:** Typically 16. Creates a bottleneck that forces the network to learn compact channel representations.\n\n5. **Overhead:** SE blocks add minimal parameters (~2C^2/r per block) but provide consistent accuracy improvements.",
+  "test_cases": [
+    {
+      "name": "Output shape same as input",
+      "code": "import numpy as np\nnp.random.seed(0)\nx = np.random.randn(2, 16, 8, 8)\nW1 = np.random.randn(4, 16) * 0.1\nb1 = np.zeros(4)\nW2 = np.random.randn(16, 4) * 0.1\nb2 = np.zeros(16)\nout = se_block(x, W1, b1, W2, b2)\nassert out.shape == x.shape"
+    },
+    {
+      "name": "All-ones excitation leaves x unchanged",
+      "code": "import numpy as np\nx = np.random.randn(2, 4, 8, 8)\n# Set up weights so sigmoid output = 1 for all channels\n# sigmoid(large positive) ~ 1\nW1 = np.zeros((2, 4)); b1 = np.zeros(2)\nW2 = np.zeros((4, 2)); b2 = np.full(4, 100.0)\nout = se_block(x, W1, b1, W2, b2)\nassert np.allclose(out, x, atol=1e-4)"
+    },
+    {
+      "name": "All-zeros excitation zeros x",
+      "code": "import numpy as np\nx = np.random.randn(2, 4, 8, 8)\nW1 = np.zeros((2, 4)); b1 = np.zeros(2)\nW2 = np.zeros((4, 2)); b2 = np.full(4, -100.0)  # sigmoid(-100) ~ 0\nout = se_block(x, W1, b1, W2, b2)\nassert np.allclose(out, 0.0, atol=1e-4)"
+    },
+    {
+      "name": "Channel scaling is per-channel",
+      "code": "import numpy as np\nx = np.ones((1, 2, 4, 4))\nW1 = np.zeros((1, 2)); b1 = np.zeros(1)\n# FC2 b2 = [100, -100] -> excitation ~ [1, 0]\nW2 = np.zeros((2, 1)); b2 = np.array([100.0, -100.0])\nout = se_block(x, W1, b1, W2, b2)\nassert np.allclose(out[0, 0], 1.0, atol=0.01)\nassert np.allclose(out[0, 1], 0.0, atol=0.01)"
+    },
+    {
+      "name": "Reduction ratio r=16 shapes",
+      "code": "import numpy as np\nC = 64; r = 16\nx = np.random.randn(4, C, 7, 7)\nW1 = np.random.randn(C//r, C) * 0.01\nb1 = np.zeros(C//r)\nW2 = np.random.randn(C, C//r) * 0.01\nb2 = np.zeros(C)\nout = se_block(x, W1, b1, W2, b2)\nassert out.shape == (4, C, 7, 7)"
+    }
+  ],
+  "hints": [
+    "Squeeze: z = x.mean(axis=(2,3)) gives (N, C)",
+    "Excitation: h = relu(z @ W1.T + b1), then s = sigmoid(h @ W2.T + b2)",
+    "Scale: x * s.reshape(N, C, 1, 1)"
+  ],
+  "related_problems": ["8.10", "8.11", "8.6"]
+}

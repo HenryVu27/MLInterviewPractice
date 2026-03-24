@@ -1,0 +1,21 @@
+{
+  "id": "5.12",
+  "title": "Categorical Cross-Entropy Loss (from Logits)",
+  "difficulty": "Medium",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "loss-functions", "numerical-stability"],
+  "description": "Implement categorical cross-entropy loss directly from logits using the log-sum-exp trick.\n\nCross-entropy from logits (numerically stable):\n```\nCE(logits, y) = -logits[y] + log(sum(exp(logits)))\n              = -logits[y] + max(logits) + log(sum(exp(logits - max(logits))))\n```\n\nFor a batch:\n```\nCE = (1/N) * sum_i [-logits_i[y_i] + log_sum_exp(logits_i)]\n```\n\nAlso return the gradient w.r.t. logits:\n```\ndCE/dlogits_i = (softmax(logits_i) - one_hot(y_i)) / N\n```\n\n**Why this matters:** This is how PyTorch's `nn.CrossEntropyLoss` works. Computing from logits avoids the numerical instability of softmax -> log.",
+  "constraints": ["Use numpy only", "Compute from logits directly (do not compute softmax first then log)", "Use log-sum-exp trick for stability", "Return (loss scalar, gradient of shape (N, C))"],
+  "starter_code": "import numpy as np\n\ndef categorical_cross_entropy(logits: np.ndarray, y_true: np.ndarray) -> tuple[float, np.ndarray]:\n    \"\"\"Categorical cross-entropy from logits.\n    \n    Args:\n        logits: Raw scores, shape (N, C) where C is number of classes\n        y_true: Integer class labels, shape (N,), values in [0, C-1]\n    \n    Returns:\n        Tuple of (loss scalar, gradient w.r.t. logits of shape (N, C))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef categorical_cross_entropy(logits: np.ndarray, y_true: np.ndarray) -> tuple[float, np.ndarray]:\n    N, C = logits.shape\n    # Log-sum-exp trick\n    logits_max = np.max(logits, axis=1, keepdims=True)\n    shifted = logits - logits_max\n    log_sum_exp = np.log(np.sum(np.exp(shifted), axis=1))  # shape (N,)\n    # Loss: -logit[y] + log_sum_exp(logits)\n    correct_logits = logits[np.arange(N), y_true]  # shape (N,)\n    loss = np.mean(-correct_logits + logits_max.squeeze() + log_sum_exp)\n    # Gradient: softmax - one_hot\n    probs = np.exp(shifted) / np.sum(np.exp(shifted), axis=1, keepdims=True)\n    grad = probs.copy()\n    grad[np.arange(N), y_true] -= 1.0\n    grad /= N\n    return float(loss), grad",
+  "explanation": "**Key concepts:**\n\n1. **From logits**: The numerically stable cross-entropy is -z_y + log(sum(exp(z))). This combines log(softmax) in one stable step.\n\n2. **Log-sum-exp**: log(sum(exp(z))) = max(z) + log(sum(exp(z - max(z)))). Avoids overflow by shifting.\n\n3. **Gradient**: After the log-softmax simplification, dCE/dz = softmax(z) - one_hot(y). This is one of the cleanest gradient formulas in ML.\n\n4. **advanced indexing**: `logits[np.arange(N), y_true]` picks the logit of the true class for each sample.",
+  "test_cases": [
+    {"name": "Perfect logits give near-zero loss", "code": "logits = np.array([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0]])\ny = np.array([0, 1])\nloss, _ = categorical_cross_entropy(logits, y)\nassert loss < 0.001"},
+    {"name": "Gradient shape is (N, C)", "code": "logits = np.random.randn(5, 3)\ny = np.array([0, 1, 2, 0, 1])\nloss, grad = categorical_cross_entropy(logits, y)\nassert grad.shape == (5, 3)"},
+    {"name": "Gradient rows sum to ~0", "code": "logits = np.random.randn(4, 5)\ny = np.array([0, 2, 1, 4])\n_, grad = categorical_cross_entropy(logits, y)\nnp.testing.assert_allclose(np.sum(grad, axis=1), np.zeros(4), atol=1e-9)"},
+    {"name": "Stable for large logits", "code": "logits = np.array([[1000.0, 0.0, 0.0]])\ny = np.array([0])\nloss, grad = categorical_cross_entropy(logits, y)\nassert not np.isnan(loss) and not np.any(np.isnan(grad))"},
+    {"name": "Uniform logits give log(C) loss", "code": "C = 4\nlogits = np.zeros((1, C))\ny = np.array([0])\nloss, _ = categorical_cross_entropy(logits, y)\nassert abs(loss - np.log(C)) < 1e-9"}
+  ],
+  "hints": ["Use logits[np.arange(N), y_true] to gather the true class logit for each sample", "Gradient is (softmax(logits) - one_hot(y)) / N — one_hot can be applied via index subtraction"],
+  "related_problems": ["5.9", "5.10", "5.11"]
+}

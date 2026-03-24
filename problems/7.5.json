@@ -1,0 +1,46 @@
+{
+  "id": "7.5",
+  "title": "DropConnect",
+  "difficulty": "Medium",
+  "category": "Regularization & Generalization",
+  "tags": ["dropconnect", "regularization", "weights", "dropout"],
+  "description": "Implement DropConnect, a generalization of Dropout where individual weights (not activations) are randomly zeroed during the forward pass.\n\nIn a linear layer `y = x @ W + b`, DropConnect masks individual elements of W:\n```\nW_masked = W * M  where M_ij ~ Bernoulli(1-p)\ny = x @ W_masked + b\n```\n\nScaling: as with inverted dropout, divide by `(1-p)` so expected output is the same as without masking.\n\nImplement `dropconnect_linear(x, W, b, p, training, rng)`.",
+  "constraints": [
+    "Use numpy only",
+    "Mask is applied to W, not to activations x",
+    "Use inverted scaling: divide by (1-p)",
+    "At eval time use W unchanged",
+    "b is never masked"
+  ],
+  "starter_code": "import numpy as np\n\ndef dropconnect_linear(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n                       p: float, training: bool = True,\n                       rng: np.random.Generator = None) -> np.ndarray:\n    \"\"\"Linear layer with DropConnect regularization.\n    \n    Args:\n        x: Input of shape (batch, in_features)\n        W: Weight matrix of shape (in_features, out_features)\n        b: Bias of shape (out_features,)\n        p: Drop probability for each weight\n        training: If False, use full W\n        rng: Optional random generator\n    \n    Returns:\n        Output of shape (batch, out_features)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef dropconnect_linear(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n                       p: float, training: bool = True,\n                       rng: np.random.Generator = None) -> np.ndarray:\n    if not training or p == 0.0:\n        return x @ W + b\n    if rng is None:\n        rng = np.random.default_rng()\n    mask = (rng.random(W.shape) >= p).astype(W.dtype)\n    W_masked = W * mask / (1.0 - p)\n    return x @ W_masked + b",
+  "explanation": "**Key concepts:**\n\n1. **DropConnect vs Dropout:** Dropout zeros activations (outputs of neurons); DropConnect zeros individual weight connections. DropConnect is strictly more general.\n\n2. **Mask on W:** The mask M has the same shape as W; each element is independently dropped with probability p.\n\n3. **Inverted scaling:** Divide W_masked by (1-p) so the expected value of each element is W_ij (same as without masking).\n\n4. **Bias not masked:** The bias term b is always used as-is.\n\n5. **Memory:** DropConnect requires storing the mask for backprop, which can be expensive for large weight matrices.",
+  "test_cases": [
+    {
+      "name": "Eval mode: exact linear forward",
+      "code": "import numpy as np\nrng = np.random.default_rng(0)\nx = np.array([[1.0, 2.0]])\nW = np.array([[1.0, 0.0], [0.0, 1.0]])\nb = np.array([0.5, -0.5])\nout = dropconnect_linear(x, W, b, p=0.5, training=False, rng=rng)\nassert np.allclose(out, x @ W + b)"
+    },
+    {
+      "name": "p=0 same as regular linear",
+      "code": "import numpy as np\nrng = np.random.default_rng(42)\nx = np.ones((3, 4))\nW = np.eye(4)\nb = np.zeros(4)\nout = dropconnect_linear(x, W, b, p=0.0, training=True, rng=rng)\nassert np.allclose(out, x @ W + b)"
+    },
+    {
+      "name": "Output shape correct",
+      "code": "import numpy as np\nrng = np.random.default_rng(1)\nx = np.ones((8, 16))\nW = np.random.randn(16, 32)\nb = np.zeros(32)\nout = dropconnect_linear(x, W, b, p=0.3, training=True, rng=rng)\nassert out.shape == (8, 32)"
+    },
+    {
+      "name": "Expected value approximately preserved",
+      "code": "import numpy as np\nresults = []\nfor i in range(300):\n    rng = np.random.default_rng(i)\n    x = np.ones((1, 1000))\n    W = np.ones((1000, 1))\n    b = np.zeros(1)\n    results.append(dropconnect_linear(x, W, b, p=0.5, training=True, rng=rng).item())\nmean_val = sum(results) / len(results)\nassert abs(mean_val - 1000.0) < 50, f'Expected ~1000, got {mean_val}'"
+    },
+    {
+      "name": "Bias is not zeroed",
+      "code": "import numpy as np\nrng = np.random.default_rng(0)\nx = np.zeros((2, 4))\nW = np.ones((4, 2))\nb = np.array([5.0, 7.0])\nout = dropconnect_linear(x, W, b, p=0.9, training=True, rng=rng)\nassert np.allclose(out, b), f'With x=0, output should equal b, got {out}'"
+    }
+  ],
+  "hints": [
+    "Generate mask with same shape as W",
+    "Apply inverted scaling: W * mask / (1-p)",
+    "Then proceed with normal matrix multiply: x @ W_masked + b"
+  ],
+  "related_problems": ["7.4", "7.1"]
+}

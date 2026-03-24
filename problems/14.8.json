@@ -1,0 +1,29 @@
+{
+  "id": "14.8",
+  "title": "SimCLR Augmentation Pipeline (numpy)",
+  "difficulty": "Medium",
+  "category": "Contrastive Learning",
+  "tags": ["contrastive-learning", "simclr", "data-augmentation"],
+  "description": "Implement a simplified SimCLR-style augmentation pipeline using numpy.\n\nApply the following augmentations in sequence to produce two random views of the same image:\n1. **Random crop:** sample a patch of size `crop_size x crop_size` from the image\n2. **Color jitter:** add uniform random noise in `[-jitter, +jitter]` to each pixel, clamp to [0, 1]\n3. **Gaussian blur:** apply a simple 3x3 average blur (approximate Gaussian)\n\nThe function should return two independently augmented views.",
+  "constraints": [
+    "Input image: numpy array shape (H, W) or (H, W, C), float in [0,1]",
+    "Use numpy only (no PIL, no cv2)",
+    "crop_size must be <= min(H, W)",
+    "Return two augmented arrays of shape (crop_size, crop_size) or (crop_size, crop_size, C)"
+  ],
+  "starter_code": "import numpy as np\n\ndef simclr_augment(image: np.ndarray, crop_size: int = 32, jitter: float = 0.1, rng: np.random.Generator = None) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"Apply SimCLR-style augmentations to produce two views.\n\n    Args:\n        image: Input image array, float in [0, 1]\n        crop_size: Size of random crop\n        jitter: Max color jitter magnitude\n        rng: Optional numpy random generator for reproducibility\n\n    Returns:\n        (view1, view2): Two augmented image arrays\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef simclr_augment(image: np.ndarray, crop_size: int = 32, jitter: float = 0.1, rng: np.random.Generator = None) -> tuple[np.ndarray, np.ndarray]:\n    if rng is None:\n        rng = np.random.default_rng()\n    image = np.asarray(image, dtype=float)\n    H = image.shape[0]\n    W = image.shape[1]\n\n    def random_crop(img):\n        max_h = H - crop_size\n        max_w = W - crop_size\n        top = rng.integers(0, max_h + 1)\n        left = rng.integers(0, max_w + 1)\n        return img[top:top+crop_size, left:left+crop_size]\n\n    def color_jitter(img):\n        noise = rng.uniform(-jitter, jitter, size=img.shape)\n        return np.clip(img + noise, 0.0, 1.0)\n\n    def avg_blur(img):\n        # 3x3 average blur via sliding window\n        if img.ndim == 2:\n            H2, W2 = img.shape\n            out = img.copy()\n            out[1:-1, 1:-1] = (\n                img[:-2, :-2] + img[:-2, 1:-1] + img[:-2, 2:] +\n                img[1:-1, :-2] + img[1:-1, 1:-1] + img[1:-1, 2:] +\n                img[2:, :-2]  + img[2:, 1:-1]  + img[2:, 2:]\n            ) / 9.0\n        else:\n            H2, W2, C = img.shape\n            out = img.copy()\n            out[1:-1, 1:-1] = (\n                img[:-2, :-2] + img[:-2, 1:-1] + img[:-2, 2:] +\n                img[1:-1, :-2] + img[1:-1, 1:-1] + img[1:-1, 2:] +\n                img[2:, :-2]  + img[2:, 1:-1]  + img[2:, 2:]\n            ) / 9.0\n        return out\n\n    def augment(img):\n        img = random_crop(img)\n        img = color_jitter(img)\n        img = avg_blur(img)\n        return img\n\n    return augment(image), augment(image)",
+  "explanation": "SimCLR's key insight is that the specific augmentation strategy matters: random crop + color jitter + Gaussian blur encourages invariance to scale, color, and texture while preserving semantic content. Two independently augmented views of the same image form a positive pair; views of different images are negatives. The model learns representations invariant to these augmentations.",
+  "test_cases": [
+    {"name": "Output shapes correct", "code": "import numpy as np\nimg = np.random.rand(64, 64)\nv1, v2 = simclr_augment(img, crop_size=32)\nassert v1.shape == (32, 32) and v2.shape == (32, 32)"},
+    {"name": "Views are different", "code": "import numpy as np\nrng = np.random.default_rng(42)\nimg = np.random.rand(64, 64)\nv1, v2 = simclr_augment(img, crop_size=32, rng=rng)\nassert not np.allclose(v1, v2)"},
+    {"name": "Values in [0,1]", "code": "import numpy as np\nimg = np.random.rand(48, 48, 3)\nv1, v2 = simclr_augment(img, crop_size=24)\nassert v1.min() >= 0 and v1.max() <= 1 and v2.min() >= 0 and v2.max() <= 1"},
+    {"name": "Color channel preserved", "code": "import numpy as np\nimg = np.random.rand(64, 64, 3)\nv1, v2 = simclr_augment(img, crop_size=32)\nassert v1.shape == (32, 32, 3) and v2.shape == (32, 32, 3)"}
+  ],
+  "hints": [
+    "Random crop: sample top-left corner uniformly in valid range",
+    "Color jitter: add uniform noise then np.clip to [0,1]",
+    "Average blur: convolve with 3x3 ones/9 using slicing"
+  ],
+  "related_problems": ["14.5", "14.6", "14.7"]
+}

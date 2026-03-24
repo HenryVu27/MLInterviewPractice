@@ -1,0 +1,38 @@
+{
+  "id": "8.11",
+  "title": "Bottleneck Block (ResNet-50)",
+  "difficulty": "Medium",
+  "category": "Convolutional Neural Networks",
+  "tags": ["resnet", "bottleneck", "1x1-conv", "deep-learning"],
+  "description": "Implement the bottleneck residual block used in ResNet-50/101/152.\n\nThe bottleneck uses three convolutions:\n1. **1x1 conv:** Reduce channels from `C` to `C//4` (bottleneck)\n2. **3x3 conv:** Process at reduced channels\n3. **1x1 conv:** Expand channels back to `C` (or `C_out`)\n\n```\nx -> [1x1, C//4] -> BN+ReLU -> [3x3, C//4] -> BN+ReLU -> [1x1, C_out] -> BN -> + shortcut -> ReLU\n```\n\nThe bottleneck reduces computation: `C//4` channels through the 3x3 conv saves `~75%` of 3x3 operations.",
+  "constraints": [
+    "Use numpy only",
+    "Bottleneck width = C_in // 4 (or provided as argument)",
+    "Use identity shortcut when C_in == C_out and stride == 1",
+    "Use projection shortcut otherwise",
+    "BN and ReLU after each conv except final (BN only, then add+ReLU)"
+  ],
+  "starter_code": "import numpy as np\n\ndef relu(x):\n    return np.maximum(0, x)\n\ndef batch_norm(x, gamma, beta, eps=1e-5):\n    mean = x.mean(axis=(0, 2, 3), keepdims=True)\n    var = x.var(axis=(0, 2, 3), keepdims=True)\n    x_norm = (x - mean) / np.sqrt(var + eps)\n    return gamma.reshape(1,-1,1,1) * x_norm + beta.reshape(1,-1,1,1)\n\ndef conv_nd(x, W, b, stride=1, padding=0):\n    \"\"\"Generic conv2d (use for 1x1 and 3x3).\"\"\"\n    N, C_in, H, W_in = x.shape\n    C_out, _, kH, kW = W.shape\n    if padding > 0:\n        x = np.pad(x, ((0,0),(0,0),(padding,padding),(padding,padding)))\n    H_out = (x.shape[2] - kH) // stride + 1\n    W_out = (x.shape[3] - kW) // stride + 1\n    out = np.zeros((N, C_out, H_out, W_out))\n    for n in range(N):\n        for co in range(C_out):\n            for i in range(H_out):\n                for j in range(W_out):\n                    patch = x[n,:,i*stride:i*stride+kH,j*stride:j*stride+kW]\n                    out[n,co,i,j] = np.sum(patch * W[co]) + b[co]\n    return out\n\ndef bottleneck_block(x: np.ndarray, params: dict, stride: int = 1) -> np.ndarray:\n    \"\"\"ResNet-50 bottleneck block.\n    \n    Args:\n        x: Input (N, C_in, H, W)\n        params: dict with keys:\n            W1, b1, gamma1, beta1: 1x1 reduce conv\n            W2, b2, gamma2, beta2: 3x3 conv\n            W3, b3, gamma3, beta3: 1x1 expand conv\n            W_proj, b_proj: projection shortcut (optional)\n        stride: Applied to the 3x3 conv\n    \n    Returns:\n        Output (N, C_out, H', W')\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef relu(x):\n    return np.maximum(0, x)\n\ndef batch_norm(x, gamma, beta, eps=1e-5):\n    mean = x.mean(axis=(0, 2, 3), keepdims=True)\n    var = x.var(axis=(0, 2, 3), keepdims=True)\n    x_norm = (x - mean) / np.sqrt(var + eps)\n    return gamma.reshape(1,-1,1,1) * x_norm + beta.reshape(1,-1,1,1)\n\ndef conv_nd(x, W, b, stride=1, padding=0):\n    N, C_in, H, W_in = x.shape\n    C_out, _, kH, kW = W.shape\n    if padding > 0:\n        x = np.pad(x, ((0,0),(0,0),(padding,padding),(padding,padding)))\n    H_out = (x.shape[2] - kH) // stride + 1\n    W_out = (x.shape[3] - kW) // stride + 1\n    out = np.zeros((N, C_out, H_out, W_out))\n    for n in range(N):\n        for co in range(C_out):\n            for i in range(H_out):\n                for j in range(W_out):\n                    patch = x[n,:,i*stride:i*stride+kH,j*stride:j*stride+kW]\n                    out[n,co,i,j] = np.sum(patch * W[co]) + b[co]\n    return out\n\ndef bottleneck_block(x, params, stride=1):\n    shortcut = x\n    # 1x1 reduce\n    out = conv_nd(x, params['W1'], params['b1'], stride=1, padding=0)\n    out = batch_norm(out, params['gamma1'], params['beta1'])\n    out = relu(out)\n    # 3x3 conv (with stride)\n    out = conv_nd(out, params['W2'], params['b2'], stride=stride, padding=1)\n    out = batch_norm(out, params['gamma2'], params['beta2'])\n    out = relu(out)\n    # 1x1 expand\n    out = conv_nd(out, params['W3'], params['b3'], stride=1, padding=0)\n    out = batch_norm(out, params['gamma3'], params['beta3'])\n    # Projection shortcut\n    if 'W_proj' in params and params['W_proj'] is not None:\n        shortcut = conv_nd(shortcut, params['W_proj'], params['b_proj'], stride=stride, padding=0)\n    return relu(out + shortcut)",
+  "explanation": "**Key concepts:**\n\n1. **Bottleneck design:** 1x1 -> 3x3 -> 1x1. The 1x1 convs reduce/restore channels around the 3x3 core, saving computation.\n\n2. **Efficiency:** For 256 input/output channels, bottleneck uses 256x64 + 64x64x9 + 64x256 = ~70k params vs standard 256x256x9 = ~590k.\n\n3. **Stride placement:** Stride is applied in the 3x3 conv (not the 1x1), preserving spatial info as long as possible.\n\n4. **Used in:** ResNet-50 (3,4,6,3 bottleneck blocks per stage), ResNet-101 (3,4,23,3), ResNet-152 (3,8,36,3).",
+  "test_cases": [
+    {
+      "name": "Identity block output shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nC = 16; mid = 4\nparams = {\n    'W1': np.random.randn(mid, C, 1, 1)*0.01, 'b1': np.zeros(mid),\n    'gamma1': np.ones(mid), 'beta1': np.zeros(mid),\n    'W2': np.random.randn(mid, mid, 3, 3)*0.01, 'b2': np.zeros(mid),\n    'gamma2': np.ones(mid), 'beta2': np.zeros(mid),\n    'W3': np.random.randn(C, mid, 1, 1)*0.01, 'b3': np.zeros(C),\n    'gamma3': np.ones(C), 'beta3': np.zeros(C),\n    'W_proj': None\n}\nx = np.random.randn(2, C, 8, 8)\nout = bottleneck_block(x, params, stride=1)\nassert out.shape == (2, C, 8, 8)"
+    },
+    {
+      "name": "Output is non-negative (ReLU)",
+      "code": "import numpy as np\nnp.random.seed(1)\nC = 8; mid = 2\nparams = {\n    'W1': np.random.randn(mid, C, 1, 1)*0.01, 'b1': np.zeros(mid),\n    'gamma1': np.ones(mid), 'beta1': np.zeros(mid),\n    'W2': np.random.randn(mid, mid, 3, 3)*0.01, 'b2': np.zeros(mid),\n    'gamma2': np.ones(mid), 'beta2': np.zeros(mid),\n    'W3': np.random.randn(C, mid, 1, 1)*0.01, 'b3': np.zeros(C),\n    'gamma3': np.ones(C), 'beta3': np.zeros(C),\n    'W_proj': None\n}\nx = np.random.randn(1, C, 4, 4)\nout = bottleneck_block(x, params)\nassert np.all(out >= 0)"
+    },
+    {
+      "name": "Projection shortcut changes channels",
+      "code": "import numpy as np\nnp.random.seed(2)\nC_in=8; C_out=16; mid=4\nparams = {\n    'W1': np.random.randn(mid, C_in, 1, 1)*0.01, 'b1': np.zeros(mid),\n    'gamma1': np.ones(mid), 'beta1': np.zeros(mid),\n    'W2': np.random.randn(mid, mid, 3, 3)*0.01, 'b2': np.zeros(mid),\n    'gamma2': np.ones(mid), 'beta2': np.zeros(mid),\n    'W3': np.random.randn(C_out, mid, 1, 1)*0.01, 'b3': np.zeros(C_out),\n    'gamma3': np.ones(C_out), 'beta3': np.zeros(C_out),\n    'W_proj': np.random.randn(C_out, C_in, 1, 1)*0.01, 'b_proj': np.zeros(C_out)\n}\nx = np.random.randn(1, C_in, 8, 8)\nout = bottleneck_block(x, params)\nassert out.shape == (1, C_out, 8, 8)"
+    }
+  ],
+  "hints": [
+    "1x1 conv: kernel shape (C_mid, C_in, 1, 1), no padding",
+    "3x3 conv: kernel shape (C_mid, C_mid, 3, 3), padding=1",
+    "Stride goes in the 3x3 conv, and also in the projection shortcut"
+  ],
+  "related_problems": ["8.10", "8.12"]
+}

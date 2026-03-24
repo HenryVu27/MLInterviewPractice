@@ -1,0 +1,28 @@
+{
+  "id": "13.16",
+  "title": "mAP for Object Detection",
+  "difficulty": "Hard",
+  "category": "Evaluation Metrics",
+  "tags": ["object-detection", "metrics", "map", "iou"],
+  "description": "Implement mAP@0.5 for object detection.\n\nFor the IoU threshold of 0.5:\n1. Sort all detections by confidence (descending)\n2. For each detection, greedily match to the best unmatched GT box with IoU >= 0.5\n3. Compute AP per class using cumulative precision-recall\n4. Average AP across all ground-truth classes\n\n**Input formats:**\n- `detections`: list of `(class_id, confidence, [x1,y1,x2,y2])`\n- `ground_truths`: list of `(class_id, [x1,y1,x2,y2])`",
+  "constraints": [
+    "Each GT box can be matched at most once",
+    "Return float in [0, 1]",
+    "Handle classes with no detections (AP=0)"
+  ],
+  "starter_code": "import numpy as np\n\ndef iou_box(b1, b2):\n    ix1, iy1 = max(b1[0],b2[0]), max(b1[1],b2[1])\n    ix2, iy2 = min(b1[2],b2[2]), min(b1[3],b2[3])\n    inter = max(0, ix2-ix1) * max(0, iy2-iy1)\n    a1 = (b1[2]-b1[0]) * (b1[3]-b1[1])\n    a2 = (b2[2]-b2[0]) * (b2[3]-b2[1])\n    denom = a1 + a2 - inter\n    return inter / denom if denom > 0 else 0.0\n\ndef map_at_50(detections: list, ground_truths: list) -> float:\n    \"\"\"Compute mAP@0.5 for object detection.\n\n    Args:\n        detections: list of (class_id, confidence, [x1,y1,x2,y2])\n        ground_truths: list of (class_id, [x1,y1,x2,y2])\n\n    Returns:\n        mAP@0.5 as float\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef iou_box(b1, b2):\n    ix1, iy1 = max(b1[0],b2[0]), max(b1[1],b2[1])\n    ix2, iy2 = min(b1[2],b2[2]), min(b1[3],b2[3])\n    inter = max(0, ix2-ix1) * max(0, iy2-iy1)\n    a1 = (b1[2]-b1[0]) * (b1[3]-b1[1])\n    a2 = (b2[2]-b2[0]) * (b2[3]-b2[1])\n    denom = a1 + a2 - inter\n    return inter / denom if denom > 0 else 0.0\n\ndef map_at_50(detections: list, ground_truths: list) -> float:\n    iou_thresh = 0.5\n    classes = set(c for c, _ in ground_truths)\n    aps = []\n    for cls in classes:\n        cls_dets = sorted(\n            [(conf, box) for c, conf, box in detections if c == cls],\n            reverse=True\n        )\n        cls_gts = [box for c, box in ground_truths if c == cls]\n        matched = [False] * len(cls_gts)\n        tps, fps = [], []\n        for conf, box in cls_dets:\n            best_iou, best_j = 0.0, -1\n            for j, gt in enumerate(cls_gts):\n                if not matched[j]:\n                    v = iou_box(box, gt)\n                    if v > best_iou:\n                        best_iou, best_j = v, j\n            if best_iou >= iou_thresh and best_j >= 0:\n                matched[best_j] = True\n                tps.append(1); fps.append(0)\n            else:\n                tps.append(0); fps.append(1)\n        n_gt = len(cls_gts)\n        if n_gt == 0:\n            aps.append(0.0)\n            continue\n        tp_cum = np.cumsum(tps).astype(float)\n        fp_cum = np.cumsum(fps).astype(float)\n        prec = tp_cum / (tp_cum + fp_cum)\n        rec = tp_cum / n_gt\n        rec = np.concatenate([[0.0], rec])\n        prec = np.concatenate([[1.0], prec])\n        ap = float(np.sum((rec[1:] - rec[:-1]) * prec[1:]))\n        aps.append(ap)\n    return float(np.mean(aps)) if aps else 0.0",
+  "explanation": "Object detection mAP evaluates both localization (IoU) and classification accuracy. Sorting detections by confidence and greedily matching to GTs ensures each GT is counted once. The PR curve per class captures the precision-recall tradeoff at different confidence thresholds. Averaging across classes gives mAP. IoU=0.5 is the PASCAL VOC standard threshold.",
+  "test_cases": [
+    {"name": "Perfect detection mAP=1", "code": "import numpy as np\ndets = [(0, 0.9, [0,0,1,1])]\ngts = [(0, [0,0,1,1])]\nassert abs(map_at_50(dets, gts) - 1.0) < 1e-9"},
+    {"name": "Wrong class gives 0 for GT class", "code": "import numpy as np\ndets = [(1, 0.9, [0,0,1,1])]\ngts = [(0, [0,0,1,1])]\nresult = map_at_50(dets, gts)\nassert result == 0.0"},
+    {"name": "No overlap mAP=0", "code": "import numpy as np\ndets = [(0, 0.9, [5,5,6,6])]\ngts = [(0, [0,0,1,1])]\nassert map_at_50(dets, gts) == 0.0"},
+    {"name": "Result in [0,1]", "code": "import numpy as np\ndets = [(0,0.8,[0,0,2,2]),(0,0.5,[1,1,3,3])]\ngts = [(0,[0,0,2,2]),(0,[1,1,3,3])]\nresult = map_at_50(dets, gts)\nassert 0 <= result <= 1"}
+  ],
+  "hints": [
+    "Sort detections by confidence descending",
+    "Greedy match: for each detection find GT with highest IoU >= threshold",
+    "Use cumulative TP/FP to build the PR curve"
+  ],
+  "related_problems": ["13.15", "13.6", "13.7"]
+}

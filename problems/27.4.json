@@ -1,0 +1,20 @@
+{
+  "id": "27.4",
+  "title": "SARSA",
+  "difficulty": "Medium",
+  "category": "RL Basics",
+  "tags": ["reinforcement-learning", "sarsa", "on-policy", "temporal-difference"],
+  "description": "Implement tabular SARSA (on-policy TD control) on the same 1D grid world as Q-Learning.\n\nSARSA is on-policy: the update uses the action actually taken in the next state:\n```\nQ[s,a] += alpha * (r + gamma * Q[s',a'] - Q[s,a])\n```\nwhere a' is chosen using the current epsilon-greedy policy from s'.\n\nGrid world: N states (0..N-1), goal at N-1 (reward=+1), start at 0.\nAction 0 = left, action 1 = right, clamped to [0, N-1].\n\nReturn the Q-table of shape (n_states, 2) after n_episodes.",
+  "constraints": ["Use numpy only", "On-policy: a' must be sampled from epsilon-greedy policy", "Same 1D grid world as 27.3"],
+  "starter_code": "import numpy as np\n\ndef sarsa(n_states: int, n_episodes: int, alpha: float, gamma: float, epsilon: float) -> np.ndarray:\n    \"\"\"Tabular SARSA on 1D grid world.\n    \n    Returns:\n        Q: Q-table of shape (n_states, 2)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef sarsa(n_states: int, n_episodes: int, alpha: float, gamma: float, epsilon: float) -> np.ndarray:\n    Q = np.zeros((n_states, 2))\n    goal = n_states - 1\n    \n    def choose_action(s):\n        if np.random.random() < epsilon:\n            return np.random.randint(2)\n        return int(np.argmax(Q[s]))\n    \n    for _ in range(n_episodes):\n        s = 0\n        a = choose_action(s)\n        \n        while s != goal:\n            s_next = int(np.clip(s + (1 if a == 1 else -1), 0, goal))\n            r = 1.0 if s_next == goal else 0.0\n            a_next = choose_action(s_next)\n            \n            Q[s, a] += alpha * (r + gamma * Q[s_next, a_next] - Q[s, a])\n            s, a = s_next, a_next\n    \n    return Q",
+  "explanation": "**Key concepts:**\n\n1. **On-policy:** SARSA updates Q using (s, a, r, s', a') — the actual next action, not the greedy one.\n\n2. **vs Q-Learning:** SARSA is more conservative near cliffs because it accounts for exploration in the update target.\n\n3. **Convergence:** SARSA converges to Q_pi (value under the behavior policy). With decaying epsilon, both Q-learning and SARSA converge to Q*.\n\n4. **State-action pair:** a' must be chosen before updating, and carried into the next step.",
+  "test_cases": [
+    {"name": "Q-table shape correct", "code": "np.random.seed(0)\nQ = sarsa(5, 100, 0.1, 0.9, 0.2)\nassert Q.shape == (5, 2)"},
+    {"name": "Right action preferred near goal", "code": "np.random.seed(42)\nQ = sarsa(6, 3000, 0.1, 0.99, 0.1)\nassert np.argmax(Q[4]) == 1, 'Should prefer going right near goal'"},
+    {"name": "Q-values non-negative", "code": "np.random.seed(1)\nQ = sarsa(5, 500, 0.1, 0.9, 0.1)\nassert np.all(Q >= 0), 'All Q-values should be non-negative'"},
+    {"name": "Goal state never updated", "code": "np.random.seed(3)\nQ = sarsa(4, 200, 0.1, 0.9, 0.1)\nassert Q[3, 0] == 0.0 and Q[3, 1] == 0.0"}
+  ],
+  "hints": ["Choose a at the start of each episode, carry a' to next iteration", "SARSA tuple: (s, a, r, s', a')", "choose_action helper avoids code duplication"],
+  "related_problems": ["27.3", "27.7", "27.11"]
+}

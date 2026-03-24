@@ -1,0 +1,27 @@
+{
+  "id": "13.5",
+  "title": "ROC Curve and AUC",
+  "difficulty": "Medium",
+  "category": "Evaluation Metrics",
+  "tags": ["classification", "metrics", "roc", "auc"],
+  "description": "Implement ROC curve computation and AUC via the trapezoidal rule.\n\nThe ROC curve plots True Positive Rate (TPR) vs False Positive Rate (FPR) at varying decision thresholds.\n- `TPR = TP / (TP + FN)` (Recall / Sensitivity)\n- `FPR = FP / (FP + TN)` (1 - Specificity)\n\nAUC = area under the ROC curve using the trapezoidal rule.\n\n**Example:**\n```\ny_true   = [0, 0, 1, 1]\ny_scores = [0.1, 0.4, 0.35, 0.8]\n=> AUC = 0.75\n```",
+  "constraints": [
+    "Sort thresholds in descending order of score",
+    "Include (FPR=0, TPR=0) and (FPR=1, TPR=1) endpoints",
+    "Return (fpr_array, tpr_array, auc) as numpy arrays and float"
+  ],
+  "starter_code": "import numpy as np\n\ndef roc_auc(y_true: np.ndarray, y_scores: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:\n    \"\"\"Compute ROC curve and AUC.\n\n    Args:\n        y_true: Binary labels (0 or 1)\n        y_scores: Predicted probabilities or scores\n\n    Returns:\n        (fpr, tpr, auc)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef roc_auc(y_true: np.ndarray, y_scores: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:\n    y_true = np.asarray(y_true)\n    y_scores = np.asarray(y_scores)\n    thresholds = np.sort(np.unique(y_scores))[::-1]\n    P = np.sum(y_true == 1)\n    N = np.sum(y_true == 0)\n    fprs, tprs = [0.0], [0.0]\n    for t in thresholds:\n        pred = (y_scores >= t).astype(int)\n        tp = np.sum((pred == 1) & (y_true == 1))\n        fp = np.sum((pred == 1) & (y_true == 0))\n        fprs.append(fp / N if N > 0 else 0.0)\n        tprs.append(tp / P if P > 0 else 0.0)\n    fprs.append(1.0)\n    tprs.append(1.0)\n    fpr = np.array(fprs)\n    tpr = np.array(tprs)\n    auc = float(np.trapz(tpr, fpr))\n    return fpr, tpr, auc",
+  "explanation": "The ROC curve shows the tradeoff between sensitivity (TPR) and specificity (1-FPR). AUC=0.5 means random performance; AUC=1.0 means perfect. The trapezoidal rule approximates the area by summing trapezoids between consecutive (FPR, TPR) points. ROC-AUC is threshold-invariant and robust to class imbalance.",
+  "test_cases": [
+    {"name": "Perfect classifier AUC=1", "code": "import numpy as np\n_, _, auc = roc_auc(np.array([0,0,1,1]), np.array([0.1,0.2,0.8,0.9]))\nassert abs(auc - 1.0) < 1e-9"},
+    {"name": "Known AUC 0.75", "code": "import numpy as np\n_, _, auc = roc_auc(np.array([0,0,1,1]), np.array([0.1,0.4,0.35,0.8]))\nassert abs(auc - 0.75) < 1e-9"},
+    {"name": "Endpoints correct", "code": "import numpy as np\nfpr, tpr, auc = roc_auc(np.array([0,1,1]), np.array([0.2,0.7,0.9]))\nassert fpr[0] == 0.0 and tpr[0] == 0.0 and fpr[-1] == 1.0 and tpr[-1] == 1.0"},
+    {"name": "AUC in [0,1]", "code": "import numpy as np\n_, _, auc = roc_auc(np.array([0,1,0,1,0]), np.array([0.3,0.4,0.7,0.8,0.1]))\nassert 0 <= auc <= 1"}
+  ],
+  "hints": [
+    "Sort unique thresholds descending to sweep from most aggressive to most conservative",
+    "np.trapz(y, x) computes trapezoidal area"
+  ],
+  "related_problems": ["13.6", "13.2", "13.19"]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "27.2",
+  "title": "UCB1",
+  "difficulty": "Medium",
+  "category": "RL Basics",
+  "tags": ["reinforcement-learning", "bandit", "upper-confidence-bound"],
+  "description": "Implement the UCB1 (Upper Confidence Bound) algorithm for the K-armed bandit.\n\nUCB1 selects the arm that maximizes:\n```\nUCB(a) = Q(a) + sqrt(2 * ln(t) / N(a))\n```\nwhere t is the current time step and N(a) is the number of times arm a was chosen.\n\nFor the first K steps, pull each arm once to initialize.\n\nReturn total accumulated reward after T steps.\n\n**UCB1 guarantees O(log T) regret**, unlike epsilon-greedy's O(T) worst case.",
+  "constraints": ["Pull each arm exactly once in the first K steps", "Use numpy only", "Arms produce Gaussian rewards: r ~ N(true_mean, 1)"],
+  "starter_code": "import numpy as np\n\ndef ucb1_bandit(true_means: list, T: int) -> float:\n    \"\"\"Run UCB1 bandit algorithm.\n    \n    Args:\n        true_means: True reward means for each arm\n        T: Total number of steps\n    \n    Returns:\n        Total accumulated reward\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef ucb1_bandit(true_means: list, T: int) -> float:\n    k = len(true_means)\n    Q = np.zeros(k)\n    N = np.zeros(k)\n    total_reward = 0.0\n    \n    for t in range(1, T + 1):\n        if t <= k:\n            a = t - 1\n        else:\n            ucb = Q + np.sqrt(2 * np.log(t) / N)\n            a = np.argmax(ucb)\n        \n        r = np.random.normal(true_means[a], 1.0)\n        N[a] += 1\n        Q[a] += (r - Q[a]) / N[a]\n        total_reward += r\n    \n    return total_reward",
+  "explanation": "**Key concepts:**\n\n1. **Optimism under uncertainty:** UCB1 adds a bonus that is large when an arm has been pulled few times, encouraging exploration of uncertain arms.\n\n2. **Logarithmic regret:** UCB1 achieves O(log T) cumulative regret, which is theoretically optimal.\n\n3. **Initialization:** Each arm is pulled once before computing UCB to avoid division by zero.\n\n4. **Confidence bound:** sqrt(2 ln(t) / N(a)) shrinks as N(a) grows — well-explored arms get smaller bonuses.",
+  "test_cases": [
+    {"name": "Converges to best arm", "code": "np.random.seed(42)\nreward = ucb1_bandit([0.0, 5.0, 1.0], T=2000)\nassert reward > 8000, f'Expected > 8000, got {reward:.1f}'"},
+    {"name": "Works with 2 arms", "code": "np.random.seed(0)\nreward = ucb1_bandit([1.0, 3.0], T=500)\nassert reward > 1000, f'Expected > 1000 reward, got {reward:.1f}'"},
+    {"name": "Initialization each arm pulled once", "code": "np.random.seed(1)\nreward = ucb1_bandit([1.0, 2.0, 3.0], T=3)\nassert isinstance(reward, float)"},
+    {"name": "Returns float", "code": "np.random.seed(5)\nassert isinstance(ucb1_bandit([1.0, 2.0], T=100), float)"}
+  ],
+  "hints": ["Pull arm (t-1) when t <= k for initialization", "UCB formula: Q(a) + sqrt(2*ln(t)/N(a))", "np.log computes natural log"],
+  "related_problems": ["27.1", "27.3", "27.11"]
+}

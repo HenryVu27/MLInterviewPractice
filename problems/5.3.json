@@ -1,0 +1,21 @@
+{
+  "id": "5.3",
+  "title": "Tanh and Its Derivative",
+  "difficulty": "Easy",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "activation-functions", "backpropagation"],
+  "description": "Implement tanh activation and its derivative.\n\nTanh is defined as:\n```\ntanh(x) = (exp(x) - exp(-x)) / (exp(x) + exp(-x))\n```\n\nIts derivative:\n```\ntanh'(x) = 1 - tanh(x)^2\n```\n\nTanh is preferred over sigmoid in hidden layers because it is zero-centered (output in (-1, 1)).\n\n**Example:**\n```\ntanh(0)  = 0.0\ntanh(1)  ≈ 0.7616\ntanh'(0) = 1.0\n```\n\n**Why this matters:** Tanh is used in RNN/LSTM hidden state updates. Its zero-centered output reduces the zigzag gradient problem compared to sigmoid.",
+  "constraints": ["Use numpy only (np.tanh is allowed)", "Return both tanh(x) and its derivative", "Compute derivative analytically as 1 - tanh(x)^2", "Handle arrays of any shape"],
+  "starter_code": "import numpy as np\n\ndef tanh_with_derivative(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"Compute tanh and its derivative.\n    \n    Args:\n        x: Input array of any shape\n    \n    Returns:\n        Tuple of (tanh(x), tanh'(x))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef tanh_with_derivative(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n    t = np.tanh(x)\n    dt = 1.0 - t ** 2\n    return t, dt",
+  "explanation": "**Key concepts:**\n\n1. **Relation to sigmoid**: tanh(x) = 2*sigmoid(2x) - 1. So tanh is a scaled, shifted sigmoid.\n\n2. **Zero-centered**: Output in (-1, 1) means positive and negative activations are symmetric. Sigmoid output in (0,1) creates always-positive gradients, causing gradient updates to zigzag.\n\n3. **Derivative**: 1 - tanh(x)^2. Like sigmoid, this vanishes at saturation (|x| large). Maximum is 1.0 at x=0.\n\n4. **Efficiency**: np.tanh is already numerically stable. The derivative just squares and subtracts.",
+  "test_cases": [
+    {"name": "tanh(0) = 0 and derivative = 1", "code": "t, dt = tanh_with_derivative(np.array([0.0]))\nassert abs(float(t) - 0.0) < 1e-9\nassert abs(float(dt) - 1.0) < 1e-9"},
+    {"name": "Standard values", "code": "t, dt = tanh_with_derivative(np.array([1.0, -1.0]))\nnp.testing.assert_allclose(t, [0.76159416, -0.76159416], rtol=1e-6)\nnp.testing.assert_allclose(dt, [0.41997434, 0.41997434], rtol=1e-6)"},
+    {"name": "Derivative matches numerical gradient", "code": "x = np.array([0.5, -1.2, 2.0])\nh = 1e-5\nnum_grad = (np.tanh(x + h) - np.tanh(x - h)) / (2 * h)\n_, dt = tanh_with_derivative(x)\nnp.testing.assert_allclose(dt, num_grad, rtol=1e-4)"},
+    {"name": "Output range (-1, 1)", "code": "x = np.linspace(-100, 100, 1000)\nt, _ = tanh_with_derivative(x)\nassert np.all(t > -1) and np.all(t < 1)"},
+    {"name": "Derivative is 1 - tanh^2", "code": "x = np.random.randn(5, 4)\nt, dt = tanh_with_derivative(x)\nnp.testing.assert_allclose(dt, 1 - t**2, rtol=1e-10)"}
+  ],
+  "hints": ["np.tanh handles numerical stability automatically", "The derivative reuses the tanh output: dt = 1 - t^2"],
+  "related_problems": ["5.1", "5.2", "5.4"]
+}

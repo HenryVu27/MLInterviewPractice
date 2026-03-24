@@ -1,0 +1,21 @@
+{
+  "id": "5.11",
+  "title": "Binary Cross-Entropy Loss",
+  "difficulty": "Easy",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "loss-functions"],
+  "description": "Implement binary cross-entropy (BCE) loss with epsilon clipping.\n\nBCE loss for a single sample:\n```\nBCE(y, p) = -[y*log(p) + (1-y)*log(1-p)]\n```\n\nFor a batch of N samples:\n```\nBCE = (1/N) * sum_i [-y_i*log(p_i) - (1-y_i)*log(1-p_i)]\n```\n\nClip predictions to [eps, 1-eps] to avoid log(0).\n\nAlso return the gradient w.r.t. predictions:\n```\ndBCE/dp_i = (-y_i/p_i + (1-y_i)/(1-p_i)) / N\n```\n\n**Why this matters:** BCE is the standard loss for binary classification and sigmoid output layers.",
+  "constraints": ["Use numpy only", "Clip predictions to [1e-7, 1-1e-7] before log", "Return both (loss scalar, gradient array)", "y values are 0 or 1; predictions are probabilities in (0, 1)"],
+  "starter_code": "import numpy as np\n\ndef binary_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> tuple[float, np.ndarray]:\n    \"\"\"Binary cross-entropy loss and its gradient.\n    \n    Args:\n        y_true: Ground truth labels, shape (N,), values in {0, 1}\n        y_pred: Predicted probabilities, shape (N,), values in (0, 1)\n    \n    Returns:\n        Tuple of (loss scalar, gradient w.r.t. y_pred of shape (N,))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef binary_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> tuple[float, np.ndarray]:\n    eps = 1e-7\n    p = np.clip(y_pred, eps, 1.0 - eps)\n    N = len(y_true)\n    loss = -np.mean(y_true * np.log(p) + (1 - y_true) * np.log(1 - p))\n    grad = (-y_true / p + (1 - y_true) / (1 - p)) / N\n    return float(loss), grad",
+  "explanation": "**Key concepts:**\n\n1. **Log(0) prevention**: Without clipping, if p=0 or p=1, log(p) = -inf. Clip to [eps, 1-eps].\n\n2. **Perfect prediction**: When p=y (all correct), BCE=0. When p is maximally wrong, BCE -> infinity.\n\n3. **Gradient**: dBCE/dp_i = (-y_i/p_i + (1-y_i)/(1-p_i)) / N. Simplifies to (p_i - y_i) / (p_i*(1-p_i)) / N. When combined with sigmoid, the (p-y)/N gradient emerges cleanly.\n\n4. **Mean vs sum**: Using mean (1/N * sum) makes the loss scale-independent w.r.t. batch size.",
+  "test_cases": [
+    {"name": "Perfect predictions give near-zero loss", "code": "y = np.array([1.0, 0.0, 1.0])\np = np.array([0.999, 0.001, 0.999])\nloss, _ = binary_cross_entropy(y, p)\nassert loss < 0.01"},
+    {"name": "Worst predictions give high loss", "code": "y = np.array([1.0, 0.0])\np = np.array([0.001, 0.999])\nloss, _ = binary_cross_entropy(y, p)\nassert loss > 5.0"},
+    {"name": "Gradient shape matches input", "code": "y = np.array([1.0, 0.0, 1.0, 0.0])\np = np.array([0.9, 0.1, 0.8, 0.2])\nloss, grad = binary_cross_entropy(y, p)\nassert grad.shape == y.shape"},
+    {"name": "Gradient sign is correct", "code": "y = np.array([1.0, 0.0])\np = np.array([0.3, 0.7])\n_, grad = binary_cross_entropy(y, p)\nassert grad[0] < 0, 'Underestimated positive class: gradient should push p up'\nassert grad[1] > 0, 'Overestimated negative class: gradient should push p down'"},
+    {"name": "No NaN for boundary predictions", "code": "y = np.array([1.0, 0.0])\np = np.array([0.0, 1.0])\nloss, grad = binary_cross_entropy(y, p)\nassert not np.isnan(loss) and not np.any(np.isnan(grad))"}
+  ],
+  "hints": ["np.clip(y_pred, 1e-7, 1-1e-7) before log prevents log(0)", "Gradient for label y=1 at prediction p is -1/p; for y=0 it is 1/(1-p)"],
+  "related_problems": ["5.9", "5.12", "3.3"]
+}

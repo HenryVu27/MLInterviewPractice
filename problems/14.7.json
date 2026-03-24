@@ -1,0 +1,28 @@
+{
+  "id": "14.7",
+  "title": "Supervised Contrastive Loss",
+  "difficulty": "Hard",
+  "category": "Contrastive Learning",
+  "tags": ["contrastive-learning", "supervised-contrastive", "metric-learning"],
+  "description": "Implement Supervised Contrastive Loss (SupCon) from Khosla et al. 2020.\n\nUnlike SimCLR which uses only augmented pairs as positives, SupCon uses **all same-class samples** as positives.\n\nFor anchor i:\n`L_i = -1/|P(i)| * sum_{p in P(i)} log( exp(z_i · z_p / tau) / sum_{a != i} exp(z_i · z_a / tau) )`\n\nwhere `P(i)` = set of indices with the same label as i (excluding i itself).\n\n`L = mean over all anchors of L_i` (skip anchors with no positives).",
+  "constraints": [
+    "Embeddings are L2-normalized, shape (B, D)",
+    "labels shape (B,)",
+    "Return scalar float"
+  ],
+  "starter_code": "import numpy as np\n\ndef supervised_contrastive_loss(embeddings: np.ndarray, labels: np.ndarray, temperature: float = 0.1) -> float:\n    \"\"\"Supervised Contrastive Loss.\n\n    Args:\n        embeddings: L2-normalized embeddings, shape (B, D)\n        labels: Class labels, shape (B,)\n        temperature: Temperature for scaling\n\n    Returns:\n        SupCon loss as float\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef supervised_contrastive_loss(embeddings: np.ndarray, labels: np.ndarray, temperature: float = 0.1) -> float:\n    embeddings = np.asarray(embeddings, dtype=float)\n    labels = np.asarray(labels)\n    B = len(embeddings)\n    sim = embeddings @ embeddings.T / temperature  # (B, B)\n    # Mask out self\n    eye = np.eye(B, dtype=bool)\n    # For numerical stability: subtract max per row (excluding self)\n    sim_masked = sim.copy()\n    sim_masked[eye] = -np.inf\n    m = sim_masked.max(axis=1, keepdims=True)\n    exp_sim = np.exp(sim - m)  # (B, B)\n    exp_sim[eye] = 0.0  # zero out self in denominator\n    log_denom = np.log(exp_sim.sum(axis=1) + 1e-12) + m[:, 0]\n    losses = []\n    for i in range(B):\n        pos_idx = np.where((labels == labels[i]) & ~eye[i])[0]\n        if len(pos_idx) == 0:\n            continue\n        pos_log_probs = sim[i, pos_idx] - log_denom[i]\n        losses.append(-np.mean(pos_log_probs))\n    return float(np.mean(losses)) if losses else 0.0",
+  "explanation": "Supervised Contrastive Loss leverages label information to use multiple positives per anchor, giving richer gradient signal than instance discrimination. It was shown to outperform cross-entropy as a pre-training loss when fine-tuning with fewer labels. The denominator sums over all other samples (both positives and negatives), and we average the log-probabilities over all positives.",
+  "test_cases": [
+    {"name": "Non-negative loss", "code": "import numpy as np\nnp.random.seed(0)\nz = np.random.randn(8, 16)\nz /= np.linalg.norm(z, axis=1, keepdims=True)\nlabels = np.array([0,0,1,1,2,2,3,3])\nassert supervised_contrastive_loss(z, labels) >= 0"},
+    {"name": "All same class returns 0 loss (nothing to push)", "code": "import numpy as np\nnp.random.seed(1)\nz = np.random.randn(4, 8)\nz /= np.linalg.norm(z, axis=1, keepdims=True)\n# All same label means every other sample is a positive\nloss = supervised_contrastive_loss(z, np.zeros(4, dtype=int))\nassert loss >= 0"},
+    {"name": "Identical embeddings low loss", "code": "import numpy as np\nz = np.array([[1.0,0],[1.0,0],[0.0,1],[0.0,1]])\nz /= np.linalg.norm(z, axis=1, keepdims=True)\nlabels = np.array([0,0,1,1])\nloss = supervised_contrastive_loss(z, labels, temperature=0.5)\nassert loss >= 0"},
+    {"name": "Single-sample classes skipped", "code": "import numpy as np\nnp.random.seed(2)\nz = np.random.randn(4, 8)\nz /= np.linalg.norm(z, axis=1, keepdims=True)\nlabels = np.array([0,1,2,3])\nresult = supervised_contrastive_loss(z, labels)\nassert result == 0.0"}
+  ],
+  "hints": [
+    "Build full similarity matrix, zero out diagonal in denominator",
+    "P(i) = all j where labels[j] == labels[i] and j != i",
+    "Average log-probs over P(i) for each anchor, then average over anchors"
+  ],
+  "related_problems": ["14.5", "14.6", "14.3"]
+}

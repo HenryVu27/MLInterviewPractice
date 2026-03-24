@@ -1,0 +1,45 @@
+{
+  "id": "8.13",
+  "title": "CNN Output Size Calculator",
+  "difficulty": "Easy",
+  "category": "Convolutional Neural Networks",
+  "tags": ["output-size", "formula", "conv", "pooling"],
+  "description": "Implement a function that computes the output spatial dimensions for convolution and pooling operations.\n\nFor **Conv2D** and **Pooling**:\n```\nH_out = floor((H_in + 2*padding - dilation*(kernel-1) - 1) / stride + 1)\n```\nFor standard conv (dilation=1):\n```\nH_out = floor((H_in + 2*padding - kernel) / stride + 1)\n```\n\nImplement:\n1. `conv_output_size(h_in, kernel, stride, padding, dilation)` - for one dimension\n2. `conv2d_output_shape(H, W, kH, kW, stride, padding, dilation)` - returns (H_out, W_out)\n3. `stack_output_shape(H, W, layers)` - compute output shape through a sequence of layers",
+  "constraints": [
+    "Pure Python, no numpy needed",
+    "Handle both symmetric and asymmetric (H != W) inputs",
+    "layers is a list of dicts with keys: type, kernel, stride, padding, dilation",
+    "type can be 'conv' or 'pool'"
+  ],
+  "starter_code": "import math\n\ndef conv_output_size(h_in: int, kernel: int, stride: int = 1,\n                     padding: int = 0, dilation: int = 1) -> int:\n    \"\"\"Compute output size for one spatial dimension.\n    \n    Returns:\n        Output size as int\n    \"\"\"\n    pass\n\ndef conv2d_output_shape(H: int, W: int, kH: int, kW: int,\n                         stride: int = 1, padding: int = 0,\n                         dilation: int = 1) -> tuple:\n    \"\"\"Compute (H_out, W_out) for a 2D conv/pool layer.\"\"\"\n    pass\n\ndef stack_output_shape(H: int, W: int, layers: list) -> tuple:\n    \"\"\"Compute output shape through a stack of conv/pool layers.\n    \n    Args:\n        H, W: Input spatial dimensions\n        layers: List of layer dicts with keys:\n                type (str), kernel (int), stride (int),\n                padding (int, default 0), dilation (int, default 1)\n    \n    Returns:\n        (H_out, W_out)\n    \"\"\"\n    pass",
+  "solution_code": "import math\n\ndef conv_output_size(h_in: int, kernel: int, stride: int = 1,\n                     padding: int = 0, dilation: int = 1) -> int:\n    effective_kernel = dilation * (kernel - 1) + 1\n    return math.floor((h_in + 2 * padding - effective_kernel) / stride + 1)\n\ndef conv2d_output_shape(H: int, W: int, kH: int, kW: int,\n                         stride: int = 1, padding: int = 0,\n                         dilation: int = 1) -> tuple:\n    H_out = conv_output_size(H, kH, stride, padding, dilation)\n    W_out = conv_output_size(W, kW, stride, padding, dilation)\n    return H_out, W_out\n\ndef stack_output_shape(H: int, W: int, layers: list) -> tuple:\n    for layer in layers:\n        k = layer['kernel']\n        s = layer.get('stride', 1)\n        p = layer.get('padding', 0)\n        d = layer.get('dilation', 1)\n        H, W = conv2d_output_shape(H, W, k, k, s, p, d)\n    return H, W",
+  "explanation": "**Key concepts:**\n\n1. **General formula:** `floor((H + 2P - d*(k-1) - 1) / s + 1)`. With d=1: `floor((H + 2P - k) / s + 1)`.\n\n2. **Effective kernel size with dilation:** `d*(k-1)+1`. For k=3, d=2: effective=5.\n\n3. **Common shapes:**\n   - Same padding (output=input): P = k//2, s=1\n   - Halving (stride=2): H_out = H//2 (approximately)\n\n4. **Stacking:** Apply the formula sequentially for each layer. Output of one layer is input of the next.\n\n5. **Why it matters:** You need to know spatial sizes to debug shape errors, design architectures, and compute FLOPs.",
+  "test_cases": [
+    {
+      "name": "Standard 3x3 conv no padding",
+      "code": "assert conv_output_size(8, 3, stride=1, padding=0) == 6"
+    },
+    {
+      "name": "Same padding: output = input",
+      "code": "assert conv_output_size(32, 3, stride=1, padding=1) == 32"
+    },
+    {
+      "name": "Stride=2 halves dimension",
+      "code": "assert conv_output_size(8, 3, stride=2, padding=1) == 4"
+    },
+    {
+      "name": "Dilated conv output size",
+      "code": "# k=3, d=2, effective k=5\nassert conv_output_size(7, 3, stride=1, padding=0, dilation=2) == 3"
+    },
+    {
+      "name": "Stack of layers: typical VGG-like",
+      "code": "layers = [\n    {'kernel': 3, 'stride': 1, 'padding': 1},  # 224 -> 224\n    {'kernel': 2, 'stride': 2, 'padding': 0},  # 224 -> 112\n    {'kernel': 3, 'stride': 1, 'padding': 1},  # 112 -> 112\n    {'kernel': 2, 'stride': 2, 'padding': 0},  # 112 -> 56\n]\nH, W = stack_output_shape(224, 224, layers)\nassert H == 56 and W == 56, f'Got ({H},{W})'"
+    }
+  ],
+  "hints": [
+    "Effective kernel with dilation: d*(k-1)+1",
+    "General formula: floor((H + 2P - d*(k-1) - 1) / s + 1)",
+    "For same padding with stride=1: P = k//2 gives output = input"
+  ],
+  "related_problems": ["8.14", "8.15", "8.1"]
+}

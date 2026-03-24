@@ -1,0 +1,28 @@
+{
+  "id": "13.20",
+  "title": "Cohen's Kappa",
+  "difficulty": "Medium",
+  "category": "Evaluation Metrics",
+  "tags": ["classification", "metrics", "inter-annotator"],
+  "description": "Implement Cohen's Kappa for inter-annotator agreement.\n\n`kappa = (p_o - p_e) / (1 - p_e)`\n\n- `p_o` = observed agreement (accuracy)\n- `p_e` = expected agreement by chance (based on marginal frequencies)\n\nFor multi-class: `p_e = sum_k (row_k_freq * col_k_freq)` using the confusion matrix.\n\nRange: [-1, 1]. kappa=1: perfect agreement; kappa=0: chance level; kappa<0: worse than chance.",
+  "constraints": [
+    "Support multi-class labels",
+    "Return float",
+    "Handle degenerate case (p_e=1) by returning 0.0"
+  ],
+  "starter_code": "import numpy as np\n\ndef cohens_kappa(y1: np.ndarray, y2: np.ndarray) -> float:\n    \"\"\"Compute Cohen's Kappa for two annotators.\n\n    Args:\n        y1: Annotations from rater 1, shape (n,)\n        y2: Annotations from rater 2, shape (n,)\n\n    Returns:\n        Cohen's Kappa as float in [-1, 1]\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef cohens_kappa(y1: np.ndarray, y2: np.ndarray) -> float:\n    y1 = np.asarray(y1)\n    y2 = np.asarray(y2)\n    n = len(y1)\n    classes = np.unique(np.concatenate([y1, y2]))\n    K = len(classes)\n    label_to_idx = {c: i for i, c in enumerate(classes)}\n    C = np.zeros((K, K), dtype=float)\n    for a, b in zip(y1, y2):\n        C[label_to_idx[a], label_to_idx[b]] += 1\n    p_o = np.trace(C) / n\n    row_sums = C.sum(axis=1) / n\n    col_sums = C.sum(axis=0) / n\n    p_e = float(np.dot(row_sums, col_sums))\n    if abs(1 - p_e) < 1e-10:\n        return 0.0\n    return float((p_o - p_e) / (1 - p_e))",
+  "explanation": "Cohen's Kappa corrects for the agreement that would occur by chance. Two annotators randomly labeling with the same marginal distribution would achieve p_e agreement. Kappa measures the agreement above chance, normalized by the maximum possible improvement. It is preferred over raw accuracy for inter-rater reliability because it accounts for label imbalance.",
+  "test_cases": [
+    {"name": "Perfect agreement kappa=1", "code": "import numpy as np\nassert cohens_kappa(np.array([0,1,2]), np.array([0,1,2])) == 1.0"},
+    {"name": "Near-chance agreement near 0", "code": "import numpy as np\nnp.random.seed(42)\ny1 = np.random.randint(0,2,1000)\ny2 = np.random.randint(0,2,1000)\nresult = cohens_kappa(y1, y2)\nassert abs(result) < 0.15"},
+    {"name": "Result in [-1, 1]", "code": "import numpy as np\ny1 = np.array([1,1,0,0])\ny2 = np.array([1,0,0,0])\nresult = cohens_kappa(y1, y2)\nassert -1 <= result <= 1"},
+    {"name": "Multi-class support", "code": "import numpy as np\nresult = cohens_kappa(np.array([0,1,2,0,1]), np.array([0,1,1,0,2]))\nassert -1 <= result <= 1"}
+  ],
+  "hints": [
+    "Build the confusion matrix first",
+    "p_o = trace(C) / n",
+    "p_e = dot(row_marginals, col_marginals) where marginals sum to 1"
+  ],
+  "related_problems": ["13.1", "13.2", "13.4"]
+}

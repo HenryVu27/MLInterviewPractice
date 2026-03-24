@@ -1,0 +1,28 @@
+{
+  "id": "3.1",
+  "title": "Linear Regression (Closed-Form)",
+  "difficulty": "Easy",
+  "category": "Classic ML Algorithms",
+  "tags": ["numpy", "from-scratch", "linear-algebra"],
+  "description": "Implement linear regression using the **Normal Equation** (closed-form solution).\n\nThe normal equation gives the optimal weights directly:\n\n```\nw = (X^T X)^{-1} X^T y\n```\n\nYour implementation should:\n- `fit(X, y)`: compute weights using the normal equation\n- `predict(X)`: return predictions\n\n**Shapes:**\n- X: (n_samples, n_features) — do NOT add bias column yourself; the fit method should handle it\n- y: (n_samples,)\n- predict returns: (n_samples,)\n\n**Why this matters:** The normal equation is the analytic foundation of linear regression. It connects directly to least squares, pseudo-inverses, and understanding when gradient descent is or isn't needed.",
+  "constraints": [
+    "Use only numpy — no sklearn or scipy",
+    "Add a bias column (column of ones) inside fit()",
+    "Use np.linalg.lstsq or np.linalg.solve for numerical stability instead of explicit matrix inversion",
+    "predict() must work after fit() is called"
+  ],
+  "starter_code": "import numpy as np\n\nclass LinearRegressionNormal:\n    def __init__(self):\n        \"\"\"Initialize weight vector (set after fit).\"\"\"\n        self.w = None  # includes bias as last element\n\n    def fit(self, X: np.ndarray, y: np.ndarray) -> None:\n        \"\"\"Fit using the normal equation.\n\n        Args:\n            X: Feature matrix of shape (n_samples, n_features)\n            y: Target vector of shape (n_samples,)\n        \"\"\"\n        pass\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return predictions for X.\n\n        Args:\n            X: Feature matrix of shape (n_samples, n_features)\n\n        Returns:\n            Predictions of shape (n_samples,)\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass LinearRegressionNormal:\n    def __init__(self):\n        self.w = None  # includes bias as last element\n\n    def fit(self, X: np.ndarray, y: np.ndarray) -> None:\n        N = X.shape[0]\n        # Add bias column\n        X_b = np.hstack([X, np.ones((N, 1))])\n        # Normal equation: w = (X^T X)^{-1} X^T y\n        # Use lstsq for numerical stability\n        self.w, _, _, _ = np.linalg.lstsq(X_b, y, rcond=None)\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        N = X.shape[0]\n        X_b = np.hstack([X, np.ones((N, 1))])\n        return X_b @ self.w",
+  "explanation": "**Key concepts:**\n\n1. **Normal equation derivation:** Minimize MSE = ||y - Xw||^2. Take derivative w.r.t. w, set to zero: X^T(Xw - y) = 0 → w = (X^TX)^{-1}X^Ty.\n\n2. **Bias trick:** Append a column of ones to X so the bias term is absorbed into the weight vector. No need to track it separately.\n\n3. **Numerical stability:** Direct inversion of X^TX can fail if it's near-singular. `np.linalg.lstsq` uses SVD internally and handles rank-deficient cases gracefully.\n\n4. **Complexity:** O(N*D^2 + D^3) — dominated by the matrix inverse. For D >> 1000, gradient descent is preferred.\n\n5. **When to use:** Small to medium datasets where D is manageable. Exact solution, no hyperparameters to tune.",
+  "test_cases": [
+    {"name": "Perfect linear fit", "code": "import numpy as np\nnp.random.seed(0)\nX = np.linspace(0, 10, 50).reshape(-1, 1)\ny = 3 * X.ravel() + 2\nmodel = LinearRegressionNormal()\nmodel.fit(X, y)\npreds = model.predict(X)\nassert np.allclose(preds, y, atol=1e-8), 'Should fit perfectly on noise-free data'"},
+    {"name": "Multiple features", "code": "import numpy as np\nnp.random.seed(1)\nX = np.random.randn(100, 3)\ntrue_w = np.array([1.5, -2.0, 0.5])\ny = X @ true_w + 1.0\nmodel = LinearRegressionNormal()\nmodel.fit(X, y)\npreds = model.predict(X)\nassert np.allclose(preds, y, atol=1e-6), 'Should recover exact weights'"},
+    {"name": "Predict shape correct", "code": "import numpy as np\nnp.random.seed(2)\nX_train = np.random.randn(80, 4)\ny_train = np.random.randn(80)\nX_test = np.random.randn(20, 4)\nmodel = LinearRegressionNormal()\nmodel.fit(X_train, y_train)\npreds = model.predict(X_test)\nassert preds.shape == (20,), f'Expected shape (20,), got {preds.shape}'"},
+    {"name": "Low MSE on noisy data", "code": "import numpy as np\nnp.random.seed(3)\nX = np.random.randn(200, 2)\ny = 2*X[:,0] - 3*X[:,1] + 1 + 0.1*np.random.randn(200)\nmodel = LinearRegressionNormal()\nmodel.fit(X, y)\npreds = model.predict(X)\nmse = np.mean((preds - y)**2)\nassert mse < 0.05, f'MSE {mse:.4f} too high on low-noise data'"}
+  ],
+  "hints": [
+    "Append np.ones((N,1)) to X before solving — this handles the bias/intercept term",
+    "Prefer np.linalg.lstsq(X_b, y, rcond=None) over np.linalg.inv(X_b.T @ X_b) @ X_b.T @ y for stability"
+  ],
+  "related_problems": ["3.2", "3.14", "1.7"]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "8.10",
+  "title": "Residual Block (ResNet)",
+  "difficulty": "Medium",
+  "category": "Convolutional Neural Networks",
+  "tags": ["resnet", "residual", "skip-connection", "deep-learning"],
+  "description": "Implement a basic ResNet residual block.\n\nA residual block computes:\n```\nout = relu(F(x) + shortcut(x))\n```\nwhere `F(x)` is two 3x3 convolutions with batch normalization and ReLU between them.\n\nIf input and output channels differ (or stride > 1), a **projection shortcut** (1x1 conv) is used:\n```\nshortcut = conv1x1(x, stride)  # when C_in != C_out or stride > 1\nshortcut = x                    # otherwise (identity shortcut)\n```\n\nUse numpy arrays with pre-initialized weights (skip actual BN training; use batch statistics for simplicity).",
+  "constraints": [
+    "Use numpy only",
+    "ReLU activation after each BN",
+    "Use identity shortcut when C_in == C_out and stride == 1",
+    "Use projection shortcut (1x1 conv) otherwise",
+    "Implement simplified BN: normalize along N,H,W axes"
+  ],
+  "starter_code": "import numpy as np\n\ndef relu(x: np.ndarray) -> np.ndarray:\n    return np.maximum(0, x)\n\ndef batch_norm(x: np.ndarray, gamma: np.ndarray, beta: np.ndarray,\n               eps: float = 1e-5) -> np.ndarray:\n    \"\"\"Batch normalization over N, H, W axes (per-channel).\"\"\"\n    pass\n\ndef conv3x3(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n            stride: int = 1, padding: int = 1) -> np.ndarray:\n    \"\"\"3x3 convolution with same-ish padding.\"\"\"\n    pass\n\ndef residual_block(x: np.ndarray,\n                   W1: np.ndarray, b1: np.ndarray, gamma1: np.ndarray, beta1: np.ndarray,\n                   W2: np.ndarray, b2: np.ndarray, gamma2: np.ndarray, beta2: np.ndarray,\n                   W_proj: np.ndarray = None, b_proj: np.ndarray = None,\n                   stride: int = 1) -> np.ndarray:\n    \"\"\"ResNet basic residual block.\n    \n    Args:\n        x: Input (N, C_in, H, W)\n        W1, b1: First conv weights (C_out, C_in, 3, 3)\n        gamma1, beta1: BN params for first conv\n        W2, b2: Second conv weights (C_out, C_out, 3, 3)\n        gamma2, beta2: BN params for second conv\n        W_proj, b_proj: Projection shortcut (optional)\n        stride: Stride for first conv\n    \n    Returns:\n        Output (N, C_out, H', W')\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef relu(x: np.ndarray) -> np.ndarray:\n    return np.maximum(0, x)\n\ndef batch_norm(x: np.ndarray, gamma: np.ndarray, beta: np.ndarray,\n               eps: float = 1e-5) -> np.ndarray:\n    # x: (N, C, H, W), normalize over N, H, W per channel\n    mean = x.mean(axis=(0, 2, 3), keepdims=True)\n    var = x.var(axis=(0, 2, 3), keepdims=True)\n    x_norm = (x - mean) / np.sqrt(var + eps)\n    return gamma.reshape(1, -1, 1, 1) * x_norm + beta.reshape(1, -1, 1, 1)\n\ndef conv3x3(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n            stride: int = 1, padding: int = 1) -> np.ndarray:\n    N, C_in, H, W_in = x.shape\n    C_out, _, kH, kW = W.shape\n    if padding > 0:\n        x = np.pad(x, ((0,0),(0,0),(padding,padding),(padding,padding)))\n    H_out = (x.shape[2] - kH) // stride + 1\n    W_out = (x.shape[3] - kW) // stride + 1\n    out = np.zeros((N, C_out, H_out, W_out), dtype=x.dtype)\n    for n in range(N):\n        for co in range(C_out):\n            for i in range(H_out):\n                for j in range(W_out):\n                    patch = x[n, :, i*stride:i*stride+kH, j*stride:j*stride+kW]\n                    out[n, co, i, j] = float(np.sum(patch * W[co])) + b[co]\n    return out\n\ndef residual_block(x, W1, b1, gamma1, beta1, W2, b2, gamma2, beta2,\n                   W_proj=None, b_proj=None, stride=1):\n    shortcut = x\n    # First conv -> BN -> ReLU\n    out = conv3x3(x, W1, b1, stride=stride, padding=1)\n    out = batch_norm(out, gamma1, beta1)\n    out = relu(out)\n    # Second conv -> BN\n    out = conv3x3(out, W2, b2, stride=1, padding=1)\n    out = batch_norm(out, gamma2, beta2)\n    # Projection shortcut\n    if W_proj is not None:\n        # 1x1 conv shortcut\n        N, C_in, H, W_in = shortcut.shape\n        C_out = W_proj.shape[0]\n        if stride > 1 or C_in != C_out:\n            padded = shortcut\n            H_out = (H - 1) // stride + 1\n            W_out = (W_in - 1) // stride + 1\n            proj = np.zeros((N, C_out, H_out, W_out), dtype=shortcut.dtype)\n            for n in range(N):\n                for co in range(C_out):\n                    for i in range(H_out):\n                        for j in range(W_out):\n                            proj[n, co, i, j] = float(np.sum(padded[n, :, i*stride, j*stride] * W_proj[co, :, 0, 0])) + b_proj[co]\n            shortcut = proj\n    return relu(out + shortcut)",
+  "explanation": "**Key concepts:**\n\n1. **Residual learning:** Learn F(x) = H(x) - x instead of H(x) directly. If H(x)=x is optimal, F(x)=0 is easy to learn.\n\n2. **Skip connections:** Allow gradients to flow directly through the shortcut path, alleviating vanishing gradients in very deep networks.\n\n3. **Projection shortcut:** When dimensions change (different C or stride), a 1x1 conv aligns the shortcut's shape with the main path.\n\n4. **Batch normalization:** Applied after each conv, before ReLU. Stabilizes training.\n\n5. **Impact:** ResNets enabled training of 100+ layer networks, winning ImageNet 2015.",
+  "test_cases": [
+    {
+      "name": "Identity shortcut (same channels, stride=1)",
+      "code": "import numpy as np\nnp.random.seed(0)\nx = np.random.randn(2, 4, 8, 8)\nW1 = np.random.randn(4, 4, 3, 3) * 0.01\nb1 = np.zeros(4)\ngamma1 = np.ones(4); beta1 = np.zeros(4)\nW2 = np.random.randn(4, 4, 3, 3) * 0.01\nb2 = np.zeros(4)\ngamma2 = np.ones(4); beta2 = np.zeros(4)\nout = residual_block(x, W1, b1, gamma1, beta1, W2, b2, gamma2, beta2)\nassert out.shape == (2, 4, 8, 8)"
+    },
+    {
+      "name": "Output is non-negative (relu applied)",
+      "code": "import numpy as np\nnp.random.seed(1)\nx = np.random.randn(1, 4, 4, 4)\nW1 = np.random.randn(4, 4, 3, 3) * 0.01\nb1 = np.zeros(4); gamma1 = np.ones(4); beta1 = np.zeros(4)\nW2 = np.random.randn(4, 4, 3, 3) * 0.01\nb2 = np.zeros(4); gamma2 = np.ones(4); beta2 = np.zeros(4)\nout = residual_block(x, W1, b1, gamma1, beta1, W2, b2, gamma2, beta2)\nassert np.all(out >= 0)"
+    },
+    {
+      "name": "Projection shortcut changes channels",
+      "code": "import numpy as np\nnp.random.seed(2)\nx = np.random.randn(1, 4, 8, 8)\nW1 = np.random.randn(8, 4, 3, 3) * 0.01\nb1 = np.zeros(8); gamma1 = np.ones(8); beta1 = np.zeros(8)\nW2 = np.random.randn(8, 8, 3, 3) * 0.01\nb2 = np.zeros(8); gamma2 = np.ones(8); beta2 = np.zeros(8)\nW_proj = np.random.randn(8, 4, 1, 1) * 0.01\nb_proj = np.zeros(8)\nout = residual_block(x, W1, b1, gamma1, beta1, W2, b2, gamma2, beta2,\n                     W_proj=W_proj, b_proj=b_proj)\nassert out.shape == (1, 8, 8, 8)"
+    },
+    {
+      "name": "BN normalizes per channel",
+      "code": "import numpy as np\nx = np.random.randn(4, 3, 8, 8)\ngamma = np.ones(3)\nbeta = np.zeros(3)\nout = batch_norm(x, gamma, beta)\nfor c in range(3):\n    assert abs(out[:, c].mean()) < 1e-5\n    assert abs(out[:, c].std() - 1.0) < 0.01"
+    },
+    {
+      "name": "conv3x3 same padding preserves H,W",
+      "code": "import numpy as np\nx = np.ones((1, 4, 8, 8))\nW = np.random.randn(4, 4, 3, 3) * 0.1\nb = np.zeros(4)\nout = conv3x3(x, W, b, stride=1, padding=1)\nassert out.shape == (1, 4, 8, 8)"
+    }
+  ],
+  "hints": [
+    "Two 3x3 conv layers with BN+ReLU, then add shortcut and apply final ReLU",
+    "When channels or stride differ, apply 1x1 projection conv to shortcut",
+    "BN normalizes over axes (0, 2, 3) = (N, H, W) per channel"
+  ],
+  "related_problems": ["8.11", "8.12", "8.16"]
+}

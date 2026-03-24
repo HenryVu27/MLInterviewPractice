@@ -1,0 +1,20 @@
+{
+  "id": "27.11",
+  "title": "Discount Return Computation",
+  "difficulty": "Easy",
+  "category": "RL Basics",
+  "tags": ["reinforcement-learning", "returns", "discounting"],
+  "description": "Compute discounted cumulative returns for a sequence of rewards.\n\nGiven rewards [r_0, r_1, ..., r_{T-1}] and discount factor gamma, compute:\n```\nG_t = r_t + gamma * r_{t+1} + gamma^2 * r_{t+2} + ... + gamma^{T-1-t} * r_{T-1}\n```\n\nReturn the array G of shape (T,).\n\n**Example:**\n```\nrewards = [1, 0, 0, 1]\ngamma = 0.9\nG[0] = 1 + 0.9*0 + 0.81*0 + 0.729*1 = 1.729\nG[1] = 0 + 0.9*0 + 0.81*1           = 0.81\nG[2] = 0 + 0.9*1                     = 0.9\nG[3] = 1\n```\n\nUse the efficient O(T) backward recurrence: `G[t] = r[t] + gamma * G[t+1]`",
+  "constraints": ["Use numpy only", "O(T) backward pass required", "Return numpy array of shape (T,)"],
+  "starter_code": "import numpy as np\n\ndef discount_returns(rewards: np.ndarray, gamma: float) -> np.ndarray:\n    \"\"\"Compute discounted cumulative returns.\n    \n    Args:\n        rewards: Array of shape (T,)\n        gamma: Discount factor in [0, 1]\n    \n    Returns:\n        G: Discounted returns of shape (T,)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef discount_returns(rewards: np.ndarray, gamma: float) -> np.ndarray:\n    T = len(rewards)\n    G = np.zeros(T)\n    G[-1] = rewards[-1]\n    for t in range(T - 2, -1, -1):\n        G[t] = rewards[t] + gamma * G[t + 1]\n    return G",
+  "explanation": "**Key concepts:**\n\n1. **Backward recurrence:** G[t] = r[t] + gamma * G[t+1] allows O(T) computation.\n\n2. **Discount factor:** gamma < 1 ensures convergence of infinite-horizon returns and encodes time preference.\n\n3. **Used in:** REINFORCE, GAE, Monte-Carlo methods all require computing returns from raw rewards.\n\n4. **Special cases:** gamma=0 gives immediate rewards only; gamma=1 gives undiscounted suffix sums.",
+  "test_cases": [
+    {"name": "Basic example", "code": "G = discount_returns(np.array([1.0, 0.0, 0.0, 1.0]), 0.9)\nassert abs(G[0] - 1.729) < 1e-6, f'Expected 1.729, got {G[0]}'"},
+    {"name": "gamma=0 gives rewards only", "code": "r = np.array([1.0, 2.0, 3.0])\nG = discount_returns(r, 0.0)\nassert np.allclose(G, r)"},
+    {"name": "gamma=1 gives suffix sums", "code": "r = np.array([1.0, 1.0, 1.0])\nG = discount_returns(r, 1.0)\nassert np.allclose(G, [3.0, 2.0, 1.0])"},
+    {"name": "Output shape correct", "code": "r = np.array([0.5, 0.5, 0.5, 0.5, 0.5])\nG = discount_returns(r, 0.99)\nassert G.shape == (5,)"}
+  ],
+  "hints": ["G[-1] = rewards[-1]", "Iterate backwards: G[t] = r[t] + gamma * G[t+1]", "range(T-2, -1, -1) iterates from T-2 down to 0"],
+  "related_problems": ["27.5", "27.12", "27.3"]
+}

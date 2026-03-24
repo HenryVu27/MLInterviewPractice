@@ -1,0 +1,27 @@
+{
+  "id": "13.6",
+  "title": "PR Curve and Average Precision",
+  "difficulty": "Medium",
+  "category": "Evaluation Metrics",
+  "tags": ["classification", "metrics", "precision-recall", "average-precision"],
+  "description": "Implement the Precision-Recall curve and Average Precision (AP).\n\nAP is the area under the PR curve computed as:\n`AP = sum_k (R[k] - R[k-1]) * P[k]`\n\nwhere detections are sorted by score descending.\n\n**Example:**\n```\ny_true   = [0, 0, 1, 1]\ny_scores = [0.1, 0.4, 0.35, 0.8]\n=> AP = 0.8333\n```",
+  "constraints": [
+    "Sort detections by score descending",
+    "Include precision=1, recall=0 at the start",
+    "Return (precision_array, recall_array, ap)"
+  ],
+  "starter_code": "import numpy as np\n\ndef pr_curve_ap(y_true: np.ndarray, y_scores: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:\n    \"\"\"Compute PR curve and Average Precision.\n\n    Returns:\n        (precision, recall, ap)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef pr_curve_ap(y_true: np.ndarray, y_scores: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:\n    y_true = np.asarray(y_true)\n    y_scores = np.asarray(y_scores)\n    order = np.argsort(y_scores)[::-1]\n    y_true_sorted = y_true[order]\n    P_total = np.sum(y_true)\n    precisions, recalls = [1.0], [0.0]\n    tp, fp = 0, 0\n    for label in y_true_sorted:\n        if label == 1:\n            tp += 1\n        else:\n            fp += 1\n        prec = tp / (tp + fp)\n        rec = tp / P_total if P_total > 0 else 0.0\n        precisions.append(prec)\n        recalls.append(rec)\n    precisions = np.array(precisions)\n    recalls = np.array(recalls)\n    ap = float(np.sum((recalls[1:] - recalls[:-1]) * precisions[1:]))\n    return precisions, recalls, ap",
+  "explanation": "The PR curve is preferred over ROC when the dataset is highly imbalanced. AP summarizes the curve as a single number: the weighted sum of precisions at each recall threshold, with the weight being the increase in recall. Higher AP means better retrieval performance across all thresholds.",
+  "test_cases": [
+    {"name": "Perfect AP=1", "code": "import numpy as np\n_, _, ap = pr_curve_ap(np.array([0,0,1,1]), np.array([0.1,0.2,0.8,0.9]))\nassert abs(ap - 1.0) < 1e-9"},
+    {"name": "AP in [0,1]", "code": "import numpy as np\n_, _, ap = pr_curve_ap(np.array([0,0,1,1]), np.array([0.1,0.4,0.35,0.8]))\nassert 0.0 <= ap <= 1.0"},
+    {"name": "Starts at recall=0 precision=1", "code": "import numpy as np\nprec, rec, _ = pr_curve_ap(np.array([0,1,1]), np.array([0.2,0.7,0.9]))\nassert rec[0] == 0.0 and prec[0] == 1.0"},
+    {"name": "All positives ranked first gives AP=1", "code": "import numpy as np\n_, _, ap = pr_curve_ap(np.array([1,1,0,0]), np.array([0.9,0.8,0.3,0.1]))\nassert abs(ap - 1.0) < 1e-9"}
+  ],
+  "hints": [
+    "Sort by score descending then iterate accumulating TP/FP",
+    "AP = sum of delta_recall * precision at each step"
+  ],
+  "related_problems": ["13.5", "13.7", "13.8"]
+}

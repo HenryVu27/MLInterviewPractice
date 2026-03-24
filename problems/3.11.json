@@ -1,0 +1,28 @@
+{
+  "id": "3.11",
+  "title": "SVM (Linear, Hinge Loss)",
+  "difficulty": "Hard",
+  "category": "Classic ML Algorithms",
+  "tags": ["numpy", "from-scratch", "svm", "hinge-loss", "optimization"],
+  "description": "Implement a **Linear Support Vector Machine** trained via subgradient descent on the hinge loss with L2 regularization.\n\n**Objective (soft-margin SVM):**\n```\nL = (lambda/2) * ||w||^2 + (1/N) * sum(max(0, 1 - y_i * (w^T x_i + b)))\n```\n\nwhere y_i ∈ {-1, +1}.\n\n**Subgradients:**\n- If `y_i * score_i >= 1` (correct with margin): `dw = lambda * w`, `db = 0`\n- If `y_i * score_i < 1` (violated margin): `dw = lambda * w - y_i * x_i`, `db = -y_i`\n\nUpdate: `w -= lr * dw_mean`, `b -= lr * db_mean` (averaged over batch).\n\n**Shapes:**\n- X: (N, D), y: (N,) with values -1 or +1\n- predict returns: (N,) with values -1 or +1",
+  "constraints": [
+    "Use only numpy",
+    "Labels must be -1 or +1 (not 0/1)",
+    "Vectorized subgradient — no Python loops over samples",
+    "Initialize w to zeros, b to 0"
+  ],
+  "starter_code": "import numpy as np\n\nclass LinearSVM:\n    def __init__(self, lambda_reg: float = 0.01):\n        \"\"\"Initialize with L2 regularization strength.\"\"\"\n        pass\n\n    def fit(self, X: np.ndarray, y: np.ndarray, lr: float = 0.001, epochs: int = 1000) -> None:\n        \"\"\"Train using subgradient descent on hinge loss.\n\n        Args:\n            X: (n_samples, n_features)\n            y: (n_samples,) labels in {-1, +1}\n            lr: learning rate\n            epochs: number of passes\n        \"\"\"\n        pass\n\n    def decision_function(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return raw scores w^T x + b.\"\"\"\n        pass\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return predicted labels in {-1, +1}.\"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass LinearSVM:\n    def __init__(self, lambda_reg: float = 0.01):\n        self.lambda_reg = lambda_reg\n        self.w = None\n        self.b = 0.0\n\n    def fit(self, X: np.ndarray, y: np.ndarray, lr: float = 0.001, epochs: int = 1000) -> None:\n        N, D = X.shape\n        self.w = np.zeros(D)\n        self.b = 0.0\n\n        for _ in range(epochs):\n            scores = X @ self.w + self.b         # (N,)\n            margins = y * scores                  # (N,)\n            violated = margins < 1               # bool mask (N,)\n\n            # Subgradient of hinge loss\n            # For violated samples: dL/dw_i = -y_i * x_i\n            dw = self.lambda_reg * self.w - (1 / N) * (X[violated] * y[violated, np.newaxis]).sum(axis=0)\n            db = -(1 / N) * y[violated].sum()\n\n            self.w -= lr * dw\n            self.b -= lr * db\n\n    def decision_function(self, X: np.ndarray) -> np.ndarray:\n        return X @ self.w + self.b\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        return np.where(self.decision_function(X) >= 0, 1, -1)",
+  "explanation": "**Key concepts:**\n\n1. **Hinge loss:** max(0, 1 - y*score). Zero when the prediction is correct and beyond the margin. Non-differentiable at the kink — use subgradient.\n\n2. **Subgradient:** For violated samples (y*score < 1): gradient is -y*x. For non-violated: gradient is 0 (only regularization).\n\n3. **L2 regularization:** lambda * w shrinks weights, maximizing the margin. This is the classic SVM trade-off: large lambda → wide margin but more misclassifications.\n\n4. **Labels -1/+1:** The hinge loss formula requires this encoding, unlike cross-entropy which uses 0/1.\n\n5. **Kernel SVM:** For non-linear boundaries, replace the dot product with a kernel function (see 3.12).\n\n**Complexity:** O(N*D) per epoch.\n\n**Interview angle:** Explain the primal vs dual SVM. Why does the dual involve only support vectors?",
+  "test_cases": [
+    {"name": "Linearly separable binary data", "code": "import numpy as np\nnp.random.seed(0)\nX = np.random.randn(200, 2)\ny = np.where(X[:, 0] > 0, 1, -1)\nmodel = LinearSVM(lambda_reg=0.01)\nmodel.fit(X, y, lr=0.01, epochs=1000)\nacc = np.mean(model.predict(X) == y)\nassert acc > 0.95, f'Accuracy {acc:.2f}'"},
+    {"name": "Predict returns only -1 and 1", "code": "import numpy as np\nnp.random.seed(1)\nX = np.random.randn(50, 3)\ny = np.where(np.random.randn(50) > 0, 1, -1)\nmodel = LinearSVM()\nmodel.fit(X, y)\npreds = model.predict(X)\nassert set(np.unique(preds)).issubset({-1, 1})"},
+    {"name": "Decision function shape", "code": "import numpy as np\nnp.random.seed(2)\nX = np.random.randn(40, 2)\ny = np.where(np.random.randn(40) > 0, 1, -1)\nmodel = LinearSVM()\nmodel.fit(X, y)\nscores = model.decision_function(X)\nassert scores.shape == (40,)"},
+    {"name": "Weights initialized to zero", "code": "import numpy as np\nmodel = LinearSVM()\nmodel.fit(np.random.randn(10, 3), np.array([1,-1,1,-1,1,-1,1,-1,1,-1]))\nassert model.w is not None\nassert model.w.shape == (3,)"}
+  ],
+  "hints": [
+    "Compute violated = (y * (X @ w + b)) < 1 as a boolean mask, then sum gradients only over violated samples",
+    "The L2 regularization gradient lambda*w applies to all samples every step; the hinge gradient only applies to violated samples"
+  ],
+  "related_problems": ["3.12", "3.3", "3.14"]
+}

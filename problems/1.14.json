@@ -1,0 +1,28 @@
+{
+  "id": "1.14",
+  "title": "Frobenius Norm",
+  "difficulty": "Easy",
+  "category": "Linear Algebra & Matrix Operations",
+  "tags": ["numpy", "from-scratch", "norms"],
+  "description": "Implement `frobenius_norm(A)` which computes the Frobenius norm of a matrix:\n\n`||A||_F = sqrt(sum of all squared elements) = sqrt(trace(A^T A))`\n\nAlso implement `nuclear_norm_approx(A, k)` which approximates the nuclear norm (sum of singular values) using only the top k singular values.\n\n**Example:**\n```\nA = [[1, 2], [3, 4]]\nfrobenius_norm(A) = sqrt(1 + 4 + 9 + 16) = sqrt(30) ~= 5.477\n```\n\n**Why this matters:** The Frobenius norm is the matrix analog of the L2 norm. It appears in regularization (weight decay), low-rank approximation error, and the Eckart-Young theorem.",
+  "constraints": [
+    "frobenius_norm must not use np.linalg.norm directly — compute from scratch",
+    "nuclear_norm_approx may use np.linalg.svd",
+    "Handle any 2-D array shape"
+  ],
+  "starter_code": "import numpy as np\n\ndef frobenius_norm(A):\n    \"\"\"Compute the Frobenius norm of a matrix.\n\n    Args:\n        A: 2-D array of shape (m, n)\n\n    Returns:\n        Scalar Frobenius norm\n    \"\"\"\n    pass\n\n\ndef nuclear_norm_approx(A, k=None):\n    \"\"\"Approximate the nuclear norm using top-k singular values.\n\n    Args:\n        A: 2-D array of shape (m, n)\n        k: number of singular values to use (None = all)\n\n    Returns:\n        Scalar approximation of nuclear norm\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef frobenius_norm(A):\n    A = np.asarray(A, dtype=float)\n    return float(np.sqrt(np.sum(A ** 2)))\n\n\ndef nuclear_norm_approx(A, k=None):\n    A = np.asarray(A, dtype=float)\n    S = np.linalg.svd(A, compute_uv=False)\n    if k is not None:\n        S = S[:k]\n    return float(np.sum(S))",
+  "explanation": "**Key concepts:**\n\n1. **Frobenius norm:** `||A||_F = sqrt(sum_{i,j} A_{ij}^2)`. It treats the matrix as a flattened vector and takes the L2 norm. Equivalently, `||A||_F = sqrt(trace(A^T A)) = sqrt(sum of squared singular values)`.\n\n2. **Connection to SVD:** `||A||_F^2 = sum sigma_i^2`. This means the Frobenius norm measures the total energy in the singular value spectrum.\n\n3. **Nuclear norm:** `||A||_* = sum sigma_i`. It is the convex relaxation of matrix rank, used in matrix completion (e.g., Netflix problem) as a regularizer to promote low-rank solutions.\n\n4. **Eckart-Young theorem:** The Frobenius error of the best rank-k approximation is `||A - A_k||_F = sqrt(sum_{i=k+1}^{r} sigma_i^2)`. So preserving the top singular values minimizes reconstruction error.\n\n5. **Weight decay:** L2 regularization on a weight matrix is `lambda * ||W||_F^2`, which penalizes large weights and prevents overfitting.",
+  "test_cases": [
+    {"name": "Known value", "code": "import numpy as np\nassert abs(frobenius_norm([[3., 4.]]) - 5.0) < 1e-9"},
+    {"name": "Frobenius vs manual", "code": "import numpy as np\nA = np.array([[1., 2.], [3., 4.]])\nassert abs(frobenius_norm(A) - np.sqrt(30.0)) < 1e-9"},
+    {"name": "Frobenius equals sqrt sum squared singular values", "code": "import numpy as np\nA = np.random.randn(4, 3)\nfnorm = frobenius_norm(A)\nS = np.linalg.svd(A, compute_uv=False)\nassert abs(fnorm - np.sqrt(np.sum(S**2))) < 1e-9"},
+    {"name": "nuclear_norm_approx all singular values", "code": "import numpy as np\nA = np.array([[3., 0.], [0., 4.]])\nassert abs(nuclear_norm_approx(A) - 7.0) < 1e-9"},
+    {"name": "nuclear_norm_approx top-1", "code": "import numpy as np\nA = np.diag([5., 3., 1.])\nassert abs(nuclear_norm_approx(A, k=1) - 5.0) < 1e-9"}
+  ],
+  "hints": [
+    "Frobenius norm = sqrt(sum of all squared elements) = same as L2 norm of the flattened matrix",
+    "Nuclear norm = sum of singular values; get them with np.linalg.svd(A, compute_uv=False)"
+  ],
+  "related_problems": ["1.3", "1.4", "1.10"]
+}

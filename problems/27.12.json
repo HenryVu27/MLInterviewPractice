@@ -1,0 +1,20 @@
+{
+  "id": "27.12",
+  "title": "Generalized Advantage Estimation (GAE)",
+  "difficulty": "Hard",
+  "category": "RL Basics",
+  "tags": ["reinforcement-learning", "gae", "advantage", "ppo"],
+  "description": "Implement Generalized Advantage Estimation (GAE) from Schulman et al. 2016.\n\nGAE interpolates between TD(0) and Monte-Carlo advantage estimates via lambda:\n```\ndelta_t = r_t + gamma * V(s_{t+1}) * (1 - done_t) - V(s_t)\n```\n\nEfficient backward computation:\n```\nA_T = delta_T\nA_t = delta_t + gamma * lambda * (1 - done_t) * A_{t+1}\n```\n\n**Args:**\n- rewards: shape (T,)\n- values: shape (T+1,) — includes bootstrap V(s_{T+1})\n- dones: shape (T,) — 1 if terminal, 0 otherwise\n- gamma: discount factor\n- lam: GAE lambda\n\nReturn advantages of shape (T,).",
+  "constraints": ["Use numpy only", "dones: 1=terminal zeroes out bootstrap", "values shape is (T+1,) to include bootstrap value"],
+  "starter_code": "import numpy as np\n\ndef gae(rewards: np.ndarray, values: np.ndarray, dones: np.ndarray, gamma: float, lam: float) -> np.ndarray:\n    \"\"\"Generalized Advantage Estimation.\n    \n    Args:\n        rewards: Shape (T,)\n        values: Shape (T+1,) including bootstrap\n        dones: Shape (T,), 1 if terminal\n        gamma: Discount factor\n        lam: GAE lambda\n    \n    Returns:\n        advantages: Shape (T,)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef gae(rewards: np.ndarray, values: np.ndarray, dones: np.ndarray, gamma: float, lam: float) -> np.ndarray:\n    T = len(rewards)\n    advantages = np.zeros(T)\n    last_adv = 0.0\n    \n    for t in reversed(range(T)):\n        not_done = 1.0 - dones[t]\n        delta = rewards[t] + gamma * values[t + 1] * not_done - values[t]\n        advantages[t] = delta + gamma * lam * not_done * last_adv\n        last_adv = advantages[t]\n    \n    return advantages",
+  "explanation": "**Key concepts:**\n\n1. **Bias-variance trade-off:** lam=0 gives TD(0) advantage (low variance, high bias). lam=1 gives Monte-Carlo (high variance, low bias).\n\n2. **Delta:** TD residual = r_t + gamma*V(s_{t+1}) - V(s_t). Positive delta means the transition was better than expected.\n\n3. **Done masking:** (1 - done) zeroes out the bootstrap when a terminal state is reached.\n\n4. **PPO practice:** Modern PPO implementations use GAE with lam~0.95, gamma~0.99.",
+  "test_cases": [
+    {"name": "Output shape correct", "code": "r = np.array([1.0, 0.0, 1.0])\nV = np.array([0.5, 0.5, 0.5, 0.0])\nd = np.array([0.0, 0.0, 1.0])\nA = gae(r, V, d, 0.99, 0.95)\nassert A.shape == (3,)"},
+    {"name": "lam=0 gives TD residuals", "code": "r = np.array([1.0, 0.0])\nV = np.array([0.0, 0.0, 0.0])\nd = np.zeros(2)\nA = gae(r, V, d, 0.9, 0.0)\nassert np.allclose(A, [1.0, 0.0])"},
+    {"name": "Terminal state zeros bootstrap", "code": "r = np.array([1.0])\nV = np.array([0.5, 999.0])\nd = np.array([1.0])\nA = gae(r, V, d, 0.99, 0.95)\nassert abs(A[0] - 0.5) < 1e-6, f'Expected 0.5 (r - V[0]), got {A[0]}'"},
+    {"name": "Returns numpy array", "code": "r = np.zeros(4)\nV = np.zeros(5)\nd = np.zeros(4)\nresult = gae(r, V, d, 0.99, 0.95)\nassert isinstance(result, np.ndarray)"}
+  ],
+  "hints": ["Iterate backwards, tracking last_adv", "delta = r + gamma * V[t+1] * (1-done) - V[t]", "adv[t] = delta + gamma * lam * (1-done) * last_adv"],
+  "related_problems": ["27.11", "27.10", "27.5"]
+}

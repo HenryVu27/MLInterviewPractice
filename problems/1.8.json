@@ -1,0 +1,29 @@
+{
+  "id": "1.8",
+  "title": "Matrix Inverse (2x2 and Gauss-Jordan)",
+  "difficulty": "Medium",
+  "category": "Linear Algebra & Matrix Operations",
+  "tags": ["numpy", "from-scratch", "linear-systems"],
+  "description": "Implement matrix inversion in two ways:\n\n1. `inv_2x2(A)` — analytic formula for 2x2 matrices (no numpy)\n2. `inv_gauss_jordan(A)` — NxN inverse via Gauss-Jordan elimination with partial pivoting (numpy allowed for array manipulation)\n\n**2x2 formula:**\n```\nA = [[a, b], [c, d]]\ndet = a*d - b*c\nA^-1 = (1/det) * [[ d, -b], [-c,  a]]\n```\n\n**Gauss-Jordan idea:** Augment `[A | I]` and reduce A to I via row operations; the right half becomes `A^-1`.\n\n**Why this matters:** Understanding matrix inversion reveals why we prefer solving `Ax=b` with LU decomposition over computing `A^-1` explicitly (numerical stability, cost). Interviewers test whether you know this.",
+  "constraints": [
+    "inv_2x2 uses only Python arithmetic, no numpy",
+    "inv_2x2 raises ValueError if determinant is zero",
+    "inv_gauss_jordan uses partial pivoting (swap largest pivot to top) for numerical stability",
+    "inv_gauss_jordan raises ValueError if matrix is singular"
+  ],
+  "starter_code": "def inv_2x2(A):\n    \"\"\"Compute the inverse of a 2x2 matrix.\n\n    Args:\n        A: 2x2 list of lists\n\n    Returns:\n        Inverse as 2x2 list of lists\n\n    Raises:\n        ValueError: if matrix is singular\n    \"\"\"\n    pass\n\n\nimport numpy as np\n\ndef inv_gauss_jordan(A):\n    \"\"\"Compute the inverse of an NxN matrix via Gauss-Jordan elimination.\n\n    Args:\n        A: NxN array-like\n\n    Returns:\n        Inverse as numpy array of shape (N, N)\n\n    Raises:\n        ValueError: if matrix is singular\n    \"\"\"\n    pass",
+  "solution_code": "def inv_2x2(A):\n    a, b = A[0][0], A[0][1]\n    c, d = A[1][0], A[1][1]\n    det = a * d - b * c\n    if abs(det) < 1e-12:\n        raise ValueError(\"Matrix is singular\")\n    inv_det = 1.0 / det\n    return [\n        [ d * inv_det, -b * inv_det],\n        [-c * inv_det,  a * inv_det]\n    ]\n\n\nimport numpy as np\n\ndef inv_gauss_jordan(A):\n    A = np.asarray(A, dtype=float)\n    n = A.shape[0]\n    if A.shape != (n, n):\n        raise ValueError(\"Matrix must be square\")\n\n    # Augment with identity\n    aug = np.hstack([A.copy(), np.eye(n)])\n\n    for col in range(n):\n        # Partial pivoting: find row with largest absolute value in this column\n        pivot_row = col + np.argmax(np.abs(aug[col:, col]))\n        if abs(aug[pivot_row, col]) < 1e-12:\n            raise ValueError(\"Matrix is singular\")\n        # Swap rows\n        aug[[col, pivot_row]] = aug[[pivot_row, col]]\n        # Normalize pivot row\n        aug[col] /= aug[col, col]\n        # Eliminate column in all other rows\n        for row in range(n):\n            if row != col:\n                aug[row] -= aug[row, col] * aug[col]\n\n    return aug[:, n:]",
+  "explanation": "**Key concepts:**\n\n1. **2x2 formula:** `det(A) = ad - bc`. If det = 0 the matrix is singular. The inverse swaps the diagonal, negates the off-diagonal, and divides by the determinant.\n\n2. **Gauss-Jordan elimination:** Forward-eliminate AND back-substitute in one pass by zeroing the column in all rows (not just below). Augmenting with the identity means row operations on the left are mirrored on the right, giving the inverse.\n\n3. **Partial pivoting:** Swap the current row with the one having the largest absolute value in the pivot column. This prevents division by small numbers, improving numerical stability.\n\n4. **Why not invert in practice?** Solving `Ax = b` via LU decomposition is 2-3x cheaper than computing `A^-1` and multiplying. Also, `A^-1 b` accumulates more floating-point error.\n\n5. **Complexity:** Gauss-Jordan is O(n^3), same as LU.",
+  "test_cases": [
+    {"name": "2x2 inverse correctness", "code": "A = [[4.0, 7.0], [2.0, 6.0]]\nAinv = inv_2x2(A)\nI = [[sum(A[i][k]*Ainv[k][j] for k in range(2)) for j in range(2)] for i in range(2)]\nassert abs(I[0][0] - 1) < 1e-9 and abs(I[1][1] - 1) < 1e-9\nassert abs(I[0][1]) < 1e-9 and abs(I[1][0]) < 1e-9"},
+    {"name": "2x2 singular raises", "code": "try:\n    inv_2x2([[1, 2], [2, 4]])\n    assert False\nexcept ValueError:\n    pass"},
+    {"name": "Gauss-Jordan 3x3", "code": "import numpy as np\nA = np.array([[2., 1., -1.], [-3., -1., 2.], [-2., 1., 2.]])\nAinv = inv_gauss_jordan(A)\nI = A @ Ainv\nassert np.allclose(I, np.eye(3), atol=1e-9)"},
+    {"name": "Gauss-Jordan singular raises", "code": "import numpy as np\ntry:\n    inv_gauss_jordan([[1, 2], [2, 4]])\n    assert False\nexcept ValueError:\n    pass"},
+    {"name": "Gauss-Jordan identity", "code": "import numpy as np\nI = np.eye(4)\nassert np.allclose(inv_gauss_jordan(I), np.eye(4))"}
+  ],
+  "hints": [
+    "For 2x2: det = a*d - b*c, then swap diagonal and negate off-diagonal, divide by det",
+    "For Gauss-Jordan: augment [A | I], reduce A to I with row ops — the right block becomes A^-1"
+  ],
+  "related_problems": ["1.11", "1.9", "1.18"]
+}

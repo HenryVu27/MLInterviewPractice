@@ -1,0 +1,27 @@
+{
+  "id": "13.18",
+  "title": "R-Squared (Coefficient of Determination)",
+  "difficulty": "Easy",
+  "category": "Evaluation Metrics",
+  "tags": ["regression", "metrics"],
+  "description": "Implement R^2 score for regression evaluation.\n\n`R^2 = 1 - SS_res / SS_tot`\n\nwhere:\n- `SS_res = sum((y_true - y_pred)^2)` (residual sum of squares)\n- `SS_tot = sum((y_true - mean(y_true))^2)` (total sum of squares)\n\nR^2=1 means perfect prediction; R^2=0 means predicting the mean; R^2<0 means worse than predicting the mean.",
+  "constraints": [
+    "Return float (can be negative)",
+    "Handle constant y_true (SS_tot=0) by returning 0.0",
+    "Use numpy"
+  ],
+  "starter_code": "import numpy as np\n\ndef r_squared(y_true: np.ndarray, y_pred: np.ndarray) -> float:\n    \"\"\"Compute R^2 score.\n\n    Args:\n        y_true: True values, shape (n,)\n        y_pred: Predicted values, shape (n,)\n\n    Returns:\n        R^2 score as float\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef r_squared(y_true: np.ndarray, y_pred: np.ndarray) -> float:\n    y_true = np.asarray(y_true, dtype=float)\n    y_pred = np.asarray(y_pred, dtype=float)\n    ss_res = np.sum((y_true - y_pred) ** 2)\n    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)\n    if ss_tot == 0:\n        return 0.0\n    return float(1 - ss_res / ss_tot)",
+  "explanation": "R^2 measures the proportion of variance in the target explained by the model. It normalizes MSE by the variance of the target, making it interpretable across datasets with different scales. A baseline model that always predicts the mean achieves R^2=0. R^2 can be negative if predictions are systematically worse than this baseline.",
+  "test_cases": [
+    {"name": "Perfect predictions R2=1", "code": "import numpy as np\nassert r_squared(np.array([1.0,2,3]), np.array([1.0,2,3])) == 1.0"},
+    {"name": "Predicting mean R2=0", "code": "import numpy as np\ny = np.array([1.0,2.0,3.0])\nassert abs(r_squared(y, np.full(3, np.mean(y)))) < 1e-9"},
+    {"name": "Constant target returns 0", "code": "import numpy as np\nassert r_squared(np.array([5.0,5.0,5.0]), np.array([5.0,5.0,5.0])) == 0.0"},
+    {"name": "Near-perfect R2 close to 1", "code": "import numpy as np\ny_true = np.array([1.0,2,3,4])\ny_pred = np.array([1.1,2.1,2.9,3.9])\nresult = r_squared(y_true, y_pred)\nassert result > 0.99"}
+  ],
+  "hints": [
+    "SS_res = sum of squared residuals (y_true - y_pred)^2",
+    "SS_tot = sum of squared deviations from mean"
+  ],
+  "related_problems": ["13.1", "13.19", "13.14"]
+}

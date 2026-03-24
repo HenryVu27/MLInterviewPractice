@@ -1,0 +1,28 @@
+{
+  "id": "3.9",
+  "title": "Naive Bayes (Gaussian)",
+  "difficulty": "Medium",
+  "category": "Classic ML Algorithms",
+  "tags": ["numpy", "from-scratch", "probabilistic", "classification"],
+  "description": "Implement **Gaussian Naive Bayes** classifier.\n\nAssumption: each feature is normally distributed given the class. Features are conditionally independent given the class label.\n\n**Training (fit):**\n- For each class k: compute prior P(y=k), mean μ_k, and variance σ²_k per feature\n\n**Prediction (log-likelihood for numerical stability):**\n```\nlog P(y=k | x) ∝ log P(y=k) + sum_j log N(x_j | μ_kj, σ²_kj)\n```\nwhere `log N(x | μ, σ²) = -0.5 * log(2π σ²) - (x-μ)² / (2σ²)`\n\nPredict the class with the highest log-probability.\n\n**Shapes:**\n- X: (N, D)\n- y: (N,) integer labels 0..C-1",
+  "constraints": [
+    "Use only numpy",
+    "Work in log-space throughout prediction to avoid underflow",
+    "Add var_smoothing (default 1e-9) to each variance for numerical stability",
+    "Store per-class priors, means, and variances during fit"
+  ],
+  "starter_code": "import numpy as np\n\nclass GaussianNaiveBayes:\n    def __init__(self, var_smoothing: float = 1e-9):\n        \"\"\"Initialize with variance smoothing constant.\"\"\"\n        pass\n\n    def fit(self, X: np.ndarray, y: np.ndarray) -> None:\n        \"\"\"Estimate per-class priors, means, and variances.\n\n        Args:\n            X: (n_samples, n_features)\n            y: (n_samples,) integer class labels\n        \"\"\"\n        pass\n\n    def predict_log_proba(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return log posterior for each class (unnormalized).\n\n        Returns:\n            (n_samples, n_classes)\n        \"\"\"\n        pass\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return predicted class labels.\"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass GaussianNaiveBayes:\n    def __init__(self, var_smoothing: float = 1e-9):\n        self.var_smoothing = var_smoothing\n\n    def fit(self, X: np.ndarray, y: np.ndarray) -> None:\n        self.classes_ = np.unique(y)\n        self.n_classes = len(self.classes_)\n        N = X.shape[0]\n        self.priors_ = np.array([np.sum(y == c) / N for c in self.classes_])\n        self.means_ = np.array([X[y == c].mean(axis=0) for c in self.classes_])   # (C, D)\n        self.vars_ = np.array([X[y == c].var(axis=0) for c in self.classes_])     # (C, D)\n        self.vars_ += self.var_smoothing\n\n    def predict_log_proba(self, X: np.ndarray) -> np.ndarray:\n        N = X.shape[0]\n        log_probs = np.zeros((N, self.n_classes))\n        for k in range(self.n_classes):\n            mu = self.means_[k]      # (D,)\n            var = self.vars_[k]      # (D,)\n            # log N(x | mu, var) summed over features\n            log_likelihood = -0.5 * np.sum(np.log(2 * np.pi * var)) \\\n                             - 0.5 * np.sum((X - mu) ** 2 / var, axis=1)\n            log_probs[:, k] = np.log(self.priors_[k]) + log_likelihood\n        return log_probs\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        return self.classes_[np.argmax(self.predict_log_proba(X), axis=1)]",
+  "explanation": "**Key concepts:**\n\n1. **Naive assumption:** Features are conditionally independent given the class. This is almost never true in practice but the classifier is surprisingly robust.\n\n2. **Gaussian likelihood:** P(x_j | y=k) = N(x_j; μ_kj, σ²_kj). We estimate μ and σ² from training data per class using the sample mean and variance.\n\n3. **Log-space computation:** log P(y=k|x) ∝ log P(y=k) + Σ_j log N(x_j|μ_kj,σ²_kj). Prevents numerical underflow for high-D data.\n\n4. **Variance smoothing:** Add a small constant to variances to avoid division by zero when a feature has near-zero variance in a class.\n\n**Complexity:** O(N*D*C) to fit and predict. Very fast.\n\n**Interview angle:** Why 'naive'? When does it fail (correlated features)? Compare to LDA (shared covariance matrix).",
+  "test_cases": [
+    {"name": "Separable Gaussian clusters", "code": "import numpy as np\nnp.random.seed(0)\nX0 = np.random.randn(100, 2) + np.array([3, 3])\nX1 = np.random.randn(100, 2) + np.array([-3, -3])\nX = np.vstack([X0, X1])\ny = np.array([0]*100 + [1]*100)\nmodel = GaussianNaiveBayes()\nmodel.fit(X, y)\nacc = np.mean(model.predict(X) == y)\nassert acc > 0.95, f'Accuracy {acc:.2f}'"},
+    {"name": "predict_log_proba shape", "code": "import numpy as np\nnp.random.seed(1)\nX = np.random.randn(50, 4)\ny = np.random.randint(0, 3, 50)\nmodel = GaussianNaiveBayes()\nmodel.fit(X, y)\nlp = model.predict_log_proba(X)\nassert lp.shape == (50, 3)"},
+    {"name": "No NaN in log proba", "code": "import numpy as np\nnp.random.seed(2)\nX = np.random.randn(50, 5)\ny = np.random.randint(0, 2, 50)\nmodel = GaussianNaiveBayes()\nmodel.fit(X, y)\nlp = model.predict_log_proba(X)\nassert not np.any(np.isnan(lp)), 'Log proba should not contain NaN'"},
+    {"name": "3-class accuracy", "code": "import numpy as np\nnp.random.seed(42)\ncenters = np.array([[4,0],[-4,0],[0,4]])\nX = np.vstack([np.random.randn(80,2) + c for c in centers])\ny = np.repeat([0,1,2], 80)\nmodel = GaussianNaiveBayes()\nmodel.fit(X, y)\nacc = np.mean(model.predict(X) == y)\nassert acc > 0.90, f'Accuracy {acc:.2f}'"}
+  ],
+  "hints": [
+    "log N(x|mu,var) = -0.5*log(2*pi*var) - (x-mu)^2 / (2*var) — sum over all D features for the log-likelihood",
+    "Add var_smoothing to self.vars_ after computing variances to prevent division by zero"
+  ],
+  "related_problems": ["3.10", "3.3", "3.4"]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "13.11",
+  "title": "Mean Reciprocal Rank (MRR)",
+  "difficulty": "Easy",
+  "category": "Evaluation Metrics",
+  "tags": ["retrieval", "metrics", "mrr"],
+  "description": "Compute Mean Reciprocal Rank (MRR) over multiple queries.\n\nFor each query, the reciprocal rank is `1/rank` of the first relevant result (or 0 if none found). Rank is 1-indexed.\n\n`MRR = (1/Q) * sum_q (1/rank_q)`\n\n**Example:**\n```\nqueries = [[0,1,0], [1,0,0], [0,0,1]]\nMRR = (1/2 + 1/1 + 1/3) / 3 ≈ 0.6111\n```",
+  "constraints": [
+    "Rank is 1-indexed",
+    "Return 0 for queries with no relevant result",
+    "Return float"
+  ],
+  "starter_code": "def mean_reciprocal_rank(relevance_lists: list[list[int]]) -> float:\n    \"\"\"Compute MRR over multiple queries.\n\n    Args:\n        relevance_lists: Each inner list is ordered relevance (1=relevant, 0=not)\n\n    Returns:\n        MRR as float\n    \"\"\"\n    pass",
+  "solution_code": "def mean_reciprocal_rank(relevance_lists: list[list[int]]) -> float:\n    rrs = []\n    for rel in relevance_lists:\n        rr = 0.0\n        for rank, r in enumerate(rel, 1):\n            if r == 1:\n                rr = 1.0 / rank\n                break\n        rrs.append(rr)\n    return sum(rrs) / len(rrs) if rrs else 0.0",
+  "explanation": "MRR focuses on the position of the first correct answer. It is popular in QA systems and single-answer retrieval tasks. A system that always returns the correct answer at rank 1 achieves MRR=1. MRR penalizes systems that bury the answer deep in the ranked list.",
+  "test_cases": [
+    {"name": "First result always relevant MRR=1", "code": "assert mean_reciprocal_rank([[1,0,0],[1,0,0]]) == 1.0"},
+    {"name": "Known MRR value", "code": "result = mean_reciprocal_rank([[0,1,0],[1,0,0],[0,0,1]])\nassert abs(result - (0.5+1+1/3)/3) < 1e-9"},
+    {"name": "No relevant items", "code": "assert mean_reciprocal_rank([[0,0,0]]) == 0.0"},
+    {"name": "Single query rank 2", "code": "assert abs(mean_reciprocal_rank([[0,1,0]]) - 0.5) < 1e-9"}
+  ],
+  "hints": [
+    "Find the index of the first 1; reciprocal rank = 1/(index+1)"
+  ],
+  "related_problems": ["13.8", "13.9", "13.7"]
+}

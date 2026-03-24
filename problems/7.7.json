@@ -1,0 +1,46 @@
+{
+  "id": "7.7",
+  "title": "Mixup Data Augmentation",
+  "difficulty": "Medium",
+  "category": "Regularization & Generalization",
+  "tags": ["mixup", "data-augmentation", "interpolation", "regularization"],
+  "description": "Implement Mixup augmentation (Zhang et al., 2018).\n\nMixup creates synthetic training examples by linearly interpolating between pairs of examples:\n```\nx_mixed = lam * x_i + (1 - lam) * x_j\ny_mixed = lam * y_i + (1 - lam) * y_j\n```\nwhere `lam ~ Beta(alpha, alpha)` and (x_j, y_j) is a randomly permuted version of the batch.\n\nImplement `mixup(x, y, alpha=0.2, rng=None)` that returns `(x_mixed, y_mixed, lam)`.\n\nLabels `y` should be one-hot encoded (or already soft labels) of shape `(N, C)`.",
+  "constraints": [
+    "Use numpy only",
+    "x shape: (N, ...) - any feature shape",
+    "y shape: (N, C) - one-hot or soft labels",
+    "lam sampled from Beta(alpha, alpha)",
+    "Return (x_mixed, y_mixed, lam)"
+  ],
+  "starter_code": "import numpy as np\n\ndef mixup(x: np.ndarray, y: np.ndarray, alpha: float = 0.2,\n          rng: np.random.Generator = None) -> tuple:\n    \"\"\"Apply Mixup augmentation to a batch.\n    \n    Args:\n        x: Input batch of shape (N, ...)\n        y: One-hot labels of shape (N, C)\n        alpha: Beta distribution parameter\n        rng: Optional random generator\n    \n    Returns:\n        (x_mixed, y_mixed, lam)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef mixup(x: np.ndarray, y: np.ndarray, alpha: float = 0.2,\n          rng: np.random.Generator = None) -> tuple:\n    if rng is None:\n        rng = np.random.default_rng()\n    N = x.shape[0]\n    if alpha > 0:\n        lam = rng.beta(alpha, alpha)\n    else:\n        lam = 1.0\n    indices = rng.permutation(N)\n    x_mixed = lam * x + (1 - lam) * x[indices]\n    y_mixed = lam * y + (1 - lam) * y[indices]\n    return x_mixed, y_mixed, lam",
+  "explanation": "**Key concepts:**\n\n1. **Beta distribution:** `lam ~ Beta(alpha, alpha)` is symmetric around 0.5. Small alpha (e.g., 0.2) produces lam values close to 0 or 1 (mild mixing); alpha=1 is uniform.\n\n2. **Random permutation:** Create a shuffled version of the batch indices to pair each example with a different one.\n\n3. **Linear interpolation:** Both inputs x and labels y are interpolated with the same lam.\n\n4. **Soft labels:** Mixup naturally produces soft targets, which act as label smoothing and improve calibration.\n\n5. **Effect:** Training on mixed examples forces the model to behave linearly between training examples, reducing memorization.",
+  "test_cases": [
+    {
+      "name": "Output shapes correct",
+      "code": "import numpy as np\nrng = np.random.default_rng(0)\nx = np.random.randn(8, 32)\ny = np.eye(8, 4)\nx_m, y_m, lam = mixup(x, y, alpha=0.2, rng=rng)\nassert x_m.shape == x.shape\nassert y_m.shape == y.shape\nassert 0 <= lam <= 1"
+    },
+    {
+      "name": "alpha=0 returns original",
+      "code": "import numpy as np\nrng = np.random.default_rng(0)\nx = np.ones((4, 10))\ny = np.eye(4)\nx_m, y_m, lam = mixup(x, y, alpha=0.0, rng=rng)\nassert lam == 1.0\nassert np.allclose(x_m, x)"
+    },
+    {
+      "name": "Labels remain valid convex combination",
+      "code": "import numpy as np\nrng = np.random.default_rng(1)\ny = np.eye(6)\n_, y_m, lam = mixup(np.zeros((6, 5)), y, alpha=1.0, rng=rng)\nassert np.all(y_m >= 0)\nassert np.allclose(y_m.sum(axis=1), 1.0)"
+    },
+    {
+      "name": "lam in [0, 1] across multiple runs",
+      "code": "import numpy as np\nfor seed in range(20):\n    rng = np.random.default_rng(seed)\n    _, _, lam = mixup(np.zeros((4, 3)), np.eye(4), alpha=0.2, rng=rng)\n    assert 0 <= lam <= 1, f'lam={lam} out of range'"
+    },
+    {
+      "name": "Mixed x is a convex combination",
+      "code": "import numpy as np\nrng = np.random.default_rng(42)\nx = np.random.randn(4, 8)\ny = np.eye(4)\nx_m, _, lam = mixup(x, y, alpha=0.5, rng=rng)\nassert x_m.min() >= min(x.min(), x.min()) - 1e-9\nassert np.all(np.isfinite(x_m))"
+    }
+  ],
+  "hints": [
+    "Use rng.beta(alpha, alpha) to sample lambda",
+    "Use rng.permutation(N) to shuffle batch indices",
+    "Mixed x = lam*x + (1-lam)*x[shuffled_indices]"
+  ],
+  "related_problems": ["7.8", "7.6"]
+}

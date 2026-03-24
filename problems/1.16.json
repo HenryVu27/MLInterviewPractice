@@ -1,0 +1,29 @@
+{
+  "id": "1.16",
+  "title": "Orthogonal Projection",
+  "difficulty": "Medium",
+  "category": "Linear Algebra & Matrix Operations",
+  "tags": ["numpy", "from-scratch", "projection", "pca"],
+  "description": "Implement two projection functions:\n\n1. `project_onto_vector(x, v)` — project vector x onto vector v:\n   `proj = (dot(x, v) / dot(v, v)) * v`\n\n2. `project_onto_subspace(x, U)` — project vector x onto the subspace spanned by the columns of U (where U has orthonormal columns):\n   `proj = U @ U^T @ x`\n\n**Example:**\n```\nx = [3, 4], v = [1, 0]\nproject_onto_vector(x, v) = [3, 0]  # projection onto x-axis\n```\n\n**Why this matters:** Projection is the core operation in PCA (projecting data onto principal components), least squares solutions, and Gram-Schmidt orthogonalization.",
+  "constraints": [
+    "Use numpy; no explicit loops",
+    "project_onto_vector: v must not be the zero vector (raise ValueError)",
+    "project_onto_subspace assumes U has orthonormal columns",
+    "Return numpy arrays"
+  ],
+  "starter_code": "import numpy as np\n\ndef project_onto_vector(x, v):\n    \"\"\"Project vector x onto vector v.\n\n    Args:\n        x: 1-D array of length n\n        v: 1-D array of length n (must be non-zero)\n\n    Returns:\n        Projection of x onto v (1-D array of length n)\n\n    Raises:\n        ValueError: if v is the zero vector\n    \"\"\"\n    pass\n\n\ndef project_onto_subspace(x, U):\n    \"\"\"Project vector x onto the subspace spanned by columns of U.\n\n    Args:\n        x: 1-D array of length n\n        U: 2-D array of shape (n, k) with orthonormal columns\n\n    Returns:\n        Projection of x onto the column space of U (1-D array of length n)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef project_onto_vector(x, v):\n    x = np.asarray(x, dtype=float)\n    v = np.asarray(v, dtype=float)\n    v_sq = np.dot(v, v)\n    if v_sq < 1e-12:\n        raise ValueError(\"v is the zero vector\")\n    return (np.dot(x, v) / v_sq) * v\n\n\ndef project_onto_subspace(x, U):\n    x = np.asarray(x, dtype=float)\n    U = np.asarray(U, dtype=float)\n    # coords in subspace basis: c = U^T x\n    # projection back to original space: U c = U U^T x\n    coords = U.T @ x\n    return U @ coords",
+  "explanation": "**Key concepts:**\n\n1. **Scalar projection:** The scalar projection of x onto v is `dot(x, v) / ||v||`. The vector projection is this scalar times the unit vector `v/||v||`, simplifying to `dot(x,v)/dot(v,v) * v`.\n\n2. **Subspace projection:** For an orthonormal basis U (columns are orthonormal), the projection matrix is `P = U U^T`. Applying P to x gives the closest point in the subspace to x.\n\n3. **Why orthonormal?** If U has orthonormal columns, `U^T U = I`, making the formula simple. For non-orthonormal U, the formula is `U (U^T U)^{-1} U^T x` — this is the least squares projection.\n\n4. **Pythagoras in vector spaces:** The projection and the residual (x - proj) are always orthogonal. `||x||^2 = ||proj||^2 + ||residual||^2`.\n\n5. **PCA:** Projecting data X onto the top-k principal components is `X_reduced = X @ U_k` where U_k contains the top-k eigenvectors of the covariance matrix.",
+  "test_cases": [
+    {"name": "Project onto axis", "code": "import numpy as np\nresult = project_onto_vector([3., 4.], [1., 0.])\nassert np.allclose(result, [3., 0.])"},
+    {"name": "Projection is idempotent", "code": "import numpy as np\nx = np.array([2., 3., 1.])\nv = np.array([1., 1., 0.])\nproj = project_onto_vector(x, v)\nproj2 = project_onto_vector(proj, v)\nassert np.allclose(proj, proj2)"},
+    {"name": "Residual is orthogonal", "code": "import numpy as np\nx = np.array([3., 4.])\nv = np.array([1., 0.])\nproj = project_onto_vector(x, v)\nresidual = x - proj\nassert abs(np.dot(proj, residual)) < 1e-9"},
+    {"name": "Subspace projection", "code": "import numpy as np\nU = np.eye(3)[:, :2]  # span of first two standard basis vectors\nx = np.array([1., 2., 3.])\nproj = project_onto_subspace(x, U)\nassert np.allclose(proj, [1., 2., 0.])"},
+    {"name": "Zero v raises", "code": "import numpy as np\ntry:\n    project_onto_vector([1., 2.], [0., 0.])\n    assert False\nexcept ValueError:\n    pass"}
+  ],
+  "hints": [
+    "project_onto_vector: coeff = dot(x,v)/dot(v,v), then return coeff * v",
+    "project_onto_subspace with orthonormal U: return U @ (U.T @ x)"
+  ],
+  "related_problems": ["1.17", "1.9", "1.10"]
+}

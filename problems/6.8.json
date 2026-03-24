@@ -1,0 +1,21 @@
+{
+  "id": "6.8",
+  "title": "Cosine Annealing Learning Rate Schedule",
+  "difficulty": "Easy",
+  "category": "Optimization Algorithms",
+  "tags": ["numpy", "from-scratch", "optimization", "learning-rate-schedule"],
+  "description": "Implement cosine annealing learning rate schedule with optional linear warmup.\n\nCosine annealing decays the learning rate following a cosine curve:\n```\nlr(t) = lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * t / T))\n```\n\nWith linear warmup for the first `warmup_steps`:\n```\nlr(t) = lr_max * t / warmup_steps   for t < warmup_steps\nlr(t) = cosine_decay(t - warmup_steps)   for t >= warmup_steps\n```\n\n**Why this matters:** Cosine annealing is the standard schedule for Transformer training (BERT, GPT). The warmup phase stabilizes early training when parameters are random.",
+  "constraints": ["Use numpy only", "Implement as function: get_lr(step, total_steps, lr_max, lr_min=0.0, warmup_steps=0)", "Return a single float learning rate", "Warmup is linear from 0 to lr_max"],
+  "starter_code": "import numpy as np\n\ndef get_lr_cosine(step: int, total_steps: int, lr_max: float,\n                  lr_min: float = 0.0, warmup_steps: int = 0) -> float:\n    \"\"\"Cosine annealing LR schedule with optional linear warmup.\n    \n    Args:\n        step: Current training step (0-indexed)\n        total_steps: Total number of training steps\n        lr_max: Peak learning rate\n        lr_min: Minimum learning rate (default 0.0)\n        warmup_steps: Number of linear warmup steps (default 0)\n    \n    Returns:\n        Learning rate for this step\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef get_lr_cosine(step: int, total_steps: int, lr_max: float,\n                  lr_min: float = 0.0, warmup_steps: int = 0) -> float:\n    if step < warmup_steps:\n        return float(lr_max * step / max(warmup_steps, 1))\n    progress = (step - warmup_steps) / max(total_steps - warmup_steps, 1)\n    return float(lr_min + 0.5 * (lr_max - lr_min) * (1 + np.cos(np.pi * progress)))",
+  "explanation": "**Key concepts:**\n\n1. **Warmup**: For the first warmup_steps, LR increases linearly from 0 to lr_max. This stabilizes training when the model's gradients are large and chaotic.\n\n2. **Cosine decay**: After warmup, LR follows a half-cosine from lr_max to lr_min. Slow decay early (when high LR still helps), then rapid decay near the end.\n\n3. **lr_min > 0**: A non-zero floor prevents the LR from reaching zero, keeping some exploration at the end of training.\n\n4. **Cosine restarts (CosineAnnealingWarmRestarts)**: Resets the schedule periodically. Here we implement single-cycle (1-cycle).",
+  "test_cases": [
+    {"name": "No warmup: starts at lr_max, ends at lr_min", "code": "lr_start = get_lr_cosine(0, 100, lr_max=0.1, lr_min=0.0)\nlr_end = get_lr_cosine(100, 100, lr_max=0.1, lr_min=0.0)\nassert abs(lr_start - 0.1) < 1e-9\nassert lr_end < 1e-6"},
+    {"name": "Warmup increases linearly", "code": "lrs = [get_lr_cosine(t, 100, 0.1, warmup_steps=10) for t in range(11)]\nassert lrs[0] == 0.0\nassert abs(lrs[5] - 0.05) < 1e-9\nassert abs(lrs[10] - 0.1) < 1e-6"},
+    {"name": "LR is monotonically non-increasing after warmup", "code": "lrs = [get_lr_cosine(t, 100, 0.1, warmup_steps=10) for t in range(10, 101)]\nassert all(lrs[i] >= lrs[i+1] - 1e-12 for i in range(len(lrs)-1))"},
+    {"name": "Midpoint gives (lr_max + lr_min) / 2", "code": "lr_mid = get_lr_cosine(50, 100, lr_max=0.1, lr_min=0.0)\nassert abs(lr_mid - 0.05) < 1e-6"},
+    {"name": "Returns float", "code": "lr = get_lr_cosine(10, 100, 0.01)\nassert isinstance(lr, float)"}
+  ],
+  "hints": ["progress = (step - warmup_steps) / (total_steps - warmup_steps); lr = lr_min + 0.5*(lr_max-lr_min)*(1+cos(pi*progress))", "Handle warmup separately: return lr_max * step / warmup_steps for step < warmup_steps"],
+  "related_problems": ["6.9", "6.10", "6.11"]
+}

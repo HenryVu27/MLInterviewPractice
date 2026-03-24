@@ -1,0 +1,20 @@
+{
+  "id": "28.3",
+  "title": "Robust Scaling",
+  "difficulty": "Easy",
+  "category": "Feature Engineering",
+  "tags": ["preprocessing", "scaling", "robust", "outliers"],
+  "description": "Implement Robust Scaling, which uses the median and interquartile range (IQR) instead of mean and std, making it robust to outliers.\n\nFor each feature column:\n```\nX_scaled = (X - median) / IQR\n```\nwhere IQR = Q75 - Q25 (75th percentile minus 25th percentile).\n\nIf IQR == 0 for a column, return 0 for all values in that column.\n\nImplement `fit`, `transform`, and `fit_transform`.",
+  "constraints": ["Use numpy only", "Use np.percentile for Q25 and Q75", "Handle IQR=0 columns by outputting zeros"],
+  "starter_code": "import numpy as np\n\nclass RobustScaler:\n    def fit(self, X: np.ndarray) -> 'RobustScaler':\n        \"\"\"Compute median and IQR per column.\"\"\"\n        pass\n    \n    def transform(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Apply robust scaling.\"\"\"\n        pass\n    \n    def fit_transform(self, X: np.ndarray) -> np.ndarray:\n        pass",
+  "solution_code": "import numpy as np\n\nclass RobustScaler:\n    def fit(self, X: np.ndarray) -> 'RobustScaler':\n        self.median_ = np.median(X, axis=0)\n        self.iqr_ = np.percentile(X, 75, axis=0) - np.percentile(X, 25, axis=0)\n        return self\n    \n    def transform(self, X: np.ndarray) -> np.ndarray:\n        iqr_safe = np.where(self.iqr_ == 0, 1, self.iqr_)\n        scaled = (X - self.median_) / iqr_safe\n        scaled[:, self.iqr_ == 0] = 0.0\n        return scaled\n    \n    def fit_transform(self, X: np.ndarray) -> np.ndarray:\n        return self.fit(X).transform(X)",
+  "explanation": "**Key concepts:**\n\n1. **Median vs mean:** Median is resistant to outliers. A single extreme value can shift the mean dramatically but not the median.\n\n2. **IQR vs std:** IQR covers the middle 50% of data. Outliers in the tails don't affect it.\n\n3. **When to use:** When your data has significant outliers and you can't remove them.\n\n4. **Not bounded:** Like Z-score, robust scaling doesn't produce a bounded output range.",
+  "test_cases": [
+    {"name": "Median becomes 0 after transform", "code": "X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]])\nscaler = RobustScaler()\nX_s = scaler.fit_transform(X)\nassert abs(np.median(X_s)) < 1e-10"},
+    {"name": "Robust to outlier", "code": "X_normal = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]])\nX_outlier = np.array([[1.0], [2.0], [3.0], [4.0], [1000.0]])\nscaler_n = RobustScaler(); scaler_o = RobustScaler()\nX_n = scaler_n.fit_transform(X_normal)\nX_o = scaler_o.fit_transform(X_outlier)\nassert abs(scaler_n.median_[0] - scaler_o.median_[0]) < 1.0, 'Medians should be similar'"},
+    {"name": "IQR=0 column gives zeros", "code": "X = np.array([[5.0, 1.0], [5.0, 2.0], [5.0, 3.0]])\nscaler = RobustScaler()\nX_s = scaler.fit_transform(X)\nassert np.all(X_s[:, 0] == 0.0)"},
+    {"name": "Output shape preserved", "code": "X = np.random.randn(20, 3)\nscaler = RobustScaler()\nX_s = scaler.fit_transform(X)\nassert X_s.shape == X.shape"}
+  ],
+  "hints": ["np.median(X, axis=0) for column-wise median", "np.percentile(X, 75, axis=0) - np.percentile(X, 25, axis=0) for IQR", "Same zero-division handling as MinMaxScaler"],
+  "related_problems": ["28.1", "28.2", "28.7"]
+}

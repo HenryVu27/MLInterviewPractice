@@ -1,0 +1,44 @@
+{
+  "id": "7.3",
+  "title": "Elastic Net Penalty",
+  "difficulty": "Easy",
+  "category": "Regularization & Generalization",
+  "tags": ["regularization", "elastic-net", "l1", "l2"],
+  "description": "Implement Elastic Net regularization, which combines L1 and L2 penalties.\n\n```\nL_reg = alpha * lambda * sum(|w|) + (1 - alpha) * (lambda/2) * sum(w^2)\n```\n\nWhere `alpha` (mixing ratio) controls the blend: alpha=1 is pure L1, alpha=0 is pure L2.\n\nImplement:\n1. `elastic_net_penalty(weights, lam, alpha)` - compute total penalty\n2. `elastic_net_grad(weights, lam, alpha)` - compute gradient\n\n**Example:**\n```\nw = np.array([1.0, -2.0, 3.0])\nelastic_net_penalty(w, lam=0.1, alpha=0.5)\n# L1 part: 0.5 * 0.1 * 6.0 = 0.3\n# L2 part: 0.5 * (0.1/2) * 14.0 = 0.35\n# total: 0.65\n```",
+  "constraints": [
+    "Use numpy only",
+    "alpha in [0, 1]",
+    "Follows sklearn's ElasticNet convention"
+  ],
+  "starter_code": "import numpy as np\n\ndef elastic_net_penalty(weights: np.ndarray, lam: float, alpha: float) -> float:\n    \"\"\"Compute Elastic Net regularization penalty.\n    \n    Args:\n        weights: weight array\n        lam: overall regularization strength\n        alpha: mixing ratio (1=L1, 0=L2)\n    \n    Returns:\n        Scalar penalty value\n    \"\"\"\n    pass\n\ndef elastic_net_grad(weights: np.ndarray, lam: float, alpha: float) -> np.ndarray:\n    \"\"\"Compute gradient of Elastic Net penalty.\"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef elastic_net_penalty(weights: np.ndarray, lam: float, alpha: float) -> float:\n    l1_part = alpha * lam * float(np.sum(np.abs(weights)))\n    l2_part = (1 - alpha) * (lam / 2) * float(np.sum(weights ** 2))\n    return l1_part + l2_part\n\ndef elastic_net_grad(weights: np.ndarray, lam: float, alpha: float) -> np.ndarray:\n    l1_grad = alpha * lam * np.sign(weights)\n    l2_grad = (1 - alpha) * lam * weights\n    return l1_grad + l2_grad",
+  "explanation": "**Key concepts:**\n\n1. **Elastic Net combines L1 and L2:** `alpha * L1 + (1-alpha) * L2`. This gives both sparsity (from L1) and grouping effect (from L2).\n\n2. **Gradient:** Sum of L1 subgradient and L2 gradient:\n   - L1 contribution: `alpha * lam * sign(w)`\n   - L2 contribution: `(1-alpha) * lam * w`\n\n3. **Use cases:** Useful when features are correlated (L1 alone picks one arbitrarily; Elastic Net can pick groups).\n\n4. **Edge cases:** alpha=1 reduces to L1; alpha=0 reduces to L2.",
+  "test_cases": [
+    {
+      "name": "Pure L1 (alpha=1)",
+      "code": "import numpy as np\nw = np.array([1.0, -2.0, 3.0])\npenalty = elastic_net_penalty(w, lam=0.1, alpha=1.0)\nassert abs(penalty - 0.6) < 1e-9, f'Expected 0.6, got {penalty}'"
+    },
+    {
+      "name": "Pure L2 (alpha=0)",
+      "code": "import numpy as np\nw = np.array([1.0, -2.0, 3.0])\npenalty = elastic_net_penalty(w, lam=0.1, alpha=0.0)\nexpected = 0.5 * 0.1 * 14.0\nassert abs(penalty - expected) < 1e-9, f'Expected {expected}, got {penalty}'"
+    },
+    {
+      "name": "Mixed penalty (alpha=0.5)",
+      "code": "import numpy as np\nw = np.array([1.0, -2.0, 3.0])\npenalty = elastic_net_penalty(w, lam=0.1, alpha=0.5)\nl1 = 0.5 * 0.1 * 6.0\nl2 = 0.5 * 0.05 * 14.0\nassert abs(penalty - (l1 + l2)) < 1e-9"
+    },
+    {
+      "name": "Gradient mixed",
+      "code": "import numpy as np\nw = np.array([1.0, -1.0])\ngrad = elastic_net_grad(w, lam=1.0, alpha=0.5)\n# L1 grad: 0.5*[1,-1], L2 grad: 0.5*[1,-1] -> total [1,-1]\nassert np.allclose(grad, np.array([1.0, -1.0])), f'Got {grad}'"
+    },
+    {
+      "name": "Zero weights",
+      "code": "import numpy as np\nw = np.zeros(3)\nassert elastic_net_penalty(w, 1.0, 0.5) == 0.0\nassert np.all(elastic_net_grad(w, 1.0, 0.5) == 0.0)"
+    }
+  ],
+  "hints": [
+    "Split into L1 and L2 parts and sum them",
+    "alpha=1 is pure L1, alpha=0 is pure L2",
+    "Gradient is simply the sum of L1 and L2 gradients"
+  ],
+  "related_problems": ["7.1", "7.2"]
+}

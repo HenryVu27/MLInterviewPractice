@@ -1,0 +1,20 @@
+{
+  "id": "25.5",
+  "title": "Top-K Elements with a Min-Heap",
+  "difficulty": "Easy",
+  "category": "Data Structures for ML",
+  "tags": ["heap", "top-k", "heapq"],
+  "description": "Find the K largest elements from a list of numbers using a min-heap of size K.\n\nThe algorithm:\n1. Push the first K elements onto a min-heap\n2. For each remaining element, if it is greater than the heap's minimum, pop the min and push the new element\n3. At the end, the heap contains the K largest elements\n\nReturn the K largest elements in **descending order**.\n\n**Example:**\n```\ntop_k([3, 1, 4, 1, 5, 9, 2, 6], k=3) -> [9, 6, 5]\n```\n\n**Use in ML:** Finding top-K recommendations, beam search candidates, most frequent features.",
+  "constraints": ["Use Python's heapq module (it is a min-heap)", "O(n log k) time complexity", "Return sorted descending", "If k >= len(nums), return all elements sorted descending"],
+  "starter_code": "import heapq\n\ndef top_k(nums: list[float], k: int) -> list[float]:\n    \"\"\"Return the K largest elements in descending order.\n\n    Args:\n        nums: list of numbers\n        k: number of top elements to find\n\n    Returns:\n        K largest elements sorted in descending order\n    \"\"\"\n    pass",
+  "solution_code": "import heapq\n\ndef top_k(nums: list[float], k: int) -> list[float]:\n    if k <= 0 or not nums:\n        return []\n    k = min(k, len(nums))\n    heap = nums[:k]\n    heapq.heapify(heap)\n    for x in nums[k:]:\n        if x > heap[0]:\n            heapq.heapreplace(heap, x)\n    return sorted(heap, reverse=True)",
+  "explanation": "**Key concepts:**\n\n1. **Min-heap of size K:** By maintaining a min-heap of the K largest elements seen so far, we can check in O(log K) whether a new element belongs in the top K.\n\n2. **heapreplace:** Atomically pops the min and pushes the new element — more efficient than separate pop/push.\n\n3. **O(n log K):** For each of the n elements, we do at most one heap operation costing O(log K). Much better than sorting (O(n log n)) when K << n.\n\n4. **Alternative:** `heapq.nlargest(k, nums)` does the same thing in one line — but knowing the manual algorithm matters for interviews.",
+  "test_cases": [
+    {"name": "Basic top-3", "code": "import heapq\nresult = top_k([3, 1, 4, 1, 5, 9, 2, 6], k=3)\nassert result == [9, 6, 5], f'Got {result}'"},
+    {"name": "k equals length returns all sorted", "code": "import heapq\nresult = top_k([3, 1, 2], k=3)\nassert result == [3, 2, 1]"},
+    {"name": "k larger than length returns all", "code": "import heapq\nresult = top_k([5, 3], k=10)\nassert sorted(result, reverse=True) == [5, 3]"},
+    {"name": "Handles duplicates", "code": "import heapq\nresult = top_k([1, 1, 1, 2, 2, 2], k=4)\nassert result == [2, 2, 2, 1], f'Got {result}'"}
+  ],
+  "hints": ["heapq.heapify converts a list to a min-heap in O(n)", "heapreplace(heap, x): pop min and push x in O(log k)", "Return sorted(heap, reverse=True) for descending order"],
+  "related_problems": ["25.4", "25.7", "25.11"]
+}

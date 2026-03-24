@@ -1,0 +1,28 @@
+{
+  "id": "3.2",
+  "title": "Linear Regression (Gradient Descent)",
+  "difficulty": "Easy",
+  "category": "Classic ML Algorithms",
+  "tags": ["numpy", "from-scratch", "optimization", "gradient-descent"],
+  "description": "Implement linear regression trained via **gradient descent** on the Mean Squared Error (MSE) loss.\n\nLoss: `L = (1/N) * sum((y_pred - y)^2)`\n\nGradients:\n- `dL/dw = (2/N) * X^T @ (y_pred - y)`\n- `dL/db = (2/N) * sum(y_pred - y)`\n\nYour implementation should:\n- `fit(X, y, lr, epochs)`: train via gradient descent\n- `predict(X)`: return predictions\n\n**Shapes:**\n- X: (n_samples, n_features)\n- y: (n_samples,)\n- predict returns: (n_samples,)",
+  "constraints": [
+    "Use only numpy — no sklearn or scipy",
+    "Gradient computation must be vectorized (no Python loops over samples)",
+    "Initialize weights to zeros",
+    "Track bias separately (do not add bias column to X)"
+  ],
+  "starter_code": "import numpy as np\n\nclass LinearRegressionGD:\n    def __init__(self, n_features: int):\n        \"\"\"Initialize weights and bias to zero.\"\"\"\n        pass\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return linear predictions.\"\"\"\n        pass\n\n    def fit(self, X: np.ndarray, y: np.ndarray, lr: float = 0.01, epochs: int = 1000) -> None:\n        \"\"\"Train using gradient descent on MSE loss.\n\n        Args:\n            X: (n_samples, n_features)\n            y: (n_samples,)\n            lr: learning rate\n            epochs: number of gradient descent steps\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass LinearRegressionGD:\n    def __init__(self, n_features: int):\n        self.w = np.zeros(n_features)\n        self.b = 0.0\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        return X @ self.w + self.b\n\n    def fit(self, X: np.ndarray, y: np.ndarray, lr: float = 0.01, epochs: int = 1000) -> None:\n        N = X.shape[0]\n        for _ in range(epochs):\n            y_pred = self.predict(X)\n            error = y_pred - y          # (N,)\n            dw = (2 / N) * (X.T @ error)  # (n_features,)\n            db = (2 / N) * np.sum(error)\n            self.w -= lr * dw\n            self.b -= lr * db",
+  "explanation": "**Key concepts:**\n\n1. **MSE gradient w.r.t. w:** dL/dw = (2/N) * X^T (y_pred - y). This is a (n_features,) vector — one gradient per weight.\n\n2. **MSE gradient w.r.t. b:** dL/db = (2/N) * sum(y_pred - y). The bias gradient is the mean error.\n\n3. **Vectorization:** X.T @ error computes all weight gradients in a single matrix multiply — never loop over samples.\n\n4. **Convergence:** Learning rate controls step size. Too large → diverge. Too small → slow convergence. Feature scaling (standardization) helps.\n\n5. **Complexity:** O(N*D) per epoch. Better than normal equation when D is large.\n\n**Interview angle:** Be ready to derive gradients from scratch, explain the trade-off vs closed-form, and discuss learning rate schedules.",
+  "test_cases": [
+    {"name": "Recovers true weights on clean data", "code": "import numpy as np\nnp.random.seed(0)\nX = np.random.randn(200, 2)\ny = 3.0 * X[:,0] - 1.5 * X[:,1] + 0.5\nmodel = LinearRegressionGD(2)\nmodel.fit(X, y, lr=0.1, epochs=2000)\nassert abs(model.w[0] - 3.0) < 0.05, f'w[0]={model.w[0]:.3f}'\nassert abs(model.w[1] - (-1.5)) < 0.05, f'w[1]={model.w[1]:.3f}'\nassert abs(model.b - 0.5) < 0.05, f'b={model.b:.3f}'"},
+    {"name": "Predict shape correct", "code": "import numpy as np\nnp.random.seed(0)\nmodel = LinearRegressionGD(3)\nmodel.fit(np.random.randn(50, 3), np.random.randn(50))\npreds = model.predict(np.random.randn(10, 3))\nassert preds.shape == (10,)"},
+    {"name": "Low MSE on noisy data", "code": "import numpy as np\nnp.random.seed(42)\nX = np.random.randn(300, 3)\ny = X @ np.array([1.0, -2.0, 0.5]) + 2.0 + 0.05 * np.random.randn(300)\nmodel = LinearRegressionGD(3)\nmodel.fit(X, y, lr=0.05, epochs=3000)\npreds = model.predict(X)\nmse = np.mean((preds - y)**2)\nassert mse < 0.01, f'MSE={mse:.4f} too high'"},
+    {"name": "Weights start at zero", "code": "import numpy as np\nmodel = LinearRegressionGD(4)\nassert np.all(model.w == 0)\nassert model.b == 0.0"}
+  ],
+  "hints": [
+    "error = y_pred - y; then dw = (2/N) * X.T @ error",
+    "The factor of 2 from the MSE derivative cancels with the 1/2 if you use (1/(2N)); both conventions work as long as you're consistent"
+  ],
+  "related_problems": ["3.1", "3.3", "3.14"]
+}

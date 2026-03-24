@@ -1,0 +1,28 @@
+{
+  "id": "14.5",
+  "title": "InfoNCE / NT-Xent Loss (SimCLR)",
+  "difficulty": "Hard",
+  "category": "Contrastive Learning",
+  "tags": ["contrastive-learning", "simclr", "infonce", "self-supervised"],
+  "description": "Implement the NT-Xent (Normalized Temperature-scaled Cross Entropy) loss used in SimCLR.\n\nGiven a batch of 2N embeddings from N pairs of augmented views:\n- Embeddings are L2-normalized\n- For anchor i, its positive is its augmented pair j\n- All other 2N-2 samples are negatives\n\n`L = -1/(2N) * sum_i log(exp(sim(i,j)/tau) / sum_{k!=i} exp(sim(i,k)/tau))`\n\nwhere `sim(u,v) = u·v` (dot product on normalized embeddings = cosine similarity).",
+  "constraints": [
+    "Input: two sets of embeddings z1, z2 each shape (N, D), already L2-normalized",
+    "Temperature tau > 0",
+    "Return scalar float"
+  ],
+  "starter_code": "import numpy as np\n\ndef nt_xent_loss(z1: np.ndarray, z2: np.ndarray, temperature: float = 0.5) -> float:\n    \"\"\"NT-Xent (SimCLR) contrastive loss.\n\n    Args:\n        z1: Normalized embeddings of view 1, shape (N, D)\n        z2: Normalized embeddings of view 2, shape (N, D)\n        temperature: Softmax temperature tau\n\n    Returns:\n        NT-Xent loss as float\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef nt_xent_loss(z1: np.ndarray, z2: np.ndarray, temperature: float = 0.5) -> float:\n    z1 = np.asarray(z1, dtype=float)\n    z2 = np.asarray(z2, dtype=float)\n    N = len(z1)\n    # Concatenate: [z1; z2] shape (2N, D)\n    z = np.concatenate([z1, z2], axis=0)  # (2N, D)\n    # Similarity matrix\n    sim = z @ z.T / temperature  # (2N, 2N)\n    # Remove self-similarity by setting diagonal to -inf\n    np.fill_diagonal(sim, -np.inf)\n    # Labels: for i in [0,N), positive is i+N; for i in [N,2N), positive is i-N\n    labels = np.concatenate([np.arange(N, 2*N), np.arange(N)])\n    # Cross entropy for each anchor\n    # log_softmax trick for numerical stability\n    sim_max = np.max(sim, axis=1, keepdims=True)\n    exp_sim = np.exp(sim - sim_max)\n    log_sum_exp = np.log(np.sum(exp_sim, axis=1)) + sim_max[:, 0]\n    positive_sim = sim[np.arange(2*N), labels] + sim_max[:, 0]  # re-add for numerics\n    # Actually compute properly:\n    # log P(positive | anchor) = sim[i, pos] - log(sum_k exp(sim[i,k]))\n    sim2 = z @ z.T / temperature\n    np.fill_diagonal(sim2, -np.inf)\n    # stable log-sum-exp per row\n    m = sim2.max(axis=1, keepdims=True)\n    lse = np.log(np.exp(sim2 - m).sum(axis=1)) + m[:, 0]\n    pos_logits = sim2[np.arange(2*N), labels]\n    loss = -np.mean(pos_logits - lse)\n    return float(loss)",
+  "explanation": "NT-Xent treats each augmented pair as a positive and all others in the batch as negatives. The temperature parameter controls the sharpness of the distribution: lower temperature means the model is forced to distinguish more finely. This loss drives the encoder to produce representations where augmented views of the same image are similar, and views of different images are dissimilar.",
+  "test_cases": [
+    {"name": "Identical pairs low loss", "code": "import numpy as np\nnp.random.seed(0)\nz = np.random.randn(4, 8)\nz = z / np.linalg.norm(z, axis=1, keepdims=True)\nloss = nt_xent_loss(z, z.copy(), temperature=0.5)\nassert loss < 1.0"},
+    {"name": "Random embeddings higher loss", "code": "import numpy as np\nnp.random.seed(1)\nz1 = np.random.randn(4, 8)\nz2 = np.random.randn(4, 8)\nz1 /= np.linalg.norm(z1, axis=1, keepdims=True)\nz2 /= np.linalg.norm(z2, axis=1, keepdims=True)\nloss = nt_xent_loss(z1, z2)\nassert loss > 0"},
+    {"name": "Result is positive", "code": "import numpy as np\nnp.random.seed(3)\nz1 = np.random.randn(8, 16)\nz2 = np.random.randn(8, 16)\nz1 /= np.linalg.norm(z1, axis=1, keepdims=True)\nz2 /= np.linalg.norm(z2, axis=1, keepdims=True)\nassert nt_xent_loss(z1, z2) >= 0"},
+    {"name": "Lower temperature makes loss sharper", "code": "import numpy as np\nnp.random.seed(5)\nz1 = np.random.randn(4, 8)\nz2 = np.random.randn(4, 8)\nz1 /= np.linalg.norm(z1, axis=1, keepdims=True)\nz2 /= np.linalg.norm(z2, axis=1, keepdims=True)\nloss_low = nt_xent_loss(z1, z2, temperature=0.1)\nloss_high = nt_xent_loss(z1, z2, temperature=1.0)\nassert isinstance(loss_low, float) and isinstance(loss_high, float)"}
+  ],
+  "hints": [
+    "Concatenate z1 and z2 to form 2N embeddings",
+    "Positive for anchor i (in first half) is i+N",
+    "Use log-sum-exp trick for numerical stability"
+  ],
+  "related_problems": ["14.6", "14.7", "14.4"]
+}

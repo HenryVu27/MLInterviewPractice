@@ -1,0 +1,20 @@
+{
+  "id": "28.6",
+  "title": "Target Encoding",
+  "difficulty": "Medium",
+  "category": "Feature Engineering",
+  "tags": ["preprocessing", "categorical", "encoding", "target-encoding"],
+  "description": "Implement Target Encoding with smoothing for high-cardinality categorical features.\n\nTarget encoding replaces each category with its smoothed mean target value:\n```\nsmoothed_mean(c) = (n_c * mean_c + m * global_mean) / (n_c + m)\n```\nwhere:\n- n_c = number of samples with category c\n- mean_c = mean target for category c\n- global_mean = overall mean target\n- m = smoothing parameter (higher m = stronger regularization toward global mean)\n\nUnseen categories at transform time get the global mean.\n\n**Args for fit:** X (categorical labels), y (target values), m (smoothing factor)\n\nReturn encoded values as float array.",
+  "constraints": ["Use numpy only", "Smoothing prevents target leakage in cross-validation", "Unseen categories use global mean"],
+  "starter_code": "import numpy as np\n\nclass TargetEncoder:\n    def fit(self, X: np.ndarray, y: np.ndarray, m: float = 10.0) -> 'TargetEncoder':\n        \"\"\"Learn smoothed target means per category.\"\"\"\n        pass\n    \n    def transform(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Encode categories using learned target means.\"\"\"\n        pass\n    \n    def fit_transform(self, X: np.ndarray, y: np.ndarray, m: float = 10.0) -> np.ndarray:\n        pass",
+  "solution_code": "import numpy as np\n\nclass TargetEncoder:\n    def fit(self, X: np.ndarray, y: np.ndarray, m: float = 10.0) -> 'TargetEncoder':\n        self.global_mean_ = float(np.mean(y))\n        self.mapping_ = {}\n        for cat in set(X):\n            mask = (X == cat)\n            n_c = mask.sum()\n            mean_c = y[mask].mean()\n            self.mapping_[cat] = (n_c * mean_c + m * self.global_mean_) / (n_c + m)\n        return self\n    \n    def transform(self, X: np.ndarray) -> np.ndarray:\n        return np.array([self.mapping_.get(c, self.global_mean_) for c in X], dtype=float)\n    \n    def fit_transform(self, X: np.ndarray, y: np.ndarray, m: float = 10.0) -> np.ndarray:\n        return self.fit(X, y, m).transform(X)",
+  "explanation": "**Key concepts:**\n\n1. **Target encoding:** Replaces a category with its mean target value — powerful for high-cardinality categoricals.\n\n2. **Smoothing:** Without smoothing, rare categories have noisy estimates. Smoothing pulls rare categories toward the global mean.\n\n3. **Target leakage:** When encoding training data, use k-fold target encoding to avoid leakage (each fold encodes using out-of-fold statistics).\n\n4. **vs One-hot:** Target encoding produces one column vs K columns, making it much more compact.",
+  "test_cases": [
+    {"name": "Encoding reflects target means", "code": "X = np.array(['a', 'a', 'b', 'b', 'b'])\ny = np.array([1.0, 3.0, 10.0, 10.0, 10.0])\nenc = TargetEncoder()\nenc.fit(X, y, m=0)\nresult = enc.transform(np.array(['a', 'b']))\nassert abs(result[0] - 2.0) < 1e-6 and abs(result[1] - 10.0) < 1e-6"},
+    {"name": "Smoothing pulls toward global mean", "code": "X = np.array(['rare', 'a', 'a', 'a', 'a'])\ny = np.array([100.0, 0.0, 0.0, 0.0, 0.0])\nenc = TargetEncoder()\nenc.fit(X, y, m=10.0)\n# 'rare' has n=1, mean=100; global_mean=20; smoothed = (1*100 + 10*20)/11 ~ 27.27\nassert enc.mapping_['rare'] < 50.0, 'Smoothing should pull rare cat toward global mean'"},
+    {"name": "Unseen category gets global mean", "code": "X = np.array(['a', 'b'])\ny = np.array([1.0, 3.0])\nenc = TargetEncoder()\nenc.fit(X, y, m=0)\nresult = enc.transform(np.array(['c']))\nassert abs(result[0] - 2.0) < 1e-6, 'Unseen should get global mean'"},
+    {"name": "Output shape correct", "code": "X = np.array(['x', 'y', 'z', 'x'])\ny = np.array([1.0, 2.0, 3.0, 4.0])\nenc = TargetEncoder()\nresult = enc.fit_transform(X, y)\nassert result.shape == (4,)"}
+  ],
+  "hints": ["global_mean = np.mean(y)", "For each category: mask = (X == cat), then compute n_c and mean_c", "smoothed = (n_c * mean_c + m * global_mean) / (n_c + m)"],
+  "related_problems": ["28.4", "28.5", "28.13"]
+}

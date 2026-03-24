@@ -1,0 +1,27 @@
+{
+  "id": "13.2",
+  "title": "Precision, Recall, F1 (Binary)",
+  "difficulty": "Easy",
+  "category": "Evaluation Metrics",
+  "tags": ["classification", "metrics", "confusion-matrix"],
+  "description": "Given a binary confusion matrix (TP, FP, FN, TN), compute Precision, Recall, and F1 score.\n\n**Formulas:**\n- `Precision = TP / (TP + FP)`\n- `Recall = TP / (TP + FN)`\n- `F1 = 2 * Precision * Recall / (Precision + Recall)`\n\nReturn 0.0 for any metric where the denominator is zero.",
+  "constraints": [
+    "Handle zero denominators gracefully",
+    "Return a tuple (precision, recall, f1)",
+    "All values in [0, 1]"
+  ],
+  "starter_code": "def precision_recall_f1(TP: int, FP: int, FN: int, TN: int) -> tuple[float, float, float]:\n    \"\"\"Compute precision, recall, and F1 from a binary confusion matrix.\n\n    Returns:\n        (precision, recall, f1)\n    \"\"\"\n    pass",
+  "solution_code": "def precision_recall_f1(TP: int, FP: int, FN: int, TN: int) -> tuple[float, float, float]:\n    precision = TP / (TP + FP) if (TP + FP) > 0 else 0.0\n    recall = TP / (TP + FN) if (TP + FN) > 0 else 0.0\n    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0\n    return precision, recall, f1",
+  "explanation": "Precision measures how many predicted positives are truly positive (avoids false alarms). Recall measures how many actual positives are caught (avoids misses). F1 is the harmonic mean, balancing both. The harmonic mean penalizes extreme imbalance between precision and recall more severely than the arithmetic mean.",
+  "test_cases": [
+    {"name": "Perfect classifier", "code": "p, r, f1 = precision_recall_f1(10, 0, 0, 5)\nassert p == 1.0 and r == 1.0 and f1 == 1.0"},
+    {"name": "Typical case", "code": "p, r, f1 = precision_recall_f1(8, 2, 4, 6)\nassert abs(p - 0.8) < 1e-9 and abs(r - 8/12) < 1e-9"},
+    {"name": "No positives predicted", "code": "p, r, f1 = precision_recall_f1(0, 0, 5, 10)\nassert p == 0.0 and r == 0.0 and f1 == 0.0"},
+    {"name": "No true positives exist", "code": "p, r, f1 = precision_recall_f1(0, 3, 0, 7)\nassert p == 0.0 and r == 0.0"}
+  ],
+  "hints": [
+    "Check for zero denominator before dividing",
+    "F1 is harmonic mean of precision and recall"
+  ],
+  "related_problems": ["13.3", "13.4", "13.1"]
+}

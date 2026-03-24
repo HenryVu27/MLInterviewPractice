@@ -1,0 +1,21 @@
+{
+  "id": "6.3",
+  "title": "Nesterov Accelerated Gradient (NAG)",
+  "difficulty": "Medium",
+  "category": "Optimization Algorithms",
+  "tags": ["numpy", "from-scratch", "optimization"],
+  "description": "Implement Nesterov Accelerated Gradient (NAG) optimizer.\n\nInstead of computing the gradient at the current position, NAG computes it at the look-ahead position:\n\nStandard form:\n```\nv_prev = v\nv = beta * v - lr * grad(w + beta*v)\nw = w + v\n```\n\nEquivalent update (used when gradient is given at current w, common in practice):\n```\nv = beta * v + grad\nw = w - lr * (grad + beta * v)\n```\n\nUse the second equivalent form (takes grad at current w).\n\n**Why this matters:** NAG has better theoretical convergence for convex functions (O(1/t^2) vs O(1/t) for SGD). The look-ahead prevents the optimizer from overshooting.",
+  "constraints": ["Use numpy only", "Implement as class with __init__(lr, beta=0.9) and step(params, grads)", "Use the equivalent form: v = beta*v + grad; w -= lr*(grad + beta*v)", "Update params in-place"],
+  "starter_code": "import numpy as np\n\nclass NAG:\n    def __init__(self, lr: float = 0.01, beta: float = 0.9):\n        \"\"\"Nesterov Accelerated Gradient optimizer.\n        \n        Args:\n            lr: Learning rate\n            beta: Momentum coefficient (default 0.9)\n        \"\"\"\n        pass\n    \n    def step(self, params: list[np.ndarray], grads: list[np.ndarray]) -> None:\n        \"\"\"Update parameters with Nesterov momentum.\n        \n        Args:\n            params: List of parameter arrays\n            grads: List of gradient arrays\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass NAG:\n    def __init__(self, lr: float = 0.01, beta: float = 0.9):\n        self.lr = lr\n        self.beta = beta\n        self.velocity = None\n    \n    def step(self, params: list[np.ndarray], grads: list[np.ndarray]) -> None:\n        if self.velocity is None:\n            self.velocity = [np.zeros_like(p) for p in params]\n        for v, p, g in zip(self.velocity, params, grads):\n            v *= self.beta\n            v += g\n            p -= self.lr * (g + self.beta * v)",
+  "explanation": "**Key concepts:**\n\n1. **Look-ahead intuition**: NAG evaluates the gradient at w + beta*v (the projected future position). This gives the optimizer a 'preview' of where it's heading.\n\n2. **Equivalent form**: The form v = beta*v + g; w -= lr*(g + beta*v) is algebraically equivalent to the standard form when gradient is computed at current w.\n\n3. **vs Momentum**: In momentum, the update is lr*v (old + new gradient). In NAG, the update is lr*(g + beta*v) — extra correction from the current gradient on top of the look-ahead.\n\n4. **Convergence**: For convex functions, NAG achieves O(1/k^2) convergence; standard momentum achieves O(1/k).",
+  "test_cases": [
+    {"name": "Minimizes quadratic", "code": "x = np.array([10.0])\nopt = NAG(lr=0.05, beta=0.9)\nfor _ in range(100):\n    g = np.array([2 * x[0]])\n    opt.step([x], [g])\nassert abs(x[0]) < 0.1, f'Expected convergence near 0, got {x[0]}'"},
+    {"name": "Velocity initialized to zeros on first step", "code": "x = np.array([0.0])\nopt = NAG(lr=0.1, beta=0.9)\nassert opt.velocity is None\nopt.step([x], [np.array([1.0])])\nassert opt.velocity is not None"},
+    {"name": "Update with beta=0 reduces to SGD", "code": "x1 = np.array([5.0])\nx2 = np.array([5.0])\ng = np.array([3.0])\nNAG(lr=0.2, beta=0.0).step([x1], [g.copy()])\nx2 -= 0.2 * g\nnp.testing.assert_allclose(x1, x2)"},
+    {"name": "Parameters updated in-place", "code": "x = np.array([4.0])\nxid = id(x)\nNAG(lr=0.1).step([x], [np.array([1.0])])\nassert id(x) == xid"},
+    {"name": "Second step uses accumulated velocity", "code": "x = np.array([0.0])\nopt = NAG(lr=0.1, beta=0.9)\nopt.step([x], [np.array([1.0])])\nv1 = opt.velocity[0].copy()\nopt.step([x], [np.array([1.0])])\nassert opt.velocity[0][0] != v1[0], 'Velocity should accumulate'}
+  ],
+  "hints": ["v = beta*v + g; then p -= lr * (g + beta*v)", "This is the Sutton-style reformulation of NAG that works when the gradient is given at the current, not look-ahead, position"],
+  "related_problems": ["6.2", "6.4", "6.6"]
+}

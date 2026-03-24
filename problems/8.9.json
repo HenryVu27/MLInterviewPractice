@@ -1,0 +1,46 @@
+{
+  "id": "8.9",
+  "title": "Transposed Convolution (Deconvolution)",
+  "difficulty": "Hard",
+  "category": "Convolutional Neural Networks",
+  "tags": ["transposed-conv", "deconvolution", "upsampling", "generative"],
+  "description": "Implement a transposed convolution (also called fractionally-strided convolution or deconvolution), used for upsampling in networks like U-Net and GANs.\n\nA transposed conv with stride s upsamples the spatial dimensions:\n```\nH_out = (H - 1) * stride - 2*padding + kH\nW_out = (W - 1) * stride - 2*padding + kW\n```\n\nThe naive implementation: for each input pixel, scatter-add the kernel (scaled by input value) into the output:\n```\nfor each (n, ci, i, j):\n    output[n, :, i*stride:i*stride+kH, j*stride:j*stride+kW] += x[n,ci,i,j] * W[ci,:,:,:]\n```\n\nInput: `(N, C_in, H, W)`, Kernel: `(C_in, C_out, kH, kW)`, Bias: `(C_out,)`",
+  "constraints": [
+    "Use numpy only",
+    "Input NCHW, kernel (C_in, C_out, kH, kW)",
+    "Support stride and padding",
+    "Padding crops the output (output padding = 0)",
+    "Return output (N, C_out, H_out, W_out)"
+  ],
+  "starter_code": "import numpy as np\n\ndef conv_transpose2d(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n                     stride: int = 1, padding: int = 0) -> np.ndarray:\n    \"\"\"Transposed 2D convolution (upsampling).\n    \n    Args:\n        x: Input (N, C_in, H, W)\n        W: Kernel (C_in, C_out, kH, kW)\n        b: Bias (C_out,)\n        stride: Upsampling factor\n        padding: Crops the output on each side\n    \n    Returns:\n        Output (N, C_out, H_out, W_out)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef conv_transpose2d(x: np.ndarray, W: np.ndarray, b: np.ndarray,\n                     stride: int = 1, padding: int = 0) -> np.ndarray:\n    N, C_in, H, W_in = x.shape\n    _, C_out, kH, kW = W.shape\n    H_out = (H - 1) * stride - 2 * padding + kH\n    W_out = (W_in - 1) * stride - 2 * padding + kW\n    # Build full output before padding crop\n    H_full = (H - 1) * stride + kH\n    W_full = (W_in - 1) * stride + kW\n    out_full = np.zeros((N, C_out, H_full, W_full), dtype=x.dtype)\n    for n in range(N):\n        for ci in range(C_in):\n            for i in range(H):\n                for j in range(W_in):\n                    h_start = i * stride\n                    w_start = j * stride\n                    out_full[n, :, h_start:h_start+kH, w_start:w_start+kW] += \\\n                        x[n, ci, i, j] * W[ci]  # W[ci]: (C_out, kH, kW)\n    if padding > 0:\n        out_full = out_full[:, :, padding:-padding, padding:-padding]\n    out_full += b.reshape(1, C_out, 1, 1)\n    return out_full",
+  "explanation": "**Key concepts:**\n\n1. **Scatter interpretation:** Each input value x[n,ci,i,j] contributes to a kH x kW region of the output starting at (i*stride, j*stride).\n\n2. **Output size:** `H_out = (H-1)*stride - 2*padding + kH`. With stride=2 and 1x1 kernel, this doubles the spatial size.\n\n3. **Padding:** Unlike regular conv where padding adds zeros, transposed conv padding *crops* the output.\n\n4. **Not a true inverse:** Transposed conv is the transpose of conv (same as the backward pass of conv), but not its mathematical inverse (hence 'transposed' not 'inverse').\n\n5. **Use in U-Net:** Used in decoder path to upsample feature maps to match encoder resolution.",
+  "test_cases": [
+    {
+      "name": "Identity: stride=1 pad=0 3x3 kernel on 1x1",
+      "code": "import numpy as np\nx = np.ones((1, 1, 3, 3))\nW = np.ones((1, 1, 3, 3))\nb = np.zeros(1)\nout = conv_transpose2d(x, W, b, stride=1, padding=0)\nassert out.shape == (1, 1, 5, 5)"
+    },
+    {
+      "name": "Stride=2 upsamples spatial dims",
+      "code": "import numpy as np\nx = np.ones((1, 1, 3, 3))\nW = np.ones((1, 1, 3, 3))\nb = np.zeros(1)\nout = conv_transpose2d(x, W, b, stride=2, padding=0)\n# H_out = (3-1)*2 + 3 = 7\nassert out.shape == (1, 1, 7, 7)"
+    },
+    {
+      "name": "Single input pixel scatters to kernel region",
+      "code": "import numpy as np\nx = np.zeros((1, 1, 1, 1))\nx[0, 0, 0, 0] = 2.0\nW = np.ones((1, 1, 3, 3))\nb = np.zeros(1)\nout = conv_transpose2d(x, W, b, stride=1, padding=0)\nassert out.shape == (1, 1, 3, 3)\nassert np.all(out == 2.0)"
+    },
+    {
+      "name": "Multi-channel output",
+      "code": "import numpy as np\nx = np.ones((2, 4, 4, 4))\nW = np.ones((4, 8, 3, 3))\nb = np.zeros(8)\nout = conv_transpose2d(x, W, b, stride=2)\nassert out.shape == (2, 8, 9, 9)"
+    },
+    {
+      "name": "Bias is added",
+      "code": "import numpy as np\nx = np.zeros((1, 1, 2, 2))\nW = np.zeros((1, 2, 3, 3))\nb = np.array([1.0, 2.0])\nout = conv_transpose2d(x, W, b)\nassert np.allclose(out[0, 0], 1.0)\nassert np.allclose(out[0, 1], 2.0)"
+    }
+  ],
+  "hints": [
+    "For each input position (i,j), add x[n,ci,i,j]*W[ci] to output at position (i*stride, j*stride)",
+    "H_full = (H-1)*stride + kH before padding crop",
+    "Padding crops: out[:,:,padding:-padding, padding:-padding]"
+  ],
+  "related_problems": ["8.1", "8.8", "8.10"]
+}

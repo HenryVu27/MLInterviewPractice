@@ -1,0 +1,20 @@
+{
+  "id": "28.9",
+  "title": "Feature Hashing",
+  "difficulty": "Medium",
+  "category": "Feature Engineering",
+  "tags": ["preprocessing", "hashing", "high-cardinality", "feature-engineering"],
+  "description": "Implement the hashing trick (feature hashing) for high-cardinality categorical or text features.\n\nGiven a list of string tokens (one list per sample), map each token to a feature index using:\n```\nindex = hash(token) % n_features\n```\n\nUse a signed hash to reduce collisions' impact:\n- sign = +1 if hash(token) // n_features is even, else -1\n- Output[i, index] += sign * value (value=1 for presence)\n\nReturn a (n_samples, n_features) matrix.\n\n**Example:**\n```\ntokens = [['hello', 'world'], ['foo', 'hello']]\nn_features = 8\n# hash each token, map to column, add signed 1\n```\n\nUse Python's built-in `hash()` function.",
+  "constraints": ["Use numpy only + Python built-in hash()", "n_features is a power of 2 (e.g., 16, 32, 64)", "Signed hash: sign based on (hash(token) // n_features) % 2"],
+  "starter_code": "import numpy as np\n\ndef feature_hashing(tokens: list, n_features: int) -> np.ndarray:\n    \"\"\"Apply hashing trick to list of token lists.\n    \n    Args:\n        tokens: List of lists of strings, one per sample\n        n_features: Number of hash buckets\n    \n    Returns:\n        X: Feature matrix of shape (n_samples, n_features)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef feature_hashing(tokens: list, n_features: int) -> np.ndarray:\n    n_samples = len(tokens)\n    X = np.zeros((n_samples, n_features))\n    \n    for i, token_list in enumerate(tokens):\n        for token in token_list:\n            h = hash(token)\n            idx = abs(h) % n_features\n            sign = 1 if (h // n_features) % 2 == 0 else -1\n            X[i, idx] += sign\n    \n    return X",
+  "explanation": "**Key concepts:**\n\n1. **Hashing trick:** Maps tokens to fixed-size vectors without needing a vocabulary. Memory O(n_features) regardless of vocabulary size.\n\n2. **Signed hashing:** The sign trick ensures E[collision bias] = 0, making the inner product of hashed vectors an unbiased estimator of the true inner product.\n\n3. **Collisions:** Multiple tokens may map to the same bucket (collision). This is a trade-off: no collisions require knowing the vocabulary size in advance.\n\n4. **Used in:** Online learning, streaming data, very large NLP vocabularies (e.g., spam filtering).",
+  "test_cases": [
+    {"name": "Output shape correct", "code": "tokens = [['a', 'b'], ['c'], ['a', 'c', 'd']]\nX = feature_hashing(tokens, 16)\nassert X.shape == (3, 16)"},
+    {"name": "Same token same column", "code": "tokens = [['hello'], ['hello']]\nX = feature_hashing(tokens, 32)\nnonzero_0 = np.where(X[0] != 0)[0]\nnonzero_1 = np.where(X[1] != 0)[0]\nassert list(nonzero_0) == list(nonzero_1), 'Same token should hash to same column'"},
+    {"name": "Empty token list gives zero row", "code": "tokens = [[], ['a']]\nX = feature_hashing(tokens, 16)\nassert np.all(X[0] == 0), 'Empty token list should give zero row'"},
+    {"name": "Values are in {-1, 0, 1} for single tokens", "code": "tokens = [['a'], ['b'], ['c']]\nX = feature_hashing(tokens, 64)\nfor row in X:\n    nonzero = row[row != 0]\n    assert all(v in [-1.0, 1.0] for v in nonzero), 'Single token should give +/-1'"}
+  ],
+  "hints": ["h = hash(token); idx = abs(h) % n_features", "sign = 1 if (h // n_features) % 2 == 0 else -1", "Initialize X to zeros, accumulate values"],
+  "related_problems": ["28.4", "28.5", "28.13"]
+}

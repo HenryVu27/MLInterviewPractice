@@ -1,0 +1,20 @@
+{
+  "id": "27.7",
+  "title": "Value Iteration",
+  "difficulty": "Medium",
+  "category": "RL Basics",
+  "tags": ["reinforcement-learning", "dynamic-programming", "value-iteration", "mdp"],
+  "description": "Implement Value Iteration for a finite MDP.\n\nGiven transition probabilities P[s,a,s'] and rewards R[s,a], compute the optimal value function V* using the Bellman optimality operator:\n```\nV(s) <- max_a sum_{s'} P[s,a,s'] * (R[s,a] + gamma * V(s'))\n```\n\nIterate until max|V_new - V_old| < theta (convergence threshold).\n\nReturn both the optimal value function V and the optimal policy pi extracted by:\n```\npi(s) = argmax_a [ R[s,a] + gamma * sum_{s'} P[s,a,s'] * V(s') ]\n```\n\n**Args:** P (shape: n_states x n_actions x n_states), R (shape: n_states x n_actions), gamma, theta",
+  "constraints": ["Use numpy only", "Iterate until delta < theta", "Return (V, pi) as a tuple of numpy arrays"],
+  "starter_code": "import numpy as np\n\ndef value_iteration(P: np.ndarray, R: np.ndarray, gamma: float, theta: float = 1e-6) -> tuple:\n    \"\"\"Value Iteration for finite MDP.\n    \n    Args:\n        P: Transition probabilities, shape (n_states, n_actions, n_states)\n        R: Rewards, shape (n_states, n_actions)\n        gamma: Discount factor\n        theta: Convergence threshold\n    \n    Returns:\n        (V, pi): Optimal value function and policy\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef value_iteration(P: np.ndarray, R: np.ndarray, gamma: float, theta: float = 1e-6) -> tuple:\n    n_states, n_actions, _ = P.shape\n    V = np.zeros(n_states)\n    \n    while True:\n        V_new = np.zeros(n_states)\n        for s in range(n_states):\n            q_values = np.array([R[s, a] + gamma * np.dot(P[s, a], V)\n                                  for a in range(n_actions)])\n            V_new[s] = np.max(q_values)\n        \n        delta = np.max(np.abs(V_new - V))\n        V = V_new\n        if delta < theta:\n            break\n    \n    pi = np.array([np.argmax([R[s, a] + gamma * np.dot(P[s, a], V)\n                               for a in range(n_actions)])\n                   for s in range(n_states)], dtype=int)\n    \n    return V, pi",
+  "explanation": "**Key concepts:**\n\n1. **Bellman optimality equation:** V*(s) = max_a [R(s,a) + gamma * sum_s' P(s'|s,a) V*(s')].\n\n2. **Contraction mapping:** The Bellman operator is a gamma-contraction, guaranteeing convergence.\n\n3. **Policy extraction:** After V* is found, extract pi*(s) = argmax_a Q*(s,a).\n\n4. **Complexity:** O(S^2 * A) per iteration.",
+  "test_cases": [
+    {"name": "V shape and pi shape correct", "code": "P = np.ones((3, 2, 3)) / 3\nR = np.zeros((3, 2))\nV, pi = value_iteration(P, R, 0.9)\nassert V.shape == (3,) and pi.shape == (3,)"},
+    {"name": "Higher reward leads to higher V", "code": "P = np.zeros((2, 1, 2))\nP[0, 0, 1] = 1.0\nP[1, 0, 1] = 1.0\nR = np.array([[0.0], [1.0]])\nV, pi = value_iteration(P, R, 0.9)\nassert V[1] > V[0], 'State with reward should have higher V'"},
+    {"name": "Returns tuple of numpy arrays", "code": "P = np.ones((2, 2, 2)) / 2\nR = np.zeros((2, 2))\nV, pi = value_iteration(P, R, 0.9)\nassert isinstance(V, np.ndarray) and isinstance(pi, np.ndarray)"},
+    {"name": "Zero gamma gives immediate reward only", "code": "P = np.zeros((2, 2, 2))\nP[0, 0, 0] = 1; P[0, 1, 1] = 1\nP[1, 0, 0] = 1; P[1, 1, 1] = 1\nR = np.array([[0.0, 5.0], [3.0, 1.0]])\nV, pi = value_iteration(P, R, 0.0)\nassert pi[0] == 1, 'State 0 should choose action 1 (reward=5)'\nassert pi[1] == 0, 'State 1 should choose action 0 (reward=3)'"}
+  ],
+  "hints": ["Q(s,a) = R[s,a] + gamma * P[s,a,:] @ V", "np.dot(P[s,a], V) gives expected next value", "Extract policy after V has converged"],
+  "related_problems": ["27.3", "27.4", "27.11"]
+}

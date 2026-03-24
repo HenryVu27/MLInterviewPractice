@@ -1,0 +1,27 @@
+{
+  "id": "14.9",
+  "title": "Cosine Embedding Loss",
+  "difficulty": "Easy",
+  "category": "Contrastive Learning",
+  "tags": ["contrastive-learning", "cosine-similarity", "metric-learning"],
+  "description": "Implement Cosine Embedding Loss for learning similarity with cosine distance.\n\nFor each pair with label y (1=similar, -1=dissimilar):\n- If y=1:  `L = 1 - cos(z1, z2)`\n- If y=-1: `L = max(0, cos(z1, z2) - margin)`\n\n`cos(u, v) = (u · v) / (||u|| * ||v||)`\n\nReturn mean loss over the batch.",
+  "constraints": [
+    "Labels are +1 (similar) or -1 (dissimilar)",
+    "margin in [0, 1], default 0.0",
+    "Return scalar float"
+  ],
+  "starter_code": "import numpy as np\n\ndef cosine_embedding_loss(z1: np.ndarray, z2: np.ndarray, labels: np.ndarray, margin: float = 0.0) -> float:\n    \"\"\"Compute cosine embedding loss.\n\n    Args:\n        z1: Embeddings, shape (B, D)\n        z2: Embeddings, shape (B, D)\n        labels: +1 for similar, -1 for dissimilar, shape (B,)\n        margin: Margin for dissimilar pairs\n\n    Returns:\n        Mean cosine embedding loss\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef cosine_embedding_loss(z1: np.ndarray, z2: np.ndarray, labels: np.ndarray, margin: float = 0.0) -> float:\n    z1 = np.asarray(z1, dtype=float)\n    z2 = np.asarray(z2, dtype=float)\n    labels = np.asarray(labels, dtype=float)\n    cos_sim = np.sum(z1 * z2, axis=1) / (\n        np.linalg.norm(z1, axis=1) * np.linalg.norm(z2, axis=1) + 1e-12\n    )\n    pos_loss = 1 - cos_sim\n    neg_loss = np.maximum(0, cos_sim - margin)\n    loss = np.where(labels == 1, pos_loss, neg_loss)\n    return float(np.mean(loss))",
+  "explanation": "Cosine Embedding Loss is useful when the magnitude of embeddings is not informative and only direction matters. Similar pairs are pulled to have cosine similarity close to 1 (loss = 1 - cos → 0). Dissimilar pairs are pushed to have cosine similarity below the margin. It is simpler than contrastive loss in Euclidean space and invariant to embedding scale.",
+  "test_cases": [
+    {"name": "Identical similar pair loss=0", "code": "import numpy as np\nz = np.array([[1.0,0.0,0.0]])\nloss = cosine_embedding_loss(z, z, np.array([1]))\nassert abs(loss) < 1e-9"},
+    {"name": "Orthogonal similar pair loss=1", "code": "import numpy as np\nz1 = np.array([[1.0,0.0]])\nz2 = np.array([[0.0,1.0]])\nloss = cosine_embedding_loss(z1, z2, np.array([1]))\nassert abs(loss - 1.0) < 1e-9"},
+    {"name": "Orthogonal dissimilar pair loss=0 (margin=0)", "code": "import numpy as np\nz1 = np.array([[1.0,0.0]])\nz2 = np.array([[0.0,1.0]])\nloss = cosine_embedding_loss(z1, z2, np.array([-1]), margin=0.0)\nassert abs(loss) < 1e-9"},
+    {"name": "Similar pair high cosine = low loss", "code": "import numpy as np\nz1 = np.array([[1.0,0.1]])\nz2 = np.array([[1.0,0.05]])\nloss = cosine_embedding_loss(z1, z2, np.array([1]))\nassert loss < 0.05"}
+  ],
+  "hints": [
+    "cos_sim = sum(z1*z2) / (||z1|| * ||z2||) per sample",
+    "Use np.where to select between pos_loss and neg_loss based on label"
+  ],
+  "related_problems": ["14.1", "14.2", "14.10"]
+}

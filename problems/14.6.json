@@ -1,0 +1,29 @@
+{
+  "id": "14.6",
+  "title": "CLIP-style Symmetric Contrastive Loss",
+  "difficulty": "Hard",
+  "category": "Contrastive Learning",
+  "tags": ["contrastive-learning", "clip", "cross-modal", "symmetric"],
+  "description": "Implement the symmetric cross-modal contrastive loss used in CLIP.\n\nGiven N image embeddings `I` and N text embeddings `T` (both L2-normalized):\n\n1. Compute similarity matrix `S = I @ T.T / temperature`  (shape N x N)\n2. Diagonal entries are the positive pairs\n3. Image-to-text loss: cross-entropy on rows with diagonal as positive\n4. Text-to-image loss: cross-entropy on columns with diagonal as positive\n\n`L = (L_I2T + L_T2I) / 2`",
+  "constraints": [
+    "Both I and T are L2-normalized, shape (N, D)",
+    "Temperature tau > 0",
+    "Return scalar float"
+  ],
+  "starter_code": "import numpy as np\n\ndef clip_loss(image_emb: np.ndarray, text_emb: np.ndarray, temperature: float = 0.07) -> float:\n    \"\"\"Symmetric CLIP contrastive loss.\n\n    Args:\n        image_emb: L2-normalized image embeddings, shape (N, D)\n        text_emb: L2-normalized text embeddings, shape (N, D)\n        temperature: Logit scale temperature\n\n    Returns:\n        Symmetric contrastive loss\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef clip_loss(image_emb: np.ndarray, text_emb: np.ndarray, temperature: float = 0.07) -> float:\n    image_emb = np.asarray(image_emb, dtype=float)\n    text_emb = np.asarray(text_emb, dtype=float)\n    N = len(image_emb)\n    logits = image_emb @ text_emb.T / temperature  # (N, N)\n    labels = np.arange(N)\n    def cross_entropy_rows(logits, labels):\n        # stable softmax cross-entropy per row\n        m = logits.max(axis=1, keepdims=True)\n        log_sum_exp = np.log(np.exp(logits - m).sum(axis=1)) + m[:, 0]\n        return float(np.mean(log_sum_exp - logits[np.arange(N), labels]))\n    l_i2t = cross_entropy_rows(logits, labels)\n    l_t2i = cross_entropy_rows(logits.T, labels)\n    return (l_i2t + l_t2i) / 2.0",
+  "explanation": "CLIP trains a vision encoder and a text encoder jointly using symmetric contrastive loss. Each image should match its corresponding text and mismatch all others. The symmetric formulation ensures both encoders are trained equally. Low temperature (e.g., 0.07) sharpens the distribution, requiring precise matching. This loss scales efficiently: one forward pass per batch yields N^2 negative pairs.",
+  "test_cases": [
+    {"name": "Identical embeddings low loss", "code": "import numpy as np\nnp.random.seed(0)\nz = np.random.randn(4, 8)\nz = z / np.linalg.norm(z, axis=1, keepdims=True)\nloss = clip_loss(z, z.copy())\nassert loss < 0.5"},
+    {"name": "Random embeddings positive loss", "code": "import numpy as np\nnp.random.seed(2)\ni = np.random.randn(4, 8)\nt = np.random.randn(4, 8)\ni /= np.linalg.norm(i, axis=1, keepdims=True)\nt /= np.linalg.norm(t, axis=1, keepdims=True)\nassert clip_loss(i, t) > 0"},
+    {"name": "Symmetric: swapping inputs same loss", "code": "import numpy as np\nnp.random.seed(4)\ni = np.random.randn(4, 8)\nt = np.random.randn(4, 8)\ni /= np.linalg.norm(i, axis=1, keepdims=True)\nt /= np.linalg.norm(t, axis=1, keepdims=True)\nassert abs(clip_loss(i, t) - clip_loss(t, i)) < 1e-9"},
+    {"name": "Loss is non-negative", "code": "import numpy as np\nnp.random.seed(6)\ni = np.random.randn(8, 16)\nt = np.random.randn(8, 16)\ni /= np.linalg.norm(i, axis=1, keepdims=True)\nt /= np.linalg.norm(t, axis=1, keepdims=True)\nassert clip_loss(i, t) >= 0"}
+  ],
+  "hints": [
+    "logits = image_emb @ text_emb.T / temperature",
+    "I2T: cross-entropy on rows (diagonal=positive)",
+    "T2I: cross-entropy on columns = cross-entropy on logits.T rows",
+    "Average I2T and T2I losses"
+  ],
+  "related_problems": ["14.5", "14.7", "14.9"]
+}

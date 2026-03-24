@@ -1,0 +1,20 @@
+{
+  "id": "24.1",
+  "title": "User-Based Collaborative Filtering",
+  "difficulty": "Medium",
+  "category": "Recommendation Systems",
+  "tags": ["numpy", "collaborative-filtering", "cosine-similarity"],
+  "description": "Implement user-based collaborative filtering to predict a target user's rating for an unrated item.\n\nGiven a ratings matrix where rows are users and columns are items (0 = unrated), predict the rating for a target user and item by:\n1. Computing cosine similarity between the target user and all other users\n2. Selecting the top-K most similar users who have rated the target item\n3. Computing a similarity-weighted average of their ratings\n\n**Example:**\n```\nratings = [\n  [5, 3, 0, 1],\n  [4, 0, 4, 1],\n  [1, 1, 0, 5],\n  [0, 0, 4, 4],\n]\nuser_based_cf(ratings, user=0, item=2, k=2) -> ~4.0\n```",
+  "constraints": ["Use numpy for computation", "Ignore users who have not rated the target item", "Use cosine similarity (handle zero vectors gracefully)", "Return 0.0 if no similar users have rated the item"],
+  "starter_code": "import numpy as np\n\ndef user_based_cf(ratings: np.ndarray, user: int, item: int, k: int = 3) -> float:\n    \"\"\"Predict rating for (user, item) using user-based CF.\n\n    Args:\n        ratings: (n_users, n_items) matrix, 0 = unrated\n        user: target user index\n        item: target item index\n        k: number of nearest neighbors\n\n    Returns:\n        Predicted rating as float\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef user_based_cf(ratings: np.ndarray, user: int, item: int, k: int = 3) -> float:\n    target = ratings[user].astype(float)\n    candidates = []\n    for u in range(len(ratings)):\n        if u == user or ratings[u, item] == 0:\n            continue\n        other = ratings[u].astype(float)\n        denom = np.linalg.norm(target) * np.linalg.norm(other)\n        if denom == 0:\n            sim = 0.0\n        else:\n            sim = np.dot(target, other) / denom\n        candidates.append((sim, float(ratings[u, item])))\n    if not candidates:\n        return 0.0\n    candidates.sort(key=lambda x: -x[0])\n    top = candidates[:k]\n    sim_sum = sum(abs(s) for s, _ in top)\n    if sim_sum == 0:\n        return 0.0\n    return sum(s * r for s, r in top) / sim_sum",
+  "explanation": "**Key concepts:**\n\n1. **Cosine similarity:** Measures the angle between user rating vectors. Users with similar taste point in the same direction regardless of rating scale.\n\n2. **Neighborhood selection:** Only users who have rated the target item can contribute a prediction.\n\n3. **Weighted average:** Ratings from more similar users count more. We weight by |sim| to handle negative similarities correctly.\n\n4. **Cold-start:** If no neighbor has rated the item, return 0.0 (no prediction possible).\n\n**Complexity:** O(n_users * n_items) per prediction.",
+  "test_cases": [
+    {"name": "Basic prediction in valid range", "code": "import numpy as np\nratings = np.array([[5,3,0,1],[4,0,4,1],[1,1,0,5],[0,0,4,4]], dtype=float)\npred = user_based_cf(ratings, user=0, item=2, k=2)\nassert 3.0 <= pred <= 5.0, f'Expected prediction near 4, got {pred}'"},
+    {"name": "No neighbors rated item returns 0.0", "code": "import numpy as np\nratings = np.array([[5,3,0],[0,0,0],[0,0,0]], dtype=float)\npred = user_based_cf(ratings, user=0, item=2, k=2)\nassert pred == 0.0"},
+    {"name": "Single neighbor", "code": "import numpy as np\nratings = np.array([[5,5,0],[5,5,4],[1,1,1]], dtype=float)\npred = user_based_cf(ratings, user=0, item=2, k=1)\nassert abs(pred - 4.0) < 1e-6, f'Got {pred}'"},
+    {"name": "Output is float", "code": "import numpy as np\nratings = np.array([[5,3,0,1],[4,0,4,1],[1,1,0,5]], dtype=float)\npred = user_based_cf(ratings, user=0, item=2, k=2)\nassert isinstance(pred, float)"}
+  ],
+  "hints": ["Cosine similarity: dot(a,b) / (norm(a)*norm(b))", "Filter to users where ratings[u, item] != 0", "Sort by similarity descending, take top k, then compute weighted average"],
+  "related_problems": ["24.2", "24.3", "24.6"]
+}

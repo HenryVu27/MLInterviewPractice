@@ -1,0 +1,20 @@
+{
+  "id": "16.3",
+  "title": "Gaussian Blur",
+  "difficulty": "Easy",
+  "category": "Computer Vision",
+  "tags": ["numpy", "from-scratch", "filtering"],
+  "description": "Implement **Gaussian blur** by constructing a Gaussian kernel and convolving it with the image.\n\nA 2D Gaussian kernel of size `kernel_size x kernel_size` with standard deviation `sigma` is:\n```\nG[i, j] = exp(-((i - k)^2 + (j - k)^2) / (2 * sigma^2))\n```\nwhere `k = kernel_size // 2`. Normalize so the kernel sums to 1.\n\nYour function should:\n1. Build the normalized Gaussian kernel given `kernel_size` (odd) and `sigma`\n2. Apply it to the image via 2D convolution with same padding\n\n**Example:**\n```\nimg = np.random.randint(0, 256, (100, 100))\nblurred = gaussian_blur(img, kernel_size=5, sigma=1.0)\n# blurred has lower variance than img\n```",
+  "constraints": ["Use numpy only", "kernel_size must be a positive odd integer", "Normalize kernel so it sums to 1", "Support grayscale images (H, W), return float64"],
+  "starter_code": "import numpy as np\n\ndef gaussian_blur(image: np.ndarray, kernel_size: int, sigma: float) -> np.ndarray:\n    \"\"\"Apply Gaussian blur to a grayscale image.\n    \n    Args:\n        image: Grayscale image, shape (H, W)\n        kernel_size: Size of the Gaussian kernel (must be odd)\n        sigma: Standard deviation of the Gaussian\n    \n    Returns:\n        Blurred image, shape (H, W), dtype float64\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef gaussian_blur(image: np.ndarray, kernel_size: int, sigma: float) -> np.ndarray:\n    assert kernel_size % 2 == 1, 'kernel_size must be odd'\n    k = kernel_size // 2\n    y, x = np.mgrid[-k:k+1, -k:k+1]\n    kernel = np.exp(-(x**2 + y**2) / (2 * sigma**2))\n    kernel = kernel / kernel.sum()\n\n    H, W = image.shape\n    padded = np.pad(image.astype(np.float64), k, mode='constant')\n    output = np.zeros((H, W), dtype=np.float64)\n    for i in range(H):\n        for j in range(W):\n            output[i, j] = np.sum(padded[i:i+kernel_size, j:j+kernel_size] * kernel)\n    return output",
+  "explanation": "**Key concepts:**\n\n1. **Gaussian kernel construction:** `np.mgrid` creates coordinate grids from -k to k. The Gaussian formula then gives the unnormalized weights, and dividing by the sum normalizes so DC gain = 1.\n\n2. **Normalization:** Ensures a uniform image stays uniform after blurring (no brightness change).\n\n3. **Sigma controls blur radius:** Larger sigma means more pixels contribute significantly, producing a smoother result. Rule of thumb: `kernel_size = 2 * ceil(2*sigma) + 1`.\n\n4. **Separability:** The 2D Gaussian is separable: G(x,y) = G(x)*G(y). Applying two 1D convolutions is O(H*W*k) vs O(H*W*k^2) for 2D, but the 2D approach is simpler to implement.\n\n5. **Use case:** Noise reduction, pre-processing before Sobel/Canny edge detection.",
+  "test_cases": [
+    {"name": "Uniform image unchanged", "code": "import numpy as np\nimg = np.ones((7,7)) * 128.0\nout = gaussian_blur(img, 3, 1.0)\nassert np.allclose(out[1:-1,1:-1], 128.0, atol=1e-8), 'Uniform image should stay uniform'"},
+    {"name": "Output shape preserved", "code": "import numpy as np\nimg = np.random.randn(20, 30)\nout = gaussian_blur(img, 5, 1.5)\nassert out.shape == (20, 30)"},
+    {"name": "Blur reduces variance", "code": "import numpy as np\nnp.random.seed(42)\nimg = np.random.randn(50, 50) * 50\nout = gaussian_blur(img, 7, 2.0)\nassert out.var() < img.var(), 'Blurred image should have lower variance'"},
+    {"name": "Impulse response is Gaussian-shaped", "code": "import numpy as np\nimg = np.zeros((11, 11))\nimg[5, 5] = 1.0\nout = gaussian_blur(img, 5, 1.0)\nassert out[5, 5] == out.max(), 'Center should be max after impulse response'\nassert out[5, 4] > out[5, 3], 'Should decrease with distance from center'"}
+  ],
+  "hints": ["Use np.mgrid[-k:k+1, -k:k+1] to build coordinate grids", "kernel = exp(-(x^2 + y^2) / (2*sigma^2)), then normalize by kernel.sum()", "Reuse the sliding-window convolution logic from 16.2"],
+  "related_problems": ["16.2", "16.4"]
+}

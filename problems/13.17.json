@@ -1,0 +1,27 @@
+{
+  "id": "13.17",
+  "title": "Silhouette Score",
+  "difficulty": "Medium",
+  "category": "Evaluation Metrics",
+  "tags": ["clustering", "metrics", "unsupervised"],
+  "description": "Implement the Silhouette score for clustering quality evaluation.\n\nFor each sample i:\n- `a(i)` = mean intra-cluster distance to other points in the same cluster\n- `b(i)` = mean nearest-cluster distance (smallest mean distance to any other cluster)\n- `s(i) = (b(i) - a(i)) / max(a(i), b(i))`\n\n`Silhouette = mean(s(i))` over all samples.\n\nRange: [-1, 1]. Higher is better (tight, well-separated clusters).",
+  "constraints": [
+    "Use Euclidean distance",
+    "Handle single-sample clusters gracefully (s=0)",
+    "Return float"
+  ],
+  "starter_code": "import numpy as np\n\ndef silhouette_score(X: np.ndarray, labels: np.ndarray) -> float:\n    \"\"\"Compute mean Silhouette score.\n\n    Args:\n        X: Data points, shape (n_samples, n_features)\n        labels: Cluster assignments, shape (n_samples,)\n\n    Returns:\n        Mean silhouette score in [-1, 1]\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef silhouette_score(X: np.ndarray, labels: np.ndarray) -> float:\n    X = np.asarray(X, dtype=float)\n    labels = np.asarray(labels)\n    n = len(X)\n    unique_labels = np.unique(labels)\n    scores = []\n    for i in range(n):\n        own = labels[i]\n        own_mask = (labels == own)\n        own_mask_copy = own_mask.copy()\n        own_mask_copy[i] = False\n        if not np.any(own_mask_copy):\n            scores.append(0.0)\n            continue\n        a = np.mean(np.linalg.norm(X[own_mask_copy] - X[i], axis=1))\n        b_vals = []\n        for c in unique_labels:\n            if c == own:\n                continue\n            c_mask = (labels == c)\n            b_vals.append(np.mean(np.linalg.norm(X[c_mask] - X[i], axis=1)))\n        b = min(b_vals) if b_vals else 0.0\n        denom = max(a, b)\n        s = (b - a) / denom if denom > 0 else 0.0\n        scores.append(s)\n    return float(np.mean(scores))",
+  "explanation": "The silhouette score measures how similar a point is to its own cluster versus other clusters. s(i)=1 means perfectly clustered; s(i)=0 means on the boundary; s(i)<0 means likely misclassified. It is useful for evaluating clustering without ground truth labels and for choosing the number of clusters.",
+  "test_cases": [
+    {"name": "Well-separated clusters high score", "code": "import numpy as np\nX = np.array([[0.0,0],[0.1,0],[10.0,0],[10.1,0]])\nlabels = np.array([0,0,1,1])\nassert silhouette_score(X, labels) > 0.8"},
+    {"name": "Single cluster returns 0", "code": "import numpy as np\nX = np.array([[0.0,0],[1.0,1],[2.0,2]])\nlabels = np.array([0,0,0])\nassert silhouette_score(X, labels) == 0.0"},
+    {"name": "Score in [-1, 1]", "code": "import numpy as np\nnp.random.seed(0)\nX = np.random.randn(20, 2)\nlabels = np.random.randint(0, 3, 20)\nresult = silhouette_score(X, labels)\nassert -1 <= result <= 1"},
+    {"name": "Overlapping clusters lower score", "code": "import numpy as np\nX = np.array([[0.0,0],[0.5,0],[1.0,0],[0.5,0.1]])\nlabels = np.array([0,0,1,1])\nassert silhouette_score(X, labels) < 0.9"}
+  ],
+  "hints": [
+    "a(i) = mean distance to same-cluster points excluding i itself",
+    "b(i) = minimum over other clusters of the mean distance to that cluster"
+  ],
+  "related_problems": ["13.1", "13.4", "13.20"]
+}

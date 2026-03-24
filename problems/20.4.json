@@ -1,0 +1,21 @@
+{
+  "id": "20.4",
+  "title": "Early Stopping with Patience",
+  "difficulty": "Easy",
+  "category": "Training Infrastructure",
+  "tags": ["numpy", "training", "regularization"],
+  "description": "Implement an early stopping callback that monitors a validation metric and stops training when it stops improving.\n\nYour class `EarlyStopping` should:\n- Track the best seen metric value\n- Count epochs without improvement\n- Stop when `patience` epochs pass without improvement\n- Support both `mode='min'` (e.g. loss) and `mode='max'` (e.g. accuracy)\n- Store the best metric value as `best_value`\n- `step(metric)` returns `True` if training should stop\n\n**Example:**\n```\nes = EarlyStopping(patience=3, mode='min')\nes.step(0.5)  # False\nes.step(0.4)  # False (improved)\nes.step(0.45) # False (no improvement, count=1)\nes.step(0.46) # False (count=2)\nes.step(0.47) # True  (count=3, stop!)\n```",
+  "constraints": ["Use only Python stdlib", "mode must be 'min' or 'max'", "Raise ValueError for invalid mode"],
+  "starter_code": "class EarlyStopping:\n    def __init__(self, patience: int, mode: str = 'min', min_delta: float = 0.0):\n        \"\"\"Initialize early stopping.\n        \n        Args:\n            patience: Epochs to wait after last improvement\n            mode: 'min' for metrics to minimize, 'max' for metrics to maximize\n            min_delta: Minimum change to qualify as improvement\n        \"\"\"\n        pass\n\n    def step(self, metric: float) -> bool:\n        \"\"\"Update state with new metric value.\n        \n        Returns:\n            True if training should stop, False otherwise\n        \"\"\"\n        pass",
+  "solution_code": "class EarlyStopping:\n    def __init__(self, patience: int, mode: str = 'min', min_delta: float = 0.0):\n        if mode not in ('min', 'max'):\n            raise ValueError(f\"mode must be 'min' or 'max', got '{mode}'\")\n        self.patience = patience\n        self.mode = mode\n        self.min_delta = min_delta\n        self.best_value = float('inf') if mode == 'min' else float('-inf')\n        self.counter = 0\n        self.should_stop = False\n\n    def step(self, metric: float) -> bool:\n        if self.mode == 'min':\n            improved = metric < self.best_value - self.min_delta\n        else:\n            improved = metric > self.best_value + self.min_delta\n        \n        if improved:\n            self.best_value = metric\n            self.counter = 0\n        else:\n            self.counter += 1\n        \n        if self.counter >= self.patience:\n            self.should_stop = True\n        \n        return self.should_stop",
+  "explanation": "**Key concepts:**\n\n1. **Patience counter**: Reset on improvement, increment otherwise. Stop when it reaches `patience`.\n2. **min_delta**: Minimum improvement threshold prevents stopping on negligible fluctuations.\n3. **mode**: Abstracts away whether lower or higher is better — the same class handles loss and accuracy.\n\n**Why early stopping matters**: Prevents overfitting and saves compute when generalization stops improving.",
+  "test_cases": [
+    {"name": "Stops after patience exceeded (min mode)", "code": "es = EarlyStopping(patience=3, mode='min')\nassert es.step(0.5) == False\nassert es.step(0.4) == False\nassert es.step(0.45) == False\nassert es.step(0.46) == False\nassert es.step(0.47) == True"},
+    {"name": "Resets counter on improvement", "code": "es = EarlyStopping(patience=2, mode='min')\nes.step(0.5)\nes.step(0.6)\nes.step(0.4)\nassert es.counter == 0"},
+    {"name": "Max mode stops correctly", "code": "es = EarlyStopping(patience=2, mode='max')\nes.step(0.8)\nes.step(0.75)\nes.step(0.7)\nassert es.should_stop == True"},
+    {"name": "Invalid mode raises ValueError", "code": "try:\n    EarlyStopping(patience=3, mode='average')\n    assert False, 'Should raise ValueError'\nexcept ValueError:\n    pass"},
+    {"name": "best_value tracks correctly", "code": "es = EarlyStopping(patience=5, mode='min')\nes.step(0.9)\nes.step(0.7)\nes.step(0.8)\nassert abs(es.best_value - 0.7) < 1e-9, f'Expected best 0.7, got {es.best_value}'"}
+  ],
+  "hints": ["Initialize best_value to inf for 'min' mode and -inf for 'max' mode", "Reset counter to 0 whenever an improvement is detected"],
+  "related_problems": ["20.5", "20.6", "20.3"]
+}

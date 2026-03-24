@@ -1,0 +1,20 @@
+{
+  "id": "28.10",
+  "title": "Polynomial Feature Expansion",
+  "difficulty": "Easy",
+  "category": "Feature Engineering",
+  "tags": ["preprocessing", "polynomial", "feature-engineering"],
+  "description": "Implement polynomial feature expansion up to degree d.\n\nGiven an input matrix X of shape (n_samples, n_features), generate all polynomial combinations of features up to degree d, including the bias term (degree 0 = 1).\n\nFor degree=2 with features [x1, x2]:\n```\nOutput: [1, x1, x2, x1^2, x1*x2, x2^2]\n```\n\nGeneralize to arbitrary n_features and degree d.\n\nReturn the expanded feature matrix. Order: sorted tuples of feature indices with repetition allowed (combinations_with_replacement).\n\n**Example:**\n```\nX = [[2, 3]]\ndegree = 2\nresult = [[1, 2, 3, 4, 6, 9]]   # [1, x1, x2, x1^2, x1*x2, x2^2]\n```",
+  "constraints": ["Use numpy only + itertools", "Include bias term (degree 0)", "Use combinations_with_replacement for feature index selection"],
+  "starter_code": "import numpy as np\nfrom itertools import combinations_with_replacement\n\ndef polynomial_features(X: np.ndarray, degree: int) -> np.ndarray:\n    \"\"\"Expand features to polynomial degree d.\n    \n    Args:\n        X: Input matrix of shape (n_samples, n_features)\n        degree: Maximum polynomial degree\n    \n    Returns:\n        X_poly: Expanded matrix\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\nfrom itertools import combinations_with_replacement\n\ndef polynomial_features(X: np.ndarray, degree: int) -> np.ndarray:\n    n_samples, n_features = X.shape\n    cols = [np.ones(n_samples)]  # bias term (degree 0)\n    \n    for d in range(1, degree + 1):\n        for combo in combinations_with_replacement(range(n_features), d):\n            col = np.ones(n_samples)\n            for idx in combo:\n                col = col * X[:, idx]\n            cols.append(col)\n    \n    return np.column_stack(cols)",
+  "explanation": "**Key concepts:**\n\n1. **Combinations with replacement:** For degree d with n features, we generate all multi-subsets of size d from feature indices. This gives (n+d choose d) features total.\n\n2. **Bias term:** The constant 1 allows learning an intercept without a separate parameter.\n\n3. **Feature count:** For n=2, d=2: 1 + 2 + 3 = 6 features. For n=3, d=3: 1 + 3 + 6 + 10 = 20 features — grows fast!\n\n4. **Use case:** Turning a linear model into a polynomial model without changing the algorithm.",
+  "test_cases": [
+    {"name": "Degree 2 with 2 features", "code": "X = np.array([[2.0, 3.0]])\nX_poly = polynomial_features(X, degree=2)\nassert X_poly.shape == (1, 6)\nassert np.allclose(X_poly[0], [1, 2, 3, 4, 6, 9])"},
+    {"name": "Degree 1 adds bias", "code": "X = np.array([[1.0, 2.0], [3.0, 4.0]])\nX_poly = polynomial_features(X, degree=1)\nassert X_poly.shape == (2, 3)\nassert np.all(X_poly[:, 0] == 1.0)"},
+    {"name": "Degree 0 is just bias", "code": "X = np.array([[5.0, 6.0]])\nX_poly = polynomial_features(X, degree=0)\nassert X_poly.shape == (1, 1)\nassert X_poly[0, 0] == 1.0"},
+    {"name": "Output shape for n=3 d=2", "code": "X = np.random.randn(10, 3)\nX_poly = polynomial_features(X, degree=2)\nassert X_poly.shape == (10, 10), f'Expected (10,10), got {X_poly.shape}'"}
+  ],
+  "hints": ["Start cols with [np.ones(n_samples)] for the bias", "combinations_with_replacement(range(n_features), d) gives feature index combos", "Multiply X[:, idx] for each idx in combo"],
+  "related_problems": ["28.1", "28.2", "28.14"]
+}

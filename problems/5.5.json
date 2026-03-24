@@ -1,0 +1,21 @@
+{
+  "id": "5.5",
+  "title": "Leaky ReLU",
+  "difficulty": "Easy",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "activation-functions"],
+  "description": "Implement Leaky ReLU with a configurable negative slope.\n\nLeaky ReLU is defined as:\n```\nLeakyReLU(x) = x        if x > 0\n             = alpha*x   if x <= 0\n```\n\nWith a small `alpha` (e.g., 0.01), negative inputs produce a small gradient instead of zero, fixing the dying ReLU problem.\n\n**Example (alpha=0.01):**\n```\nLeakyReLU([-2, 0, 3]) = [-0.02, 0, 3]\n```\n\n**Why this matters:** Leaky ReLU prevents dead neurons. Parametric ReLU (PReLU) learns alpha during training.",
+  "constraints": ["Use numpy only", "alpha must be configurable (default 0.01)", "Return both the activation and its derivative", "Handle arrays of any shape"],
+  "starter_code": "import numpy as np\n\ndef leaky_relu_with_derivative(x: np.ndarray, alpha: float = 0.01) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"Compute Leaky ReLU and its derivative.\n    \n    Args:\n        x: Input array of any shape\n        alpha: Negative slope coefficient (default 0.01)\n    \n    Returns:\n        Tuple of (leaky_relu(x), derivative(x))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef leaky_relu_with_derivative(x: np.ndarray, alpha: float = 0.01) -> tuple[np.ndarray, np.ndarray]:\n    x = np.asarray(x, dtype=float)\n    r = np.where(x > 0, x, alpha * x)\n    dr = np.where(x > 0, 1.0, alpha)\n    return r, dr",
+  "explanation": "**Key concepts:**\n\n1. **Dying ReLU fix**: With alpha > 0, negative neurons still receive gradient alpha instead of 0, allowing recovery during training.\n\n2. **np.where**: `np.where(condition, x, y)` is the vectorized if-else, applied element-wise.\n\n3. **PReLU**: If alpha is a learned parameter (backpropagated), it becomes Parametric ReLU. The gradient w.r.t. alpha is the sum of negative input values.\n\n4. **Common values**: alpha=0.01 (standard Leaky ReLU), alpha=0.2 (used in some GAN architectures).",
+  "test_cases": [
+    {"name": "Default alpha=0.01", "code": "r, dr = leaky_relu_with_derivative(np.array([-2.0, 0.0, 3.0]))\nnp.testing.assert_allclose(r, [-0.02, 0.0, 3.0])\nnp.testing.assert_allclose(dr, [0.01, 0.01, 1.0])"},
+    {"name": "Custom alpha=0.2", "code": "r, dr = leaky_relu_with_derivative(np.array([-1.0, 2.0]), alpha=0.2)\nnp.testing.assert_allclose(r, [-0.2, 2.0])\nnp.testing.assert_allclose(dr, [0.2, 1.0])"},
+    {"name": "All positive same as identity", "code": "x = np.array([1.0, 2.5, 0.1])\nr, _ = leaky_relu_with_derivative(x)\nnp.testing.assert_allclose(r, x)"},
+    {"name": "Negative slope nonzero", "code": "r, dr = leaky_relu_with_derivative(np.array([-5.0]), alpha=0.1)\nassert abs(r[0] - (-0.5)) < 1e-9\nassert abs(dr[0] - 0.1) < 1e-9"},
+    {"name": "Shape preserved", "code": "x = np.random.randn(3, 4, 2)\nr, dr = leaky_relu_with_derivative(x)\nassert r.shape == x.shape and dr.shape == x.shape"}
+  ],
+  "hints": ["np.where(x > 0, x, alpha * x) handles the piecewise definition cleanly", "Derivative is np.where(x > 0, 1.0, alpha)"],
+  "related_problems": ["5.4", "5.6", "5.7"]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "7.10",
+  "title": "K-Fold Cross Validation",
+  "difficulty": "Medium",
+  "category": "Regularization & Generalization",
+  "tags": ["cross-validation", "k-fold", "evaluation", "generalization"],
+  "description": "Implement K-Fold cross-validation split.\n\nGiven a dataset of N samples, divide into K folds and yield (train_indices, val_indices) for each fold.\n\nFor stratified K-fold, ensure each fold has approximately equal class distribution.\n\nImplement:\n1. `kfold_split(n_samples, k, shuffle, rng)` - yields (train_idx, val_idx)\n2. `stratified_kfold_split(y, k, rng)` - stratified version\n\n**Example:**\n```\nlist(kfold_split(10, k=5))  # -> 5 (train, val) index arrays\n# val sizes: [2, 2, 2, 2, 2]\n```",
+  "constraints": [
+    "Use numpy only",
+    "Return numpy arrays of indices",
+    "Stratified: y is integer class labels",
+    "Handle when n_samples is not divisible by k (last fold gets remainder)"
+  ],
+  "starter_code": "import numpy as np\nfrom typing import Iterator\n\ndef kfold_split(n_samples: int, k: int, shuffle: bool = True,\n                rng: np.random.Generator = None) -> Iterator:\n    \"\"\"K-Fold split generator.\n    \n    Yields:\n        (train_indices, val_indices) as numpy arrays\n    \"\"\"\n    pass\n\ndef stratified_kfold_split(y: np.ndarray, k: int,\n                            rng: np.random.Generator = None) -> Iterator:\n    \"\"\"Stratified K-Fold split generator.\n    \n    Args:\n        y: Integer class labels of shape (N,)\n        k: Number of folds\n    \n    Yields:\n        (train_indices, val_indices) as numpy arrays\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\nfrom typing import Iterator\n\ndef kfold_split(n_samples: int, k: int, shuffle: bool = True,\n                rng: np.random.Generator = None) -> Iterator:\n    if rng is None:\n        rng = np.random.default_rng()\n    indices = np.arange(n_samples)\n    if shuffle:\n        rng.shuffle(indices)\n    fold_sizes = np.full(k, n_samples // k, dtype=int)\n    fold_sizes[:n_samples % k] += 1\n    current = 0\n    for fold_size in fold_sizes:\n        val_idx = indices[current:current + fold_size]\n        train_idx = np.concatenate([indices[:current], indices[current + fold_size:]])\n        yield train_idx, val_idx\n        current += fold_size\n\ndef stratified_kfold_split(y: np.ndarray, k: int,\n                            rng: np.random.Generator = None) -> Iterator:\n    if rng is None:\n        rng = np.random.default_rng()\n    classes = np.unique(y)\n    fold_indices = [[] for _ in range(k)]\n    for cls in classes:\n        cls_idx = np.where(y == cls)[0]\n        rng.shuffle(cls_idx)\n        splits = np.array_split(cls_idx, k)\n        for fold_i, split in enumerate(splits):\n            fold_indices[fold_i].extend(split.tolist())\n    for fold_i in range(k):\n        val_idx = np.array(fold_indices[fold_i])\n        train_idx = np.concatenate([np.array(fold_indices[j]) for j in range(k) if j != fold_i])\n        yield train_idx, val_idx",
+  "explanation": "**Key concepts:**\n\n1. **Fold sizes:** When N is not divisible by k, distribute remainder: first (N%k) folds get one extra sample.\n\n2. **Non-overlapping val sets:** Each sample appears in exactly one validation fold. The training set is all other samples.\n\n3. **Stratified:** For each class, split its indices into k portions and add one portion per fold. This ensures balanced class distribution in each fold.\n\n4. **Why cross-val?** More reliable estimate of generalization than a single train/val split, especially for small datasets.",
+  "test_cases": [
+    {
+      "name": "Correct number of folds",
+      "code": "import numpy as np\nsplits = list(kfold_split(20, k=5, shuffle=False))\nassert len(splits) == 5"
+    },
+    {
+      "name": "Val sets are disjoint and cover all samples",
+      "code": "import numpy as np\nsplits = list(kfold_split(20, k=4, shuffle=False))\nall_val = np.concatenate([v for _, v in splits])\nassert len(all_val) == 20\nassert len(set(all_val.tolist())) == 20"
+    },
+    {
+      "name": "Train+val covers all samples each fold",
+      "code": "import numpy as np\nfor train, val in kfold_split(15, k=3, shuffle=False):\n    combined = sorted(np.concatenate([train, val]).tolist())\n    assert combined == list(range(15))"
+    },
+    {
+      "name": "Stratified preserves class balance",
+      "code": "import numpy as np\ny = np.array([0]*10 + [1]*10 + [2]*10)\nfor train, val in stratified_kfold_split(y, k=5, rng=np.random.default_rng(0)):\n    val_classes = y[val]\n    for c in [0, 1, 2]:\n        assert (val_classes == c).sum() == 2, f'Expected 2 per class in val, got {(val_classes==c).sum()}'"
+    },
+    {
+      "name": "Handles non-divisible N",
+      "code": "import numpy as np\nsplits = list(kfold_split(11, k=3, shuffle=False))\nval_sizes = [len(v) for _, v in splits]\nassert sum(val_sizes) == 11\nassert max(val_sizes) - min(val_sizes) <= 1"
+    }
+  ],
+  "hints": [
+    "Use np.array_split or manual index tracking for fold boundaries",
+    "For stratified: split each class's indices into k groups, then assign one group per fold",
+    "np.where(y == cls) gives indices for a given class"
+  ],
+  "related_problems": ["7.9", "7.11"]
+}

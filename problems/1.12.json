@@ -1,0 +1,28 @@
+{
+  "id": "1.12",
+  "title": "Hadamard Product and Broadcasting",
+  "difficulty": "Easy",
+  "category": "Linear Algebra & Matrix Operations",
+  "tags": ["numpy", "broadcasting", "element-wise"],
+  "description": "Implement:\n\n1. `hadamard(A, B)` — element-wise product of two arrays of the same shape\n2. `scale_rows(A, v)` — scale each row of matrix A by the corresponding element of vector v (broadcasting)\n3. `scale_cols(A, v)` — scale each column of matrix A by the corresponding element of vector v\n\n**Example:**\n```\nA = [[1, 2], [3, 4]]\nB = [[5, 6], [7, 8]]\nhadamard(A, B) = [[5, 12], [21, 32]]\n\nv = [2, 3]\nscale_rows(A, v) = [[2, 4], [9, 12]]  # row 0 * 2, row 1 * 3\n```\n\n**Why this matters:** Element-wise operations with broadcasting appear in attention masking, gradient scaling, batch normalization, and dropout. Misunderstanding broadcasting is a common source of silent shape bugs.",
+  "constraints": [
+    "Use numpy; no explicit loops",
+    "hadamard must raise ValueError if shapes don't match",
+    "scale_rows and scale_cols must use broadcasting (no loops, no np.tile)"
+  ],
+  "starter_code": "import numpy as np\n\ndef hadamard(A, B):\n    \"\"\"Element-wise product of two arrays.\n\n    Args:\n        A, B: arrays of the same shape\n\n    Returns:\n        Element-wise product, same shape as inputs\n\n    Raises:\n        ValueError: if shapes differ\n    \"\"\"\n    pass\n\n\ndef scale_rows(A, v):\n    \"\"\"Scale each row i of A by v[i].\n\n    Args:\n        A: array of shape (m, n)\n        v: 1-D array of length m\n\n    Returns:\n        Array of shape (m, n)\n    \"\"\"\n    pass\n\n\ndef scale_cols(A, v):\n    \"\"\"Scale each column j of A by v[j].\n\n    Args:\n        A: array of shape (m, n)\n        v: 1-D array of length n\n\n    Returns:\n        Array of shape (m, n)\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef hadamard(A, B):\n    A = np.asarray(A, dtype=float)\n    B = np.asarray(B, dtype=float)\n    if A.shape != B.shape:\n        raise ValueError(f\"Shape mismatch: {A.shape} vs {B.shape}\")\n    return A * B\n\n\ndef scale_rows(A, v):\n    A = np.asarray(A, dtype=float)\n    v = np.asarray(v, dtype=float).reshape(-1, 1)  # (m, 1)\n    return A * v  # broadcasts across columns\n\n\ndef scale_cols(A, v):\n    A = np.asarray(A, dtype=float)\n    v = np.asarray(v, dtype=float).reshape(1, -1)  # (1, n)\n    return A * v  # broadcasts across rows",
+  "explanation": "**Key concepts:**\n\n1. **Hadamard product:** Denoted `A o B`. Not to be confused with matrix multiplication. Each element multiplied independently.\n\n2. **Broadcasting rules:** numpy aligns shapes from the right. A `(m, 1)` array broadcasts against `(m, n)` by repeating across the n columns. A `(1, n)` array broadcasts across m rows.\n\n3. **scale_rows trick:** Reshape v to `(m, 1)` so it broadcasts correctly. Without reshape, a 1-D vector of length m would fail or give wrong results.\n\n4. **ML applications:**\n   - Dropout: `output = activation * mask` (Hadamard)\n   - Attention: `scores = queries * keys` component-wise before sum\n   - Batch norm: scale by gamma vector (scale_cols pattern)\n   - Gradient clipping by parameter group (scale_rows pattern)\n\n5. **Common bug:** Forgetting to reshape leads to shape `(m,) * (m, n)` which may broadcast incorrectly or raise an error.",
+  "test_cases": [
+    {"name": "Hadamard basic", "code": "import numpy as np\nresult = hadamard([[1, 2], [3, 4]], [[5, 6], [7, 8]])\nassert np.allclose(result, [[5, 12], [21, 32]])"},
+    {"name": "Hadamard shape mismatch", "code": "import numpy as np\ntry:\n    hadamard([[1, 2]], [[1, 2, 3]])\n    assert False\nexcept ValueError:\n    pass"},
+    {"name": "scale_rows", "code": "import numpy as np\nA = np.array([[1., 2., 3.], [4., 5., 6.]])\nv = np.array([2., 3.])\nresult = scale_rows(A, v)\nassert np.allclose(result, [[2., 4., 6.], [12., 15., 18.]])"},
+    {"name": "scale_cols", "code": "import numpy as np\nA = np.array([[1., 2., 3.], [4., 5., 6.]])\nv = np.array([10., 20., 30.])\nresult = scale_cols(A, v)\nassert np.allclose(result, [[10., 40., 90.], [40., 100., 180.]])"},
+    {"name": "scale_rows preserves shape", "code": "import numpy as np\nA = np.ones((5, 7))\nv = np.arange(5, dtype=float)\nassert scale_rows(A, v).shape == (5, 7)"}
+  ],
+  "hints": [
+    "For scale_rows: reshape v to (-1, 1) so it has shape (m, 1) and broadcasts across columns",
+    "For scale_cols: reshape v to (1, -1) so it has shape (1, n) and broadcasts across rows"
+  ],
+  "related_problems": ["1.1", "1.7", "1.13"]
+}

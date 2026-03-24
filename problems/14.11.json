@@ -1,0 +1,30 @@
+{
+  "id": "14.11",
+  "title": "ArcFace Loss",
+  "difficulty": "Hard",
+  "category": "Contrastive Learning",
+  "tags": ["contrastive-learning", "arcface", "face-recognition", "angular-margin"],
+  "description": "Implement ArcFace Loss (Additive Angular Margin Loss) for face recognition.\n\nArcFace adds an angular margin `m` to the target class angle before softmax:\n\n1. Normalize embeddings and weight matrix\n2. Compute cosine: `cos_theta = W_yi · z_i` (for each sample, target class weight dot embedding)\n3. Add margin: `cos(theta + m)` for the target class logit\n4. Scale all logits by `s` then apply cross-entropy\n\n`L = CrossEntropy(s * [cos(theta_j) for j!=y, cos(theta_y + m)])`",
+  "constraints": [
+    "Both embeddings and weight rows are L2-normalized inside the function",
+    "margin m in radians (e.g., 0.5)",
+    "scale s > 0 (e.g., 64.0)",
+    "Return scalar float"
+  ],
+  "starter_code": "import numpy as np\n\ndef arcface_loss(embeddings: np.ndarray, labels: np.ndarray, W: np.ndarray, margin: float = 0.5, scale: float = 64.0) -> float:\n    \"\"\"Compute ArcFace loss.\n\n    Args:\n        embeddings: shape (B, D) - will be L2-normalized\n        labels: integer class labels, shape (B,)\n        W: weight matrix shape (num_classes, D) - will be L2-normalized\n        margin: additive angular margin in radians\n        scale: logit scale factor\n\n    Returns:\n        ArcFace loss as float\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef arcface_loss(embeddings: np.ndarray, labels: np.ndarray, W: np.ndarray, margin: float = 0.5, scale: float = 64.0) -> float:\n    embeddings = np.asarray(embeddings, dtype=float)\n    labels = np.asarray(labels, dtype=int)\n    W = np.asarray(W, dtype=float)\n    # L2 normalize\n    z = embeddings / (np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-12)\n    w = W / (np.linalg.norm(W, axis=1, keepdims=True) + 1e-12)\n    # Cosine similarity: (B, num_classes)\n    cos_theta = z @ w.T\n    cos_theta = np.clip(cos_theta, -1.0 + 1e-7, 1.0 - 1e-7)\n    # For target class: add angular margin\n    theta = np.arccos(cos_theta)\n    B = len(labels)\n    logits = cos_theta.copy()\n    for i in range(B):\n        logits[i, labels[i]] = np.cos(theta[i, labels[i]] + margin)\n    logits *= scale\n    # Cross-entropy\n    m = logits.max(axis=1, keepdims=True)\n    exp_logits = np.exp(logits - m)\n    log_sum = np.log(exp_logits.sum(axis=1)) + m[:, 0]\n    loss = log_sum - logits[np.arange(B), labels]\n    return float(np.mean(loss))",
+  "explanation": "ArcFace enforces an angular margin in the hyperspherical space. By adding margin m to the target angle theta_y before taking cosine, the decision boundary is tighter: the model must have angle at least m smaller than any competitor to classify correctly. The scale s compensates for smaller logit values after the margin. ArcFace achieves state-of-the-art face verification performance.",
+  "test_cases": [
+    {"name": "Loss is positive", "code": "import numpy as np\nnp.random.seed(0)\nB, D, C = 4, 8, 3\nemb = np.random.randn(B, D)\nW = np.random.randn(C, D)\nlabels = np.array([0,1,2,0])\nloss = arcface_loss(emb, labels, W)\nassert loss > 0"},
+    {"name": "Loss is finite", "code": "import numpy as np\nnp.random.seed(1)\nemb = np.random.randn(6, 16)\nW = np.random.randn(5, 16)\nlabels = np.array([0,1,2,3,4,0])\nloss = arcface_loss(emb, labels, W, margin=0.5, scale=64.0)\nassert np.isfinite(loss)"},
+    {"name": "Larger margin increases loss", "code": "import numpy as np\nnp.random.seed(2)\nemb = np.random.randn(4, 8)\nW = np.random.randn(3, 8)\nlabels = np.array([0,1,2,0])\nloss_small = arcface_loss(emb, labels, W, margin=0.1)\nloss_large = arcface_loss(emb, labels, W, margin=0.8)\nassert loss_large > loss_small"},
+    {"name": "Returns float", "code": "import numpy as np\nnp.random.seed(3)\nemb = np.random.randn(3, 4)\nW = np.random.randn(2, 4)\nlabels = np.array([0,1,0])\nassert isinstance(arcface_loss(emb, labels, W), float)"}
+  ],
+  "hints": [
+    "Normalize embeddings and weight rows to unit length",
+    "cos_theta = z @ w.T gives (B, num_classes)",
+    "For target class: theta_y = arccos(cos_theta_y), add margin, take cos again",
+    "Standard cross-entropy after scaling"
+  ],
+  "related_problems": ["14.10", "14.7", "14.6"]
+}

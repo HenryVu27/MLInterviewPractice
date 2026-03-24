@@ -1,0 +1,46 @@
+{
+  "id": "7.11",
+  "title": "Spectral Normalization",
+  "difficulty": "Hard",
+  "category": "Regularization & Generalization",
+  "tags": ["spectral-normalization", "GAN", "power-iteration", "lipschitz"],
+  "description": "Implement Spectral Normalization (Miyato et al., 2018) for weight matrices.\n\nSpectral normalization constrains the Lipschitz constant of a layer by dividing the weight matrix by its largest singular value (spectral norm):\n```\nW_sn = W / sigma(W)   where sigma(W) = largest singular value\n```\n\nComputing full SVD each step is expensive, so use **power iteration** to estimate sigma:\n```\nfor _ in range(n_power_iters):\n    v = W^T u / ||W^T u||\n    u = W v / ||W v||\nsigma = u^T W v\n```\n\nImplement `SpectralNorm` class with `normalize(W)` and `sigma(W)` methods. Store `u` between calls for efficiency.",
+  "constraints": [
+    "Use numpy only",
+    "W is a 2D weight matrix (reshape to 2D if higher-dim)",
+    "Store u vector across calls for efficiency",
+    "n_power_iters=1 is standard",
+    "Return normalized W same shape as input"
+  ],
+  "starter_code": "import numpy as np\n\nclass SpectralNorm:\n    \"\"\"Spectral normalization via power iteration.\"\"\"\n    \n    def __init__(self, n_power_iters: int = 1):\n        \"\"\"Initialize SpectralNorm.\n        \n        Args:\n            n_power_iters: Number of power iteration steps\n        \"\"\"\n        pass\n    \n    def normalize(self, W: np.ndarray) -> np.ndarray:\n        \"\"\"Return spectrally normalized version of W.\n        \n        Args:\n            W: Weight matrix of shape (out, in) or higher-dim\n        \n        Returns:\n            W / sigma(W), same shape as W\n        \"\"\"\n        pass\n    \n    def sigma(self, W: np.ndarray) -> float:\n        \"\"\"Return estimated spectral norm (largest singular value).\"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass SpectralNorm:\n    def __init__(self, n_power_iters: int = 1):\n        self.n_power_iters = n_power_iters\n        self._u = None\n    \n    def _reshape(self, W: np.ndarray) -> np.ndarray:\n        if W.ndim > 2:\n            return W.reshape(W.shape[0], -1)\n        return W\n    \n    def _power_iter(self, W_mat: np.ndarray) -> tuple:\n        if self._u is None or self._u.shape[0] != W_mat.shape[0]:\n            self._u = np.random.randn(W_mat.shape[0])\n            self._u = self._u / (np.linalg.norm(self._u) + 1e-12)\n        u = self._u\n        for _ in range(self.n_power_iters):\n            v = W_mat.T @ u\n            v = v / (np.linalg.norm(v) + 1e-12)\n            u = W_mat @ v\n            u = u / (np.linalg.norm(u) + 1e-12)\n        self._u = u\n        sigma = float(u @ W_mat @ v)\n        return sigma, u, v\n    \n    def sigma(self, W: np.ndarray) -> float:\n        W_mat = self._reshape(W)\n        s, _, _ = self._power_iter(W_mat.copy())\n        return s\n    \n    def normalize(self, W: np.ndarray) -> np.ndarray:\n        W_mat = self._reshape(W)\n        s, _, _ = self._power_iter(W_mat)\n        return W / (s + 1e-12)",
+  "explanation": "**Key concepts:**\n\n1. **Spectral norm:** The largest singular value sigma_max of W. Dividing by it ensures ||W||_2 = 1 (1-Lipschitz).\n\n2. **Power iteration:** Alternately multiply by W and W^T, normalizing each time. Converges to the top singular vectors. With 1 iteration per step (updated every forward pass), it tracks sigma accurately.\n\n3. **Persistent u vector:** Store u between calls so each call only needs 1 iteration to stay accurate. Initialize randomly once.\n\n4. **Why spectral norm?** Used in GANs (SNGAN) to stabilize discriminator training by bounding its Lipschitz constant.\n\n5. **Higher-dim weights:** Reshape to 2D (out_features, -1) before applying.",
+  "test_cases": [
+    {
+      "name": "Spectral norm is approximately 1 after normalization",
+      "code": "import numpy as np\nnp.random.seed(0)\nW = np.random.randn(8, 16)\nsn = SpectralNorm(n_power_iters=20)\nW_norm = sn.normalize(W)\ntrue_sigma = np.linalg.svd(W_norm, compute_uv=False)[0]\nassert abs(true_sigma - 1.0) < 0.05, f'sigma={true_sigma}'"
+    },
+    {
+      "name": "Estimated sigma close to true sigma",
+      "code": "import numpy as np\nnp.random.seed(1)\nW = np.random.randn(16, 8)\nsn = SpectralNorm(n_power_iters=50)\nsigma_est = sn.sigma(W)\ntrue_sigma = np.linalg.svd(W, compute_uv=False)[0]\nassert abs(sigma_est - true_sigma) / true_sigma < 0.1, f'est={sigma_est}, true={true_sigma}'"
+    },
+    {
+      "name": "Output shape preserved",
+      "code": "import numpy as np\nW = np.random.randn(4, 6)\nsn = SpectralNorm()\nW_norm = sn.normalize(W)\nassert W_norm.shape == W.shape"
+    },
+    {
+      "name": "Identity matrix has sigma=1",
+      "code": "import numpy as np\nW = np.eye(5)\nsn = SpectralNorm(n_power_iters=10)\nsigma_est = sn.sigma(W)\nassert abs(sigma_est - 1.0) < 0.01, f'sigma={sigma_est}'"
+    },
+    {
+      "name": "Scaling: 3*I has sigma=3",
+      "code": "import numpy as np\nW = 3.0 * np.eye(5)\nsn = SpectralNorm(n_power_iters=20)\nsigma_est = sn.sigma(W)\nassert abs(sigma_est - 3.0) < 0.1, f'sigma={sigma_est}'"
+    }
+  ],
+  "hints": [
+    "Power iteration: v = W^T u / ||W^T u||, then u = W v / ||W v||",
+    "sigma = u^T W v after convergence",
+    "Store u between calls; initialize randomly if not yet set"
+  ],
+  "related_problems": ["7.1", "7.2", "7.10"]
+}

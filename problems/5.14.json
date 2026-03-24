@@ -1,0 +1,21 @@
+{
+  "id": "5.14",
+  "title": "MAE Loss (L1 Loss) and Subgradient",
+  "difficulty": "Easy",
+  "category": "Activation Functions & Loss Functions",
+  "tags": ["numpy", "from-scratch", "loss-functions", "regression"],
+  "description": "Implement Mean Absolute Error (MAE / L1) loss and its subgradient.\n\nMAE loss:\n```\nMAE(y, y_hat) = (1/N) * sum_i |y_hat_i - y_i|\n```\n\nSubgradient w.r.t. predictions:\n```\ndMAE/dy_hat_i = sign(y_hat_i - y_i) / N\n```\n\nAt y_hat_i = y_i (where |x| is not differentiable), use subgradient = 0.\n\n**Why this matters:** MAE is more robust to outliers than MSE because large errors are not squared. Used in regression tasks where outliers are common.",
+  "constraints": ["Use numpy only", "Subgradient at 0 must be 0 (not 1 or -1)", "Return (loss scalar, gradient array of same shape as y_pred)"],
+  "starter_code": "import numpy as np\n\ndef mae_loss(y_true: np.ndarray, y_pred: np.ndarray) -> tuple[float, np.ndarray]:\n    \"\"\"Mean absolute error loss and subgradient.\n    \n    Args:\n        y_true: Ground truth values, shape (N,)\n        y_pred: Predicted values, shape (N,)\n    \n    Returns:\n        Tuple of (mae scalar, subgradient w.r.t. y_pred of shape (N,))\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef mae_loss(y_true: np.ndarray, y_pred: np.ndarray) -> tuple[float, np.ndarray]:\n    diff = y_pred - y_true\n    loss = float(np.mean(np.abs(diff)))\n    grad = np.sign(diff) / diff.size\n    return loss, grad",
+  "explanation": "**Key concepts:**\n\n1. **Robustness**: MAE treats all errors linearly. A prediction off by 10 contributes 10x the loss of a prediction off by 1 (vs 100x for MSE).\n\n2. **Subgradient**: np.sign(diff) returns +1 for positive, -1 for negative, 0 for zero. Dividing by N gives the mean gradient.\n\n3. **Non-smooth at 0**: MAE is not differentiable when y_hat = y. Subgradient = 0 is a valid choice (others: any value in [-1, 1]).\n\n4. **Applications**: Used in target domain tasks (predicting house prices where a few outlier mansions exist), object detection (L1 box regression).",
+  "test_cases": [
+    {"name": "Zero loss for perfect predictions", "code": "y = np.array([1.0, 2.0, 3.0])\nloss, grad = mae_loss(y, y)\nassert loss == 0.0\nnp.testing.assert_array_equal(grad, [0.0, 0.0, 0.0])"},
+    {"name": "Known MAE value", "code": "y = np.array([0.0, 0.0, 0.0])\nyh = np.array([1.0, -2.0, 3.0])\nloss, _ = mae_loss(y, yh)\nassert abs(loss - 2.0) < 1e-9"},
+    {"name": "Subgradient signs are correct", "code": "y = np.array([0.0, 0.0])\nyh = np.array([1.0, -1.0])\n_, grad = mae_loss(y, yh)\nassert grad[0] > 0 and grad[1] < 0"},
+    {"name": "Subgradient at zero is 0", "code": "y = np.array([1.0])\nyh = np.array([1.0])\n_, grad = mae_loss(y, yh)\nassert grad[0] == 0.0"},
+    {"name": "Gradient shape matches input", "code": "y = np.random.randn(20)\nyh = np.random.randn(20)\nloss, grad = mae_loss(y, yh)\nassert grad.shape == y.shape"}
+  ],
+  "hints": ["np.abs(diff) for loss, np.sign(diff) for subgradient", "np.sign returns 0 for zero inputs, handling the non-differentiable point correctly"],
+  "related_problems": ["5.13", "5.15"]
+}

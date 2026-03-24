@@ -1,0 +1,27 @@
+{
+  "id": "13.7",
+  "title": "Mean Average Precision (mAP)",
+  "difficulty": "Medium",
+  "category": "Evaluation Metrics",
+  "tags": ["retrieval", "metrics", "map"],
+  "description": "Compute Mean Average Precision (mAP) over multiple queries.\n\nFor each query, compute Average Precision (AP), then average across all queries.\n\n`mAP = (1/Q) * sum_q AP(q)`\n\nFor each query the relevance list is ordered by rank (position 0 = rank 1). AP at binary relevance:\n`AP = [sum_k rel(k) * P@k] / |relevant docs|`\n\nwhere P@k = hits_so_far / k.\n\n**Example:**\n```\nqueries = [[1,0,1,0,1], [0,1,1,0,0]]\nmAP ≈ 0.6944\n```",
+  "constraints": [
+    "Each query is a list of 0/1 relevance judgments in ranked order",
+    "Return float",
+    "Handle queries with no relevant items (AP=0)"
+  ],
+  "starter_code": "import numpy as np\n\ndef mean_average_precision(relevance_lists: list[list[int]]) -> float:\n    \"\"\"Compute mAP over multiple queries.\n\n    Args:\n        relevance_lists: List of relevance arrays (1=relevant, 0=not) in retrieval rank order\n\n    Returns:\n        mAP as float\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef mean_average_precision(relevance_lists: list[list[int]]) -> float:\n    aps = []\n    for rel in relevance_lists:\n        rel = np.asarray(rel)\n        n_relevant = int(np.sum(rel))\n        if n_relevant == 0:\n            aps.append(0.0)\n            continue\n        hits, ap = 0, 0.0\n        for k, r in enumerate(rel, 1):\n            if r == 1:\n                hits += 1\n                ap += hits / k\n        aps.append(ap / n_relevant)\n    return float(np.mean(aps))",
+  "explanation": "mAP is the standard retrieval metric. For each query, AP rewards systems that rank relevant items at the top. Dividing by the number of relevant items normalizes across queries with different numbers of relevant documents. Averaging across queries gives mAP, which is interpretable as average retrieval quality.",
+  "test_cases": [
+    {"name": "All relevant at top", "code": "result = mean_average_precision([[1,1,0,0]])\nassert abs(result - 1.0) < 1e-9"},
+    {"name": "No relevant items", "code": "result = mean_average_precision([[0,0,0]])\nassert result == 0.0"},
+    {"name": "Single query known AP", "code": "result = mean_average_precision([[1,0,1]])\nassert abs(result - (1.0/1 + 2.0/3)/2) < 1e-9"},
+    {"name": "Multiple queries averaged", "code": "r1 = mean_average_precision([[1,0,0]])\nr2 = mean_average_precision([[0,0,1]])\navg = mean_average_precision([[1,0,0],[0,0,1]])\nassert abs(avg - (r1+r2)/2) < 1e-9"}
+  ],
+  "hints": [
+    "For each rank k where item is relevant, P@k = hits_so_far / k",
+    "Divide sum by number of relevant items to get AP"
+  ],
+  "related_problems": ["13.6", "13.8", "13.9"]
+}

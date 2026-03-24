@@ -1,0 +1,21 @@
+{
+  "id": "6.2",
+  "title": "SGD with Momentum",
+  "difficulty": "Easy",
+  "category": "Optimization Algorithms",
+  "tags": ["numpy", "from-scratch", "optimization"],
+  "description": "Implement SGD with momentum.\n\nMomentum accumulates a velocity vector to dampen oscillations and accelerate in the relevant direction:\n```\nv = beta * v - lr * grad\nw = w + v\n```\n\nor equivalently:\n```\nv = beta * v + grad\nw = w - lr * v\n```\n\nUse the second form (gradient accumulation).\n\n**Why this matters:** Momentum smooths the optimization trajectory, especially in ravines (narrow valleys in the loss surface). It typically reduces the number of iterations by 2-10x over vanilla SGD.",
+  "constraints": ["Use numpy only", "Implement as class with __init__(lr, beta=0.9) and step(params, grads)", "Initialize velocity to zeros on first step", "Update params in-place", "Velocity must persist across step() calls"],
+  "starter_code": "import numpy as np\n\nclass SGDMomentum:\n    def __init__(self, lr: float = 0.01, beta: float = 0.9):\n        \"\"\"SGD with momentum.\n        \n        Args:\n            lr: Learning rate\n            beta: Momentum coefficient (default 0.9)\n        \"\"\"\n        pass\n    \n    def step(self, params: list[np.ndarray], grads: list[np.ndarray]) -> None:\n        \"\"\"Update parameters with momentum.\n        \n        Args:\n            params: List of parameter arrays\n            grads: List of gradient arrays\n        \"\"\"\n        pass",
+  "solution_code": "import numpy as np\n\nclass SGDMomentum:\n    def __init__(self, lr: float = 0.01, beta: float = 0.9):\n        self.lr = lr\n        self.beta = beta\n        self.velocity = None\n    \n    def step(self, params: list[np.ndarray], grads: list[np.ndarray]) -> None:\n        if self.velocity is None:\n            self.velocity = [np.zeros_like(p) for p in params]\n        for v, p, g in zip(self.velocity, params, grads):\n            v *= self.beta\n            v += g\n            p -= self.lr * v",
+  "explanation": "**Key concepts:**\n\n1. **Velocity accumulation**: v = beta*v + g. With beta=0.9, past gradients decay exponentially. The effective learning rate grows by 1/(1-beta) in the direction gradients persist.\n\n2. **Oscillation damping**: In ravines, gradients alternate sign across the narrow dimension. Momentum cancels these out, allowing faster progress along the ravine.\n\n3. **Initialization**: Velocity starts at zero. The first few steps are biased toward the initial gradient.\n\n4. **beta=0.9**: Corresponds to an exponential moving average with a window of ~10 steps.",
+  "test_cases": [
+    {"name": "Converges faster than vanilla SGD on quadratic", "code": "x_sgd = np.array([10.0])\nx_mom = np.array([10.0])\nfrom copy import deepcopy\nsgd = SGD(lr=0.01) if False else None\nmom = SGDMomentum(lr=0.01, beta=0.9)\nfor _ in range(50):\n    g_mom = np.array([2 * x_mom[0]])\n    mom.step([x_mom], [g_mom])\nassert abs(x_mom[0]) < abs(10.0), 'Should converge toward 0'"},
+    {"name": "Velocity persists across steps", "code": "x = np.array([0.0])\nopt = SGDMomentum(lr=0.1, beta=0.9)\nopt.step([x], [np.array([1.0])])\nassert opt.velocity is not None\nv_after_step1 = opt.velocity[0].copy()\nopt.step([x], [np.array([1.0])])\nassert opt.velocity[0][0] != v_after_step1[0], 'Velocity should update'"},
+    {"name": "Zero momentum is equivalent to SGD", "code": "x1 = np.array([5.0])\nx2 = np.array([5.0])\ng = np.array([2.0])\nSGDMomentum(lr=0.1, beta=0.0).step([x1], [g.copy()])\nx2 -= 0.1 * g\nnp.testing.assert_allclose(x1, x2)"},
+    {"name": "Velocity initialized to zeros", "code": "opt = SGDMomentum(lr=0.1)\nx = np.array([3.0])\nopt.step([x], [np.array([1.0])])\nassert opt.velocity[0][0] == 1.0, 'First step: v = 0*beta + g = g'"},
+    {"name": "Update is in-place", "code": "x = np.array([2.0])\nopt = SGDMomentum(lr=0.1)\nxid = id(x)\nopt.step([x], [np.array([1.0])])\nassert id(x) == xid"}
+  ],
+  "hints": ["Initialize velocity as None; create zeros_like on first step call", "v *= beta; v += g; p -= lr * v — order matters"],
+  "related_problems": ["6.1", "6.3", "6.6"]
+}

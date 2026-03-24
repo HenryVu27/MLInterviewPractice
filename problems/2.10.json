@@ -1,0 +1,29 @@
+{
+  "id": "2.10",
+  "title": "MLE for Gaussian Parameters",
+  "difficulty": "Medium",
+  "category": "Probability & Statistics",
+  "tags": ["numpy", "from-scratch", "mle", "gaussian", "statistics"],
+  "description": "Implement `mle_gaussian(X)` which estimates the mean vector and covariance matrix of a multivariate Gaussian via **Maximum Likelihood Estimation (MLE)**:\n\n```\nmu_hat = (1/N) * sum_i x_i\nSigma_hat = (1/N) * sum_i (x_i - mu_hat)(x_i - mu_hat)^T\n```\n\nNote: MLE uses `1/N` (not `1/(N-1)`), giving a biased but consistent estimator.\n\nAlso implement `mle_univariate(x)` for the 1-D case, returning `(mu, sigma)` where `sigma` is the MLE standard deviation.\n\n**Why this matters:** MLE is the foundation of most statistical estimation. The Gaussian MLE is derived by setting the gradient of the log-likelihood to zero — a derivation interviewers may ask you to sketch.",
+  "constraints": [
+    "Do NOT use np.cov — implement from scratch",
+    "MLE covariance uses 1/N (not 1/(N-1))",
+    "Use numpy matrix operations",
+    "N must be at least 2 — raise ValueError otherwise"
+  ],
+  "starter_code": "import numpy as np\n\ndef mle_univariate(x):\n    \"\"\"Estimate Gaussian parameters via MLE for 1-D data.\n\n    Args:\n        x: 1-D array of observations\n\n    Returns:\n        (mu_hat, sigma_hat): MLE mean and standard deviation\n    \"\"\"\n    pass\n\n\ndef mle_gaussian(X):\n    \"\"\"Estimate multivariate Gaussian parameters via MLE.\n\n    Args:\n        X: array of shape (N, D) — N observations, D features\n\n    Returns:\n        (mu_hat, Sigma_hat): MLE mean (D,) and covariance (D, D)\n\n    Raises:\n        ValueError: if N < 2\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef mle_univariate(x):\n    x = np.asarray(x, dtype=float)\n    N = len(x)\n    if N < 2:\n        raise ValueError(\"Need at least 2 observations\")\n    mu_hat = np.sum(x) / N\n    sigma_sq_hat = np.sum((x - mu_hat) ** 2) / N  # MLE uses 1/N\n    return float(mu_hat), float(np.sqrt(sigma_sq_hat))\n\n\ndef mle_gaussian(X):\n    X = np.asarray(X, dtype=float)\n    N, D = X.shape\n    if N < 2:\n        raise ValueError(\"Need at least 2 observations\")\n    mu_hat = np.sum(X, axis=0) / N  # (D,)\n    X_c = X - mu_hat  # (N, D)\n    Sigma_hat = X_c.T @ X_c / N  # (D, D) — MLE uses 1/N\n    return mu_hat, Sigma_hat",
+  "explanation": "**Key concepts:**\n\n1. **MLE derivation:** Maximize log-likelihood `L = sum_i log N(x_i; mu, Sigma)`. Setting d/d_mu = 0 gives `mu_hat = mean(X)`. Setting d/d_Sigma = 0 gives `Sigma_hat = (1/N) sum_i (x_i - mu_hat)(x_i - mu_hat)^T`.\n\n2. **MLE is biased:** The MLE covariance uses 1/N and is a biased estimator of the true covariance. The unbiased estimator uses 1/(N-1) (Bessel's correction). However, MLE is consistent — it converges to the truth as N grows.\n\n3. **Why 1/N?** MLE maximizes the likelihood, not the unbiasedness. The 1/N estimate has lower MSE than 1/(N-1) when both bias and variance are considered for small N.\n\n4. **Sufficient statistics:** mu_hat and Sigma_hat are sufficient statistics for the Gaussian — they capture everything the data tells you about the parameters.\n\n5. **EM algorithm:** MLE of Gaussian parameters is the M-step in the EM algorithm for Gaussian Mixture Models.",
+  "test_cases": [
+    {"name": "1D MLE mean", "code": "import numpy as np\nx = [1., 2., 3., 4., 5.]\nmu, sigma = mle_univariate(x)\nassert abs(mu - 3.0) < 1e-9"},
+    {"name": "1D MLE uses 1/N not 1/(N-1)", "code": "import numpy as np\nx = [2., 4.]\nmu, sigma = mle_univariate(x)\n# MLE sigma = sqrt((1/2)*((2-3)^2 + (4-3)^2)) = 1.0\nassert abs(sigma - 1.0) < 1e-9"},
+    {"name": "Multivariate mean", "code": "import numpy as np\nX = np.array([[1., 2.], [3., 4.], [5., 6.]])\nmu, Sigma = mle_gaussian(X)\nassert np.allclose(mu, [3., 4.])"},
+    {"name": "Covariance shape", "code": "import numpy as np\nX = np.random.randn(20, 5)\nmu, Sigma = mle_gaussian(X)\nassert Sigma.shape == (5, 5)"},
+    {"name": "Covariance is symmetric PSD", "code": "import numpy as np\nX = np.random.randn(100, 3)\nmu, Sigma = mle_gaussian(X)\nassert np.allclose(Sigma, Sigma.T)\nassert np.all(np.linalg.eigvalsh(Sigma) >= -1e-9)"}
+  ],
+  "hints": [
+    "mu_hat = X.sum(axis=0) / N",
+    "Sigma_hat = X_centered.T @ X_centered / N (divide by N for MLE, not N-1)"
+  ],
+  "related_problems": ["2.8", "2.9", "2.2"]
+}

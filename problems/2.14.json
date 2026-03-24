@@ -1,0 +1,29 @@
+{
+  "id": "2.14",
+  "title": "Kernel Density Estimation",
+  "difficulty": "Medium",
+  "category": "Probability & Statistics",
+  "tags": ["numpy", "from-scratch", "kde", "density-estimation", "non-parametric"],
+  "description": "Implement `kde(x_eval, x_data, bandwidth)` which estimates the probability density at evaluation points `x_eval` using **Gaussian Kernel Density Estimation**:\n\n```\nhat_f(x) = (1 / (n * h)) * sum_i K((x - x_i) / h)\n```\n\nwhere `K(u) = N(u; 0, 1)` is the standard normal kernel and `h` is the bandwidth.\n\nAlso implement `silverman_bandwidth(x_data)` which computes the automatic bandwidth using Silverman's rule of thumb:\n```\nh = 1.06 * sigma * n^(-1/5)\n```\n\n**Why this matters:** KDE is a non-parametric density estimator that avoids histogram binning artifacts. It is used in anomaly detection, visualizing distributions, and as a building block for non-parametric classifiers.",
+  "constraints": [
+    "Use numpy; no explicit loops over evaluation points",
+    "x_eval and x_data are 1-D arrays",
+    "bandwidth must be positive",
+    "The output must integrate to approximately 1"
+  ],
+  "starter_code": "import numpy as np\n\ndef kde(x_eval, x_data, bandwidth):\n    \"\"\"Estimate density at x_eval using Gaussian KDE.\n\n    Args:\n        x_eval: 1-D array of evaluation points, shape (m,)\n        x_data: 1-D array of data points, shape (n,)\n        bandwidth: scalar h > 0\n\n    Returns:\n        density: 1-D array of shape (m,) with estimated density values\n    \"\"\"\n    pass\n\n\ndef silverman_bandwidth(x_data):\n    \"\"\"Compute bandwidth using Silverman's rule of thumb.\n\n    Args:\n        x_data: 1-D array of data points\n\n    Returns:\n        Scalar bandwidth h\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef kde(x_eval, x_data, bandwidth):\n    x_eval = np.asarray(x_eval, dtype=float)\n    x_data = np.asarray(x_data, dtype=float)\n    n = len(x_data)\n    h = float(bandwidth)\n\n    # Compute (x_eval[:, None] - x_data[None, :]) / h  shape: (m, n)\n    u = (x_eval[:, None] - x_data[None, :]) / h  # (m, n)\n\n    # Gaussian kernel: K(u) = N(u; 0, 1)\n    kernel_vals = (1.0 / np.sqrt(2 * np.pi)) * np.exp(-0.5 * u ** 2)  # (m, n)\n\n    # KDE estimate\n    density = np.sum(kernel_vals, axis=1) / (n * h)  # (m,)\n    return density\n\n\ndef silverman_bandwidth(x_data):\n    x_data = np.asarray(x_data, dtype=float)\n    n = len(x_data)\n    sigma = np.std(x_data, ddof=1)\n    return float(1.06 * sigma * n ** (-0.2))",
+  "explanation": "**Key concepts:**\n\n1. **KDE idea:** Place a smooth 'bump' (kernel) centered at each data point, then sum and normalize. Wider kernels (large h) give smoother estimates; narrow kernels track noise.\n\n2. **Bandwidth selection:** h controls the bias-variance tradeoff. Too small h: high variance (spiky). Too large h: high bias (oversmoothed). Silverman's rule is optimal for Gaussian data and is a good default otherwise.\n\n3. **Silverman's rule:** `h = 1.06 * sigma * n^(-1/5)`. The n^(-1/5) rate is optimal for 1-D Gaussian kernels. For non-Gaussian data, use cross-validation.\n\n4. **Vectorized implementation:** Broadcasting `x_eval[:, None]` against `x_data[None, :]` produces an (m, n) matrix of all pairwise differences — no Python loop needed.\n\n5. **Computational cost:** O(m * n) — fine for moderate sizes. For large n, use Fast Gauss Transform or binning approximations.\n\n6. **Higher dimensions:** Gaussian KDE generalizes to D-D but suffers from the curse of dimensionality. Rule of thumb for optimal h is `h ~ n^(-1/(D+4))`.",
+  "test_cases": [
+    {"name": "Output shape", "code": "import numpy as np\nx_data = np.array([1., 2., 3., 4., 5.])\nx_eval = np.linspace(0, 6, 100)\ndensity = kde(x_eval, x_data, bandwidth=0.5)\nassert density.shape == (100,)"},
+    {"name": "Density is non-negative", "code": "import numpy as np\nx_data = np.random.randn(50)\nx_eval = np.linspace(-5, 5, 200)\nassert np.all(kde(x_eval, x_data, bandwidth=0.5) >= 0)"},
+    {"name": "Integrates to approximately 1", "code": "import numpy as np\nx_data = np.random.randn(100)\nx_eval = np.linspace(-6, 6, 1000)\ndx = x_eval[1] - x_eval[0]\nh = silverman_bandwidth(x_data)\ndensity = kde(x_eval, x_data, h)\nassert abs(np.sum(density) * dx - 1.0) < 0.05"},
+    {"name": "Silverman bandwidth is positive", "code": "import numpy as np\nx_data = np.random.randn(100)\nh = silverman_bandwidth(x_data)\nassert h > 0"},
+    {"name": "Mode near data center", "code": "import numpy as np\nx_data = np.zeros(100)  # all data at 0\nh = 0.1\nx_eval = np.linspace(-1, 1, 100)\ndensity = kde(x_eval, x_data, h)\nassert np.argmax(density) == len(x_eval) // 2"}
+  ],
+  "hints": [
+    "Use broadcasting: u = (x_eval[:, None] - x_data[None, :]) / h gives shape (m, n)",
+    "Silverman: h = 1.06 * std(data) * len(data)^(-0.2)"
+  ],
+  "related_problems": ["2.15", "2.8", "2.12"]
+}

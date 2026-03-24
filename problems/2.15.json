@@ -1,0 +1,29 @@
+{
+  "id": "2.15",
+  "title": "Sampling from Discrete Distribution (Inverse CDF)",
+  "difficulty": "Easy",
+  "category": "Probability & Statistics",
+  "tags": ["numpy", "from-scratch", "sampling", "probability"],
+  "description": "Implement `sample_discrete(probs, n_samples, seed=42)` which draws `n_samples` samples from a discrete distribution **without using `np.random.choice`**.\n\n**Algorithm (Inverse CDF / Inverse Transform Sampling):**\n1. Compute the CDF: `cdf[k] = sum_{i=0}^{k} probs[i]`\n2. Draw `n_samples` uniform random numbers `u ~ Uniform(0, 1)`\n3. For each u, find the smallest k such that `cdf[k] >= u`\n\n**Example:**\n```\nprobs = [0.1, 0.3, 0.6]\nsample_discrete(probs, 5) -> array with values in {0, 1, 2}\n# Expected: ~10% zeros, ~30% ones, ~60% twos\n```\n\n**Why this matters:** Understanding inverse CDF sampling is fundamental to simulation and probabilistic programming. It explains how random number generators work and is a stepping stone to more advanced methods (rejection sampling, MCMC).",
+  "constraints": [
+    "Do NOT use np.random.choice",
+    "Use np.searchsorted for efficient inverse CDF lookup",
+    "probs must be a valid probability distribution (non-negative, sum to 1)",
+    "Return an integer array of indices"
+  ],
+  "starter_code": "import numpy as np\n\ndef sample_discrete(probs, n_samples, seed=42):\n    \"\"\"Sample from a discrete distribution using inverse CDF method.\n\n    Args:\n        probs: 1-D array-like — probability of each category (must sum to 1)\n        n_samples: number of samples to draw\n        seed: random seed\n\n    Returns:\n        samples: integer array of shape (n_samples,) with indices drawn from probs\n\n    Raises:\n        ValueError: if probs is not a valid distribution\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef sample_discrete(probs, n_samples, seed=42):\n    probs = np.asarray(probs, dtype=float)\n    if not (np.all(probs >= 0) and np.allclose(probs.sum(), 1.0, atol=1e-6)):\n        raise ValueError(\"probs must be a valid probability distribution\")\n\n    # Compute CDF\n    cdf = np.cumsum(probs)\n    # Ensure last element is exactly 1.0 to avoid edge cases\n    cdf[-1] = 1.0\n\n    rng = np.random.default_rng(seed)\n    u = rng.uniform(0.0, 1.0, size=n_samples)\n\n    # Inverse CDF: find index where cdf >= u\n    samples = np.searchsorted(cdf, u)\n    return samples",
+  "explanation": "**Key concepts:**\n\n1. **Inverse CDF method:** If F is the CDF of a distribution and U ~ Uniform(0,1), then F^{-1}(U) follows the distribution with CDF F. For discrete distributions, the inverse is the step function defined by searchsorted.\n\n2. **np.searchsorted:** Binary search on a sorted array. `searchsorted(cdf, u)` returns the smallest index k where `cdf[k] >= u`. This is O(log K) per sample.\n\n3. **Why this works:** Probability of drawing index k is `P(cdf[k-1] < U <= cdf[k]) = cdf[k] - cdf[k-1] = probs[k]`. The uniform distribution over [0,1] naturally partitions into regions of size `probs[k]`.\n\n4. **Numerical fix:** Set `cdf[-1] = 1.0` exactly. Floating-point accumulation might give 0.9999999 and a u = 0.9999998 would land in the last bucket correctly, but u = 1.0 would fail without this fix.\n\n5. **Extending to continuous distributions:** The same principle applies — if you can compute the inverse CDF analytically (e.g., for Gaussian using the error function), you can sample from it. This is the basis for Box-Muller transform for Gaussian sampling.",
+  "test_cases": [
+    {"name": "Output shape", "code": "import numpy as np\nsamples = sample_discrete([0.3, 0.3, 0.4], 100)\nassert samples.shape == (100,)"},
+    {"name": "Output values in valid range", "code": "import numpy as np\nsamples = sample_discrete([0.1, 0.5, 0.4], 1000)\nassert np.all(samples >= 0) and np.all(samples <= 2)"},
+    {"name": "Frequencies match probabilities approximately", "code": "import numpy as np\nprobs = [0.2, 0.5, 0.3]\nsamples = sample_discrete(probs, 10000)\ncounts = np.bincount(samples, minlength=3) / 10000\nassert np.allclose(counts, probs, atol=0.03)"},
+    {"name": "Deterministic with seed", "code": "import numpy as np\nprobs = [0.4, 0.6]\ns1 = sample_discrete(probs, 20, seed=7)\ns2 = sample_discrete(probs, 20, seed=7)\nassert np.array_equal(s1, s2)"},
+    {"name": "Invalid distribution raises", "code": "import numpy as np\ntry:\n    sample_discrete([0.3, 0.3], 10)\n    assert False\nexcept ValueError:\n    pass"}
+  ],
+  "hints": [
+    "CDF = np.cumsum(probs). Then np.searchsorted(cdf, u) maps each uniform sample to a category",
+    "Set cdf[-1] = 1.0 exactly to handle edge cases when u is very close to 1"
+  ],
+  "related_problems": ["2.14", "2.11", "2.8"]
+}

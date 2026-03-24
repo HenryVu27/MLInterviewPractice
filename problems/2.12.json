@@ -1,0 +1,29 @@
+{
+  "id": "2.12",
+  "title": "Bootstrap Confidence Interval",
+  "difficulty": "Medium",
+  "category": "Probability & Statistics",
+  "tags": ["numpy", "from-scratch", "bootstrap", "statistics", "resampling"],
+  "description": "Implement `bootstrap_ci(data, statistic, n_bootstrap=10000, ci=0.95, seed=42)` which computes a **bootstrap confidence interval** for any statistic.\n\n**Algorithm:**\n1. For each of `n_bootstrap` iterations:\n   a. Resample `len(data)` points with replacement from `data`\n   b. Compute `statistic(resample)`\n2. Return the `(1-ci)/2` and `1-(1-ci)/2` percentiles of the bootstrap distribution\n\n**Example:**\n```\ndata = [2, 4, 4, 4, 5, 5, 7, 9]\nbootstrap_ci(data, np.mean, n_bootstrap=1000)\n# -> approximately (4.0, 6.25) at 95%\n```\n\n**Why this matters:** Bootstrap is a non-parametric method for estimating uncertainty. It works when the analytical formula is unknown or when assumptions (e.g., normality) are violated.",
+  "constraints": [
+    "Use numpy for resampling — avoid Python loops where possible",
+    "statistic is a callable that takes a 1-D array and returns a scalar",
+    "Use percentile method (not BCa) for simplicity",
+    "Set random seed for reproducibility"
+  ],
+  "starter_code": "import numpy as np\n\ndef bootstrap_ci(data, statistic, n_bootstrap=10000, ci=0.95, seed=42):\n    \"\"\"Compute bootstrap confidence interval for a statistic.\n\n    Args:\n        data: 1-D array-like of observations\n        statistic: callable that takes a 1-D array and returns a scalar\n        n_bootstrap: number of bootstrap samples\n        ci: confidence level (e.g., 0.95 for 95% CI)\n        seed: random seed\n\n    Returns:\n        (lower, upper): confidence interval bounds\n    \"\"\"\n    pass",
+  "solution_code": "import numpy as np\n\ndef bootstrap_ci(data, statistic, n_bootstrap=10000, ci=0.95, seed=42):\n    data = np.asarray(data, dtype=float)\n    n = len(data)\n    rng = np.random.default_rng(seed)\n\n    # Generate all bootstrap samples at once: shape (n_bootstrap, n)\n    indices = rng.integers(0, n, size=(n_bootstrap, n))\n    bootstrap_samples = data[indices]  # (n_bootstrap, n)\n\n    # Apply statistic to each bootstrap sample\n    boot_stats = np.array([statistic(bootstrap_samples[i]) for i in range(n_bootstrap)])\n\n    # Percentile method\n    alpha = 1 - ci\n    lower = float(np.percentile(boot_stats, 100 * alpha / 2))\n    upper = float(np.percentile(boot_stats, 100 * (1 - alpha / 2)))\n    return lower, upper",
+  "explanation": "**Key concepts:**\n\n1. **Bootstrap principle:** Treat the sample as a proxy for the population. The variation of the statistic across bootstrap samples estimates its sampling variability.\n\n2. **Why resampling with replacement?** Without replacement, each resample is just a permutation — identical statistics. With replacement, different resamples give different values, simulating drawing new samples from the population.\n\n3. **Percentile method:** The simplest CI: just take the ci/2 and 1-ci/2 percentiles of the bootstrap distribution. More sophisticated methods (BCa, studentized) give better coverage but are harder to implement.\n\n4. **When to use bootstrap:**\n   - When analytical formulas don't exist (e.g., CI for median, correlation)\n   - When normality assumption is violated\n   - For complex estimators derived from ML models\n\n5. **Limitations:** Bootstrap assumes the sample is representative of the population. It doesn't work well with very small samples (n < 20) or heavy-tailed distributions.",
+  "test_cases": [
+    {"name": "CI contains true mean", "code": "import numpy as np\nnp.random.seed(0)\ndata = np.random.normal(5.0, 1.0, 100)\nlower, upper = bootstrap_ci(data, np.mean)\nassert lower < 5.0 < upper"},
+    {"name": "CI is ordered", "code": "import numpy as np\ndata = [1., 2., 3., 4., 5.]\nlower, upper = bootstrap_ci(data, np.mean)\nassert lower < upper"},
+    {"name": "Wider CI for more uncertainty", "code": "import numpy as np\ndata_small = np.random.randn(10)\ndata_large = np.random.randn(1000)\nw_small = bootstrap_ci(data_small, np.mean)[1] - bootstrap_ci(data_small, np.mean)[0]\nw_large = bootstrap_ci(data_large, np.mean)[1] - bootstrap_ci(data_large, np.mean)[0]\nassert w_small > w_large"},
+    {"name": "Works for median", "code": "import numpy as np\ndata = [1., 2., 3., 4., 5., 6., 7., 8., 9., 10.]\nlower, upper = bootstrap_ci(data, np.median)\nassert lower < np.median(data) < upper"},
+    {"name": "Reproducible with seed", "code": "import numpy as np\ndata = [1., 2., 3., 4., 5.]\nr1 = bootstrap_ci(data, np.mean, seed=42)\nr2 = bootstrap_ci(data, np.mean, seed=42)\nassert r1 == r2"}
+  ],
+  "hints": [
+    "Generate all bootstrap indices at once: rng.integers(0, n, size=(n_bootstrap, n))",
+    "Use np.percentile with the alpha/2 and 1-alpha/2 quantiles"
+  ],
+  "related_problems": ["2.1", "2.13", "2.11"]
+}

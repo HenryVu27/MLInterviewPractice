@@ -94,6 +94,9 @@
         <button class="btn btn-primary" id="btn-run" disabled>
           Run Tests
         </button>
+        <button class="btn btn-accent" id="btn-run-code" disabled>
+          Run Code
+        </button>
         <button class="btn btn-secondary" id="btn-reset">
           Reset Code
         </button>
@@ -103,18 +106,36 @@
         </button>
       </div>
 
+      <!-- Tab bar for switching between Test Results and Console -->
+      <div class="output-tabs">
+        <button class="output-tab active" data-tab="tests">Test Results <span id="test-summary"></span></button>
+        <button class="output-tab" data-tab="console">Console</button>
+      </div>
+
       <!-- Code Editor (CodeMirror mounts here) -->
       <div class="editor-container" id="editor-container" aria-label="Code editor">
         <!-- CodeMirror instance injected by problem.js -->
       </div>
 
-      <!-- Test Results Panel -->
-      <div class="test-results" id="test-results" aria-label="Test results" aria-live="polite">
-        <div class="test-results-header">
-          <span>Test Results</span>
-          <span id="test-summary"></span>
+      <!-- Output panels container -->
+      <div class="output-panels">
+        <!-- Test Results Panel -->
+        <div class="output-panel active" id="panel-tests" aria-label="Test results">
+          <div class="test-results" id="test-results">
+            <!-- JS injects .test-result.pass/.fail elements here -->
+          </div>
         </div>
-        <!-- JS injects .test-result.pass/.fail elements here -->
+
+        <!-- Console Panel -->
+        <div class="output-panel" id="panel-console" aria-label="Console">
+          <div class="console-output" id="console-output">
+            <div class="console-line console-info">Python console ready. Use "Run Code" to execute your editor code, then type commands below to inspect variables.</div>
+          </div>
+          <div class="console-input-row">
+            <span class="console-prompt">&gt;&gt;&gt;</span>
+            <input type="text" class="console-input" id="console-input" placeholder="Type Python here... (Enter to run)" autocomplete="off" spellcheck="false" disabled />
+          </div>
+        </div>
       </div>
 
       <!-- Solution Panel (hidden until revealed) -->

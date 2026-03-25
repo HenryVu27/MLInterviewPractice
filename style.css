@@ -738,9 +738,102 @@ select, input {
   opacity: 1;
 }
 
+.btn-accent {
+  background: rgba(76, 175, 80, 0.15);
+  color: var(--easy);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.btn-accent:not(:disabled):hover {
+  background: rgba(76, 175, 80, 0.25);
+}
+
+.btn-accent:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Spacer in action bar */
 .action-bar .spacer {
   flex: 1;
+}
+
+/* ==========================================================================
+   Console Panel
+   ========================================================================== */
+.console-output {
+  padding: 0.5rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  min-height: 60px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.console-line {
+  padding: 0.15rem 1rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.console-line.console-input-echo {
+  color: var(--text-muted);
+}
+
+.console-line.console-output-text {
+  color: var(--text);
+}
+
+.console-line.console-error {
+  color: var(--fail-border);
+}
+
+.console-line.console-info {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.console-line.console-separator {
+  border-top: 1px solid var(--border-dim);
+  margin: 0.25rem 0;
+  padding: 0;
+}
+
+.console-input-row {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding: 0;
+}
+
+.console-prompt {
+  padding: 0.4rem 0 0.4rem 1rem;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.console-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.5rem;
+}
+
+.console-input:disabled {
+  opacity: 0.4;
+}
+
+.console-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 /* ==========================================================================
@@ -780,13 +873,57 @@ select, input {
 }
 
 /* ==========================================================================
+   Output Tabs
+   ========================================================================== */
+.output-tabs {
+  display: flex;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.output-tab {
+  padding: 0.4rem 1rem;
+  font-size: 0.78rem;
+  font-family: var(--font-sans);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.output-tab:hover { color: var(--text); }
+
+.output-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Output panels container */
+.output-panels {
+  flex-shrink: 0;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+.output-panel {
+  display: none;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.output-panel.active {
+  display: block;
+}
+
+/* ==========================================================================
    Test Results Panel
    ========================================================================== */
 .test-results {
-  max-height: 250px;
   overflow-y: auto;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
   background: var(--bg-secondary);
 }
 

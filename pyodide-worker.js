@@ -17,9 +17,95 @@ async function initPyodide() {
 const initPromise = initPyodide();
 
 self.onmessage = async function (event) {
-  const { type, userCode, tests } = event.data;
+  const { type } = event.data;
+
+  // --- REPL: execute a single command in the current namespace ---
+  if (type === 'exec') {
+    await initPromise;
+    const { code } = event.data;
+
+    // Redirect stdout
+    pyodide.runPython(`
+import sys, io
+_stdout_capture = io.StringIO()
+sys.stdout = _stdout_capture
+`);
+
+    let output = '';
+    let error = '';
+    let result = null;
+
+    try {
+      // Try eval first (expression that returns a value)
+      try {
+        result = pyodide.runPython(code);
+        if (result !== undefined && result !== null && String(result) !== 'None') {
+          result = String(result);
+        } else {
+          result = null;
+        }
+      } catch (evalErr) {
+        // If eval fails, try exec (statement)
+        result = null;
+        pyodide.runPython(code);
+      }
+    } catch (err) {
+      error = err.message || String(err);
+    } finally {
+      output = pyodide.runPython(`
+sys.stdout = sys.__stdout__
+_stdout_capture.getvalue()
+`);
+    }
+
+    postMessage({ type: 'exec-result', output, error, result });
+    return;
+  }
+
+  // --- Run user code (no tests, just execute and show output) ---
+  if (type === 'run-code') {
+    await initPromise;
+    const { userCode } = event.data;
+
+    // Reset namespace
+    pyodide.runPython(`
+for _name in list(dir()):
+    if not _name.startswith('_'):
+        try:
+            del globals()[_name]
+        except:
+            pass
+import numpy as np
+`);
+
+    // Redirect stdout
+    pyodide.runPython(`
+import sys, io
+_stdout_capture = io.StringIO()
+sys.stdout = _stdout_capture
+`);
+
+    let output = '';
+    let error = '';
+
+    try {
+      pyodide.runPython(userCode);
+    } catch (err) {
+      error = err.message || String(err);
+    } finally {
+      output = pyodide.runPython(`
+sys.stdout = sys.__stdout__
+_stdout_capture.getvalue()
+`);
+    }
+
+    postMessage({ type: 'run-code-result', output, error });
+    return;
+  }
 
   if (type !== 'run') return;
+
+  const { userCode, tests } = event.data;
 
   await initPromise;
 

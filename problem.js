@@ -506,6 +506,9 @@ async function init() {
     const originalText = btnRun.textContent;
     btnRun.textContent = 'Running...';
 
+    // Switch to tests tab
+    switchTab('tests');
+
     markAttempted(problemId);
 
     const userCode = editor.getCode();
@@ -529,6 +532,152 @@ async function init() {
       }
       if (timerInterval !== null) {
         stopTimerUI(problemId);
+      }
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // Output tabs
+  // -------------------------------------------------------------------------
+  const tabs = document.querySelectorAll('.output-tab');
+  const panels = document.querySelectorAll('.output-panel');
+
+  function switchTab(tabName) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+    panels.forEach(p => p.classList.toggle('active', p.id === `panel-${tabName}`));
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  // -------------------------------------------------------------------------
+  // Console: Run Code button + REPL input
+  // -------------------------------------------------------------------------
+  const btnRunCode = document.getElementById('btn-run-code');
+  const consoleOutput = document.getElementById('console-output');
+  const consoleInput = document.getElementById('console-input');
+  let consoleCommandHistory = [];
+  let historyIdx = -1;
+
+  function appendConsoleLine(text, cls) {
+    const line = document.createElement('div');
+    line.className = `console-line ${cls}`;
+    line.textContent = text;
+    consoleOutput.appendChild(line);
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+  }
+
+  function appendConsoleSeparator() {
+    const sep = document.createElement('div');
+    sep.className = 'console-line console-separator';
+    consoleOutput.appendChild(sep);
+  }
+
+  // "Run Code" button -- executes editor code and shows output in console
+  btnRunCode.addEventListener('click', async () => {
+    switchTab('console');
+    btnRunCode.disabled = true;
+    btnRunCode.textContent = 'Running...';
+
+    appendConsoleSeparator();
+    appendConsoleLine('Running your code...', 'console-info');
+
+    const userCode = editor.getCode();
+
+    const result = await new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        worker.terminate();
+        worker = createWorker();
+        resolve({ output: '', error: 'Timed out after 30s.' });
+      }, 30000);
+
+      const handler = (e) => {
+        if (e.data.type === 'run-code-result') {
+          clearTimeout(timeout);
+          worker.removeEventListener('message', handler);
+          resolve(e.data);
+        }
+      };
+      worker.addEventListener('message', handler);
+      worker.postMessage({ type: 'run-code', userCode });
+    });
+
+    if (result.output) {
+      appendConsoleLine(result.output, 'console-output-text');
+    }
+    if (result.error) {
+      appendConsoleLine(result.error, 'console-error');
+    }
+    if (!result.output && !result.error) {
+      appendConsoleLine('Code executed (no output). Add print() statements to see results.', 'console-info');
+    }
+
+    btnRunCode.textContent = 'Run Code';
+    btnRunCode.disabled = false;
+    consoleInput.disabled = false;
+    consoleInput.placeholder = 'Type Python here... (Enter to run)';
+  });
+
+  // REPL input -- execute single commands in the same Pyodide context
+  consoleInput.addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter' && consoleInput.value.trim()) {
+      const code = consoleInput.value.trim();
+      consoleCommandHistory.push(code);
+      historyIdx = consoleCommandHistory.length;
+
+      appendConsoleLine(`>>> ${code}`, 'console-input-echo');
+      consoleInput.value = '';
+      consoleInput.disabled = true;
+
+      const result = await new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+          worker.terminate();
+          worker = createWorker();
+          resolve({ output: '', error: 'Timed out.', result: null });
+        }, 10000);
+
+        const handler = (e) => {
+          if (e.data.type === 'exec-result') {
+            clearTimeout(timeout);
+            worker.removeEventListener('message', handler);
+            resolve(e.data);
+          }
+        };
+        worker.addEventListener('message', handler);
+        worker.postMessage({ type: 'exec', code });
+      });
+
+      if (result.result) {
+        appendConsoleLine(result.result, 'console-output-text');
+      }
+      if (result.output) {
+        appendConsoleLine(result.output, 'console-output-text');
+      }
+      if (result.error) {
+        appendConsoleLine(result.error, 'console-error');
+      }
+
+      consoleInput.disabled = false;
+      consoleInput.focus();
+    }
+
+    // Up/down arrow for command history
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIdx > 0) {
+        historyIdx--;
+        consoleInput.value = consoleCommandHistory[historyIdx];
+      }
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIdx < consoleCommandHistory.length - 1) {
+        historyIdx++;
+        consoleInput.value = consoleCommandHistory[historyIdx];
+      } else {
+        historyIdx = consoleCommandHistory.length;
+        consoleInput.value = '';
       }
     }
   });

@@ -766,7 +766,7 @@ select, input {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   min-height: 60px;
-  max-height: 240px;
+  max-height: 50vh;
   overflow-y: auto;
 }
 
@@ -905,13 +905,13 @@ select, input {
 /* Output panels container */
 .output-panels {
   flex-shrink: 0;
-  max-height: 300px;
+  max-height: 50vh;
   overflow: hidden;
 }
 
 .output-panel {
   display: none;
-  max-height: 300px;
+  max-height: 50vh;
   overflow-y: auto;
 }
 
@@ -1070,7 +1070,7 @@ select, input {
   border-top: 1px solid var(--border);
   background: var(--bg-secondary);
   flex-shrink: 0;
-  max-height: 300px;
+  max-height: 50vh;
   overflow-y: auto;
 }
 

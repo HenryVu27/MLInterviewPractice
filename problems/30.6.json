@@ -1,0 +1,47 @@
+{
+  "id": "30.6",
+  "title": "Sliding Window Maximum",
+  "difficulty": "Medium",
+  "category": "Data Structures & Algorithms",
+  "tags": ["sliding window", "deque", "monotonic deque", "arrays", "pooling"],
+  "description": "Given an integer array `nums` and a window size `k`, return an array of the maximum value in each contiguous sliding window of size `k`.\n\n```python\ndef sliding_window_maximum(nums: list, k: int) -> list:\n    ...\n```\n\nThe window slides one position to the right each step. For an array of length `n`, there are `n - k + 1` windows.\n\nYou must achieve **O(n)** time complexity using `collections.deque` as a **monotonic decreasing deque** of indices.\n\n**Connection to ML**: This exact pattern is used in max-pooling operations in CNNs. In 1D max-pooling with a sliding window, you want the maximum activation in each window. A naive O(nk) approach is too slow for large feature maps; the deque approach gives O(n).",
+  "constraints": [
+    "1 <= k <= len(nums) <= 10^5",
+    "nums contains integers (positive, negative, or zero)",
+    "O(n) time complexity required",
+    "Use collections.deque"
+  ],
+  "starter_code": "from collections import deque\n\ndef sliding_window_maximum(nums: list, k: int) -> list:\n    pass\n",
+  "solution_code": "from collections import deque\n\ndef sliding_window_maximum(nums: list, k: int) -> list:\n    if not nums or k == 0:\n        return []\n\n    n = len(nums)\n    result = []\n    # Deque stores indices; maintained in monotonically decreasing order of nums[index]\n    dq = deque()\n\n    for i in range(n):\n        # Remove indices that are out of the current window\n        while dq and dq[0] < i - k + 1:\n            dq.popleft()\n\n        # Maintain monotonic decreasing order:\n        # Remove indices from the back whose values are <= nums[i]\n        # (they can never be the maximum for any future window)\n        while dq and nums[dq[-1]] <= nums[i]:\n            dq.pop()\n\n        dq.append(i)\n\n        # Start recording results once the first full window is formed\n        if i >= k - 1:\n            result.append(nums[dq[0]])\n\n    return result\n",
+  "explanation": "**Monotonic Deque** is the key data structure here. We maintain a deque of indices such that `nums[dq[0]] >= nums[dq[1]] >= ...` (decreasing order). The front of the deque is always the index of the current window's maximum.\n\n**Algorithm for each index `i`**:\n1. **Evict stale front**: If `dq[0] < i - k + 1`, that index is no longer in the current window. Remove from the front with `popleft()`.\n2. **Maintain monotonicity**: Before appending `i`, remove all indices from the back whose values are ≤ `nums[i]`. Those elements are now useless — they are older AND smaller than `nums[i]`, so they can never be the maximum for any future window that includes `nums[i]`.\n3. **Append current index** to the back.\n4. **Record result**: Once `i >= k - 1` (the first full window), `dq[0]` is the index of the maximum, so append `nums[dq[0]]`.\n\n**Why O(n)?** Each index is appended to the deque exactly once and removed at most once (either from the front when stale, or from the back during the monotonicity cleanup). Total deque operations = O(2n) = O(n).\n\n**Why not use a max-heap?** A heap gives O(n log n) because we need to remove stale entries. The deque approach exploits the fact that we only move the window forward, so old maxima are never needed again.\n\n**Edge case**: `<=` vs `<` when removing from the back — using `<=` removes duplicate values, which is correct (the later occurrence is preferred as it stays valid longer).",
+  "test_cases": [
+    {
+      "name": "Standard sliding window",
+      "code": "assert sliding_window_maximum([1, 3, -1, -3, 5, 3, 6, 7], 3) == [3, 3, 5, 5, 6, 7]"
+    },
+    {
+      "name": "Window size equals array size",
+      "code": "assert sliding_window_maximum([4, 2, 7, 1], 4) == [7]"
+    },
+    {
+      "name": "Window size 1 returns original array",
+      "code": "assert sliding_window_maximum([5, 3, 8, 2], 1) == [5, 3, 8, 2]"
+    },
+    {
+      "name": "Array with negative numbers",
+      "code": "assert sliding_window_maximum([-4, -2, -7, -1, -5], 2) == [-2, -2, -1, -1]"
+    },
+    {
+      "name": "Array with duplicates",
+      "code": "assert sliding_window_maximum([2, 2, 2, 2, 2], 3) == [2, 2, 2]"
+    }
+  ],
+  "hints": [
+    "The deque stores INDICES, not values. This lets you check if an index has fallen outside the window boundary.",
+    "When you add a new element, all previous elements that are smaller (or equal) and to the left will NEVER be the maximum for any remaining window — they are dominated by the new element which is both larger AND more recent. Remove them from the back.",
+    "The front of the deque (`dq[0]`) always holds the index of the current window's maximum.",
+    "Check `dq[0] < i - k + 1` (not `<= i - k`) to determine if the front is out of the window. The leftmost valid index for window ending at `i` is `i - k + 1`.",
+    "Start recording results only after you've seen at least `k` elements: `if i >= k - 1`."
+  ],
+  "related_problems": ["30.5", "30.7"]
+}

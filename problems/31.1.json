@@ -1,0 +1,50 @@
+{
+  "id": "31.1",
+  "title": "ML Pipeline: Scaler + PCA + Logistic Regression",
+  "difficulty": "Hard",
+  "category": "Composite ML Systems",
+  "tags": ["pipeline", "StandardScaler", "PCA", "logistic-regression", "gradient-descent", "eigenvectors"],
+  "description": "Implement a Pipeline class that chains three components: StandardScaler (z-score normalization), PCA (dimensionality reduction via top-k eigenvectors of the covariance matrix), and LogisticRegression (sigmoid activation + binary cross-entropy loss + gradient descent).\n\nThe Pipeline class must expose:\n- `fit(X, y)`: fits each component sequentially, passing transformed data to the next\n- `predict(X)`: transforms X through Scaler and PCA, then returns binary predictions from LogisticRegression\n\nEach component must implement `fit(X)`, `transform(X)`, and the logistic regression must also implement `fit(X, y)` and `predict(X)`.\n\nTest on a linearly separable 2-class dataset and achieve >85% accuracy.",
+  "constraints": [
+    "numpy and Python stdlib only",
+    "PCA must use eigendecomposition of the covariance matrix (not SVD directly)",
+    "LogisticRegression uses sigmoid + binary cross-entropy + gradient descent",
+    "Pipeline.fit must call each component's fit/transform in order",
+    "Pipeline.predict must apply transforms before predicting",
+    "X shape: (n_samples, n_features), y shape: (n_samples,) with values 0 or 1",
+    "Do not use sklearn or any ML libraries"
+  ],
+  "starter_code": "import numpy as np\n\nclass StandardScaler:\n    def fit(self, X):\n        pass\n    def transform(self, X):\n        pass\n    def fit_transform(self, X):\n        pass\n\nclass PCA:\n    def __init__(self, n_components):\n        pass\n    def fit(self, X):\n        pass\n    def transform(self, X):\n        pass\n    def fit_transform(self, X):\n        pass\n\nclass LogisticRegression:\n    def __init__(self, lr=0.1, n_iter=1000):\n        pass\n    def fit(self, X, y):\n        pass\n    def predict_proba(self, X):\n        pass\n    def predict(self, X):\n        pass\n\nclass Pipeline:\n    def __init__(self, n_components=2, lr=0.1, n_iter=1000):\n        pass\n    def fit(self, X, y):\n        pass\n    def predict(self, X):\n        pass\n",
+  "solution_code": "import numpy as np\n\nclass StandardScaler:\n    def __init__(self):\n        self.mean_ = None\n        self.std_ = None\n\n    def fit(self, X):\n        self.mean_ = np.mean(X, axis=0)\n        self.std_ = np.std(X, axis=0) + 1e-8\n        return self\n\n    def transform(self, X):\n        return (X - self.mean_) / self.std_\n\n    def fit_transform(self, X):\n        return self.fit(X).transform(X)\n\n\nclass PCA:\n    def __init__(self, n_components):\n        self.n_components = n_components\n        self.components_ = None\n        self.mean_ = None\n\n    def fit(self, X):\n        self.mean_ = np.mean(X, axis=0)\n        X_centered = X - self.mean_\n        cov = np.cov(X_centered, rowvar=False)\n        eigenvalues, eigenvectors = np.linalg.eigh(cov)\n        # Sort descending\n        idx = np.argsort(eigenvalues)[::-1]\n        eigenvectors = eigenvectors[:, idx]\n        self.components_ = eigenvectors[:, :self.n_components].T\n        return self\n\n    def transform(self, X):\n        X_centered = X - self.mean_\n        return X_centered @ self.components_.T\n\n    def fit_transform(self, X):\n        return self.fit(X).transform(X)\n\n\nclass LogisticRegression:\n    def __init__(self, lr=0.1, n_iter=1000):\n        self.lr = lr\n        self.n_iter = n_iter\n        self.weights_ = None\n        self.bias_ = None\n\n    def _sigmoid(self, z):\n        return 1.0 / (1.0 + np.exp(-np.clip(z, -250, 250)))\n\n    def fit(self, X, y):\n        n_samples, n_features = X.shape\n        self.weights_ = np.zeros(n_features)\n        self.bias_ = 0.0\n\n        for _ in range(self.n_iter):\n            z = X @ self.weights_ + self.bias_\n            y_hat = self._sigmoid(z)\n            error = y_hat - y\n            dw = (X.T @ error) / n_samples\n            db = np.mean(error)\n            self.weights_ -= self.lr * dw\n            self.bias_ -= self.lr * db\n        return self\n\n    def predict_proba(self, X):\n        z = X @ self.weights_ + self.bias_\n        return self._sigmoid(z)\n\n    def predict(self, X):\n        return (self.predict_proba(X) >= 0.5).astype(int)\n\n\nclass Pipeline:\n    def __init__(self, n_components=2, lr=0.1, n_iter=1000):\n        self.scaler = StandardScaler()\n        self.pca = PCA(n_components=n_components)\n        self.clf = LogisticRegression(lr=lr, n_iter=n_iter)\n\n    def fit(self, X, y):\n        X_scaled = self.scaler.fit_transform(X)\n        X_pca = self.pca.fit_transform(X_scaled)\n        self.clf.fit(X_pca, y)\n        return self\n\n    def predict(self, X):\n        X_scaled = self.scaler.transform(X)\n        X_pca = self.pca.transform(X_scaled)\n        return self.clf.predict(X_pca)\n",
+  "explanation": "The Pipeline chains three components:\n\n1. **StandardScaler**: Computes per-feature mean and std during `fit`, then applies z-score normalization in `transform`. A small epsilon (1e-8) prevents division by zero.\n\n2. **PCA**: Centers the data, computes the covariance matrix, performs eigendecomposition via `np.linalg.eigh` (symmetric matrix), sorts eigenvectors by descending eigenvalue, and retains the top-k. `transform` projects centered data onto the principal components.\n\n3. **LogisticRegression**: Initializes weights to zero, then runs gradient descent. At each step: compute sigmoid(Xw+b), compute error (y_hat - y), compute gradients dw = X^T * error / n, db = mean(error), update weights. The sigmoid is clipped to avoid numerical overflow.\n\n**Pipeline.fit**: calls fit_transform on scaler, fit_transform on PCA with the scaled data, then fits the logistic regression on the PCA-projected data.\n\n**Pipeline.predict**: applies the already-fitted scaler and PCA transforms, then predicts with the logistic regression.\n\nFor a linearly separable dataset, PCA preserves the discriminative direction and logistic regression finds the decision boundary, easily exceeding 85% accuracy.",
+  "test_cases": [
+    {
+      "name": "test_accuracy_on_separable_data",
+      "code": "import numpy as np\nnp.random.seed(42)\nX0 = np.random.randn(100, 5) + np.array([3, 0, 0, 0, 0])\nX1 = np.random.randn(100, 5) + np.array([-3, 0, 0, 0, 0])\nX = np.vstack([X0, X1])\ny = np.array([0]*100 + [1]*100)\npipeline = Pipeline(n_components=2, lr=0.5, n_iter=500)\npipeline.fit(X, y)\npreds = pipeline.predict(X)\nacc = np.mean(preds == y)\nassert acc > 0.85, f'Accuracy {acc:.2f} is not above 0.85'"
+    },
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nnp.random.seed(0)\nX = np.random.randn(50, 4)\ny = (X[:, 0] > 0).astype(int)\npipeline = Pipeline(n_components=2)\npipeline.fit(X, y)\npreds = pipeline.predict(X)\nassert preds.shape == (50,), f'Expected shape (50,), got {preds.shape}'\nassert set(preds).issubset({0, 1}), 'Predictions must be binary (0 or 1)'"
+    },
+    {
+      "name": "test_scaler_zero_mean_unit_std",
+      "code": "import numpy as np\nnp.random.seed(7)\nX = np.random.randn(100, 3) * 5 + 10\nscaler = StandardScaler()\nX_scaled = scaler.fit_transform(X)\nassert np.allclose(np.mean(X_scaled, axis=0), 0, atol=1e-6), 'Scaled mean should be ~0'\nassert np.allclose(np.std(X_scaled, axis=0), 1, atol=0.01), 'Scaled std should be ~1'"
+    },
+    {
+      "name": "test_pca_reduces_dimensions",
+      "code": "import numpy as np\nnp.random.seed(3)\nX = np.random.randn(80, 10)\npca = PCA(n_components=3)\nX_pca = pca.fit_transform(X)\nassert X_pca.shape == (80, 3), f'Expected (80, 3), got {X_pca.shape}'"
+    },
+    {
+      "name": "test_logistic_regression_convergence",
+      "code": "import numpy as np\nnp.random.seed(1)\nX = np.random.randn(200, 3)\ny = (X[:, 0] + X[:, 1] > 0).astype(int)\nlr_model = LogisticRegression(lr=0.5, n_iter=1000)\nlr_model.fit(X, y)\npreds = lr_model.predict(X)\nacc = np.mean(preds == y)\nassert acc > 0.85, f'Logistic regression accuracy {acc:.2f} should exceed 0.85'"
+    }
+  ],
+  "hints": [
+    "Use np.linalg.eigh for symmetric covariance matrices — it's more numerically stable than eig",
+    "Sort eigenvalues in descending order to pick the most-variance components first",
+    "Clip the sigmoid input to [-250, 250] to prevent overflow in np.exp",
+    "Gradient of BCE loss w.r.t. weights is (1/n) * X^T * (y_hat - y) — no extra sigmoid derivative needed",
+    "Pipeline.fit must store the fitted components so Pipeline.predict can reuse them"
+  ],
+  "related_problems": ["30.1", "30.2", "30.3", "31.9"]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "30.10",
+  "title": "Connected Components",
+  "difficulty": "Medium",
+  "category": "Data Structures & Algorithms",
+  "tags": ["graphs", "DFS", "union-find", "connected components", "clustering"],
+  "description": "Given an undirected graph as an adjacency list, find all connected components.\n\nImplement two approaches:\n\n**Approach 1 — DFS**:\n```python\ndef connected_components_dfs(graph: dict) -> list:\n    ...\n```\nReturn a list of sets, where each set contains the nodes of one connected component. Use iterative DFS (stack-based) to avoid recursion depth limits.\n\n**Approach 2 — Union-Find**:\n```python\nclass UnionFind:\n    def __init__(self, nodes)\n    def find(self, x) -> ...\n    def union(self, x, y) -> None\n    def get_components(self) -> list\n\ndef connected_components_union_find(graph: dict) -> list:\n    ...\n```\nImplement Union-Find with path compression and union by rank. `get_components()` returns a list of sets of nodes in each component.\n\nBoth functions should return the same result (sets of nodes), though the order of components and order within sets may differ.",
+  "constraints": [
+    "1 <= number of nodes <= 10^5",
+    "0 <= number of edges <= 10^5",
+    "Node labels can be any hashable type",
+    "Graph is undirected: if (u, v) is an edge, (v, u) is also an edge in the adjacency list",
+    "All nodes appear as keys in the adjacency list (even isolated nodes have an empty list)"
+  ],
+  "starter_code": "def connected_components_dfs(graph: dict) -> list:\n    pass\n\n\nclass UnionFind:\n    def __init__(self, nodes):\n        pass\n\n    def find(self, x):\n        pass\n\n    def union(self, x, y) -> None:\n        pass\n\n    def get_components(self) -> list:\n        pass\n\n\ndef connected_components_union_find(graph: dict) -> list:\n    pass\n",
+  "solution_code": "def connected_components_dfs(graph: dict) -> list:\n    visited = set()\n    components = []\n\n    for start in graph:\n        if start in visited:\n            continue\n        # Iterative DFS\n        component = set()\n        stack = [start]\n        while stack:\n            node = stack.pop()\n            if node in visited:\n                continue\n            visited.add(node)\n            component.add(node)\n            for neighbor in graph[node]:\n                if neighbor not in visited:\n                    stack.append(neighbor)\n        components.append(component)\n\n    return components\n\n\nclass UnionFind:\n    def __init__(self, nodes):\n        self.parent = {node: node for node in nodes}\n        self.rank = {node: 0 for node in nodes}\n\n    def find(self, x):\n        # Path compression: make every node point directly to the root\n        if self.parent[x] != x:\n            self.parent[x] = self.find(self.parent[x])\n        return self.parent[x]\n\n    def union(self, x, y) -> None:\n        rx, ry = self.find(x), self.find(y)\n        if rx == ry:\n            return  # Already in the same component\n        # Union by rank: attach smaller tree under larger tree\n        if self.rank[rx] < self.rank[ry]:\n            rx, ry = ry, rx\n        self.parent[ry] = rx\n        if self.rank[rx] == self.rank[ry]:\n            self.rank[rx] += 1\n\n    def get_components(self) -> list:\n        from collections import defaultdict\n        root_to_members = defaultdict(set)\n        for node in self.parent:\n            root = self.find(node)\n            root_to_members[root].add(node)\n        return list(root_to_members.values())\n\n\ndef connected_components_union_find(graph: dict) -> list:\n    uf = UnionFind(graph.keys())\n    for node in graph:\n        for neighbor in graph[node]:\n            uf.union(node, neighbor)\n    return uf.get_components()\n",
+  "explanation": "**Connected Components** partitions an undirected graph into maximal subgraphs where every node is reachable from every other node in the same subgraph.\n\n**DFS Approach**:\n- Iterate over all nodes. For each unvisited node, launch an iterative DFS that explores its entire component.\n- Use an explicit stack (not recursion) to avoid Python's recursion limit.\n- The key: once a node is added to `visited`, it will never be the start of another DFS iteration. So each node is processed exactly once: O(V + E).\n\n**Union-Find Approach**:\n- Initialize each node as its own root.\n- For each edge `(u, v)`, call `union(u, v)` to merge their components.\n- `find(x)` returns the root of x's component with **path compression**: every node along the path is made to point directly to the root, flattening the tree.\n- **Union by rank**: attach the shallower tree under the deeper one to keep trees flat.\n- With both optimizations, each operation is nearly O(1) (amortized O(α(n)) where α is the inverse Ackermann function — effectively constant).\n- `get_components()` groups nodes by their root.\n\n**When to use which?**\n- **DFS**: Better for general graph traversal where you need to explore structure (paths, cycles).\n- **Union-Find**: Better for dynamic connectivity queries — as edges are added, you want O(1) queries asking 'are u and v connected?'. Used in Kruskal's MST algorithm, clustering, and online graph algorithms.\n\n**ML Context**: Connected components appear in clustering (finding clusters in a k-NN graph), image segmentation (connected regions of pixels), and knowledge graph analysis.",
+  "test_cases": [
+    {
+      "name": "DFS two components",
+      "code": "graph = {\n    1: [2, 3], 2: [1, 3], 3: [1, 2],  # Component 1\n    4: [5], 5: [4]                       # Component 2\n}\nresult = connected_components_dfs(graph)\nassert len(result) == 2\nresult_frozen = [frozenset(c) for c in result]\nassert frozenset({1, 2, 3}) in result_frozen\nassert frozenset({4, 5}) in result_frozen"
+    },
+    {
+      "name": "Union-Find two components matches DFS",
+      "code": "graph = {\n    'a': ['b'], 'b': ['a', 'c'], 'c': ['b'],\n    'd': ['e'], 'e': ['d'],\n    'f': []\n}\ndfs_result = connected_components_dfs(graph)\nuf_result = connected_components_union_find(graph)\ndfs_frozen = sorted([frozenset(c) for c in dfs_result], key=lambda s: sorted(str(x) for x in s))\nuf_frozen = sorted([frozenset(c) for c in uf_result], key=lambda s: sorted(str(x) for x in s))\nassert dfs_frozen == uf_frozen"
+    },
+    {
+      "name": "All nodes isolated",
+      "code": "graph = {1: [], 2: [], 3: [], 4: []}\nresult = connected_components_dfs(graph)\nassert len(result) == 4\nfor comp in result:\n    assert len(comp) == 1"
+    },
+    {
+      "name": "Fully connected graph is one component",
+      "code": "graph = {i: [j for j in range(5) if j != i] for i in range(5)}\nresult = connected_components_union_find(graph)\nassert len(result) == 1\nassert result[0] == {0, 1, 2, 3, 4}"
+    },
+    {
+      "name": "UnionFind path compression and rank",
+      "code": "uf = UnionFind(range(6))\nuf.union(0, 1)\nuf.union(1, 2)\nuf.union(3, 4)\nuf.union(4, 5)\nassert uf.find(0) == uf.find(2)   # 0, 1, 2 same component\nassert uf.find(3) == uf.find(5)   # 3, 4, 5 same component\nassert uf.find(0) != uf.find(3)   # Different components\nuf.union(2, 3)\nassert uf.find(0) == uf.find(5)   # Now all in one component"
+    }
+  ],
+  "hints": [
+    "For DFS, use an explicit stack `[start_node]` and a `visited` set. Iterate over all nodes as potential starting points; skip already-visited nodes.",
+    "For Union-Find, path compression in `find`: `if self.parent[x] != x: self.parent[x] = self.find(self.parent[x])`. This recursively flattens the path.",
+    "Union by rank: keep a `rank` dict. When merging, the root with lower rank becomes a child of the root with higher rank. Only increment rank when both have equal rank.",
+    "To extract components from UnionFind: call `find(node)` for every node and group by root. Using a defaultdict(set) makes this clean.",
+    "Make sure the graph is undirected — both (u,v) and (v,u) edges must be present in the adjacency list, or Union-Find handles it naturally since `union(u, v)` and `union(v, u)` are equivalent."
+  ],
+  "related_problems": ["30.3", "30.4", "30.11"]
+}

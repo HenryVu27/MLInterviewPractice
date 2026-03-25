@@ -1,0 +1,49 @@
+{
+  "id": "30.3",
+  "title": "Dijkstra's Shortest Path",
+  "difficulty": "Medium",
+  "category": "Data Structures & Algorithms",
+  "tags": ["graphs", "shortest path", "greedy", "heapq", "BFS"],
+  "description": "Implement Dijkstra's algorithm to find the shortest distances from a source node to all other nodes in a weighted directed graph.\n\nThe graph is given as an adjacency list: `graph` is a `dict` where `graph[u]` is a list of `(v, weight)` tuples representing an edge from `u` to `v` with the given non-negative weight.\n\nImplement:\n```python\ndef dijkstra(graph: dict, source) -> dict:\n    ...\n```\n\nReturn a dictionary mapping each reachable node to its minimum distance from the source. Nodes that are in the graph (appear as keys in `graph`) but are not reachable should have distance `float('inf')` in the result. The source node itself has distance 0.\n\nYou must use a min-heap (`heapq`) for O((V + E) log V) complexity. Do not use a naive O(V^2) scan.",
+  "constraints": [
+    "1 <= number of nodes <= 10^4",
+    "0 <= number of edges <= 10^5",
+    "All edge weights are non-negative integers",
+    "Graph may be disconnected",
+    "Node labels can be any hashable type (int, str)",
+    "graph[node] exists for every node in the graph (no missing keys for nodes with no outgoing edges)"
+  ],
+  "starter_code": "import heapq\n\ndef dijkstra(graph: dict, source) -> dict:\n    pass\n",
+  "solution_code": "import heapq\n\ndef dijkstra(graph: dict, source) -> dict:\n    # Initialize distances to infinity for all nodes\n    dist = {node: float('inf') for node in graph}\n    dist[source] = 0\n\n    # Min-heap: (distance, node)\n    heap = [(0, source)]\n\n    while heap:\n        current_dist, u = heapq.heappop(heap)\n\n        # Skip if we already found a shorter path to u\n        if current_dist > dist[u]:\n            continue\n\n        for v, weight in graph[u]:\n            new_dist = current_dist + weight\n            if new_dist < dist[v]:\n                dist[v] = new_dist\n                heapq.heappush(heap, (new_dist, v))\n\n    return dist\n",
+  "explanation": "Dijkstra's algorithm is a greedy shortest-path algorithm that works on graphs with non-negative edge weights.\n\n**Core idea**: Maintain a set of 'settled' nodes (those with finalized shortest distances) and a priority queue of candidates. Repeatedly extract the unsettled node with the smallest tentative distance and relax all its outgoing edges.\n\n**Step-by-step**:\n1. Initialize all distances to infinity except the source (distance 0).\n2. Push `(0, source)` onto the min-heap.\n3. Pop the minimum `(d, u)`. If `d > dist[u]`, this is a stale entry (we already found a shorter path) — skip it.\n4. For each neighbor `v` of `u` with edge weight `w`: if `dist[u] + w < dist[v]`, update `dist[v]` and push the new candidate.\n5. Repeat until the heap is empty.\n\n**Why the stale-entry check?** We use a lazy deletion strategy: instead of decreasing the key of an existing heap entry (complex to implement), we push a new entry and skip the old one when popped. The check `current_dist > dist[u]` implements this.\n\n**Complexity**: O((V + E) log V). Each node is settled at most once (after that, stale entries are skipped). Each edge relaxation may push to the heap: O(E log V) for pushes.\n\n**Disconnected graphs**: Nodes not reachable from the source retain their initial `float('inf')` distance.",
+  "test_cases": [
+    {
+      "name": "Simple directed weighted graph",
+      "code": "graph = {\n    0: [(1, 4), (2, 1)],\n    1: [(3, 1)],\n    2: [(1, 2), (3, 5)],\n    3: []\n}\ndist = dijkstra(graph, 0)\nassert dist[0] == 0\nassert dist[1] == 3   # 0->2->1: 1+2\nassert dist[2] == 1   # 0->2\nassert dist[3] == 4   # 0->2->1->3: 1+2+1"
+    },
+    {
+      "name": "Disconnected graph returns inf for unreachable nodes",
+      "code": "graph = {\n    'A': [('B', 5)],\n    'B': [],\n    'C': [('D', 2)],\n    'D': []\n}\ndist = dijkstra(graph, 'A')\nassert dist['A'] == 0\nassert dist['B'] == 5\nassert dist['C'] == float('inf')\nassert dist['D'] == float('inf')"
+    },
+    {
+      "name": "Single node graph",
+      "code": "graph = {42: []}\ndist = dijkstra(graph, 42)\nassert dist[42] == 0"
+    },
+    {
+      "name": "Multiple paths, always picks shortest",
+      "code": "graph = {\n    0: [(1, 10), (2, 3)],\n    1: [(3, 2)],\n    2: [(1, 4), (3, 8), (4, 2)],\n    3: [(4, 5)],\n    4: []\n}\ndist = dijkstra(graph, 0)\nassert dist[0] == 0\nassert dist[1] == 7   # 0->2->1: 3+4\nassert dist[2] == 3\nassert dist[3] == 9   # 0->2->1->3: 3+4+2\nassert dist[4] == 5   # 0->2->4: 3+2"
+    },
+    {
+      "name": "Graph with zero weight edges",
+      "code": "graph = {\n    0: [(1, 0), (2, 5)],\n    1: [(2, 0)],\n    2: []\n}\ndist = dijkstra(graph, 0)\nassert dist[0] == 0\nassert dist[1] == 0\nassert dist[2] == 0   # 0->1->2 with total weight 0"
+    }
+  ],
+  "hints": [
+    "Initialize a dist dict with `float('inf')` for every node in the graph, then set `dist[source] = 0`.",
+    "The heap stores `(distance, node)` tuples. Python's heapq is a min-heap by default, so the smallest distance is always popped first.",
+    "The stale-entry check `if current_dist > dist[u]: continue` is critical. Without it, you may relax edges from a node using an outdated distance.",
+    "You do NOT need a separate 'visited' set if you use the stale-entry check. A node is effectively 'visited' once its heap entry matches its current dist.",
+    "Make sure every node in the graph appears as a key in `graph`, even if it has no outgoing edges, so the initial dist dict covers all nodes."
+  ],
+  "related_problems": ["30.4", "30.11"]
+}

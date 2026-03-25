@@ -1,0 +1,48 @@
+{
+  "id": "30.4",
+  "title": "Topological Sort (Kahn's Algorithm)",
+  "difficulty": "Medium",
+  "category": "Data Structures & Algorithms",
+  "tags": ["graphs", "topological sort", "BFS", "DAG", "compute graph", "ML systems"],
+  "description": "Implement **Kahn's algorithm** for topological sorting of a Directed Acyclic Graph (DAG).\n\nGiven a directed graph as an adjacency list (a `dict` mapping each node to a list of its neighbors), return a valid topological ordering of all nodes as a list.\n\nIf the graph contains a **cycle**, raise a `ValueError` with the message `'Graph contains a cycle'`.\n\nIf multiple valid orderings exist, any one of them is acceptable.\n\n```python\ndef topological_sort(graph: dict) -> list:\n    ...\n```\n\n**Context**: Topological sort is the backbone of ML compute graphs (e.g., PyTorch autograd, TensorFlow's execution engine). Before running a forward pass, the framework determines a topological order of operations so that every input to a node is computed before the node itself executes.",
+  "constraints": [
+    "1 <= number of nodes <= 10^4",
+    "0 <= number of edges <= 10^5",
+    "All nodes in the graph are keys in the adjacency list (including sink nodes with empty lists)",
+    "Node labels can be any hashable type",
+    "Raise ValueError if and only if the graph has a cycle"
+  ],
+  "starter_code": "from collections import deque\n\ndef topological_sort(graph: dict) -> list:\n    pass\n",
+  "solution_code": "from collections import deque\n\ndef topological_sort(graph: dict) -> list:\n    # Step 1: Compute in-degrees for every node\n    in_degree = {node: 0 for node in graph}\n    for node in graph:\n        for neighbor in graph[node]:\n            in_degree[neighbor] += 1\n\n    # Step 2: Enqueue all nodes with in-degree 0\n    queue = deque(node for node in graph if in_degree[node] == 0)\n    result = []\n\n    # Step 3: BFS\n    while queue:\n        node = queue.popleft()\n        result.append(node)\n        for neighbor in graph[node]:\n            in_degree[neighbor] -= 1\n            if in_degree[neighbor] == 0:\n                queue.append(neighbor)\n\n    # Step 4: Cycle detection\n    if len(result) != len(graph):\n        raise ValueError('Graph contains a cycle')\n\n    return result\n",
+  "explanation": "**Kahn's Algorithm** is a BFS-based approach to topological sort that naturally detects cycles.\n\n**Algorithm**:\n1. **Compute in-degrees**: For each edge `u -> v`, increment `in_degree[v]`. A node with `in_degree == 0` has no prerequisites — it can be scheduled first.\n2. **Initialize queue**: Add all zero-in-degree nodes to a queue. These are the 'roots' of the DAG.\n3. **BFS loop**: Dequeue a node, add it to the result. Then for each of its neighbors, decrement their in-degree. When a neighbor's in-degree reaches 0, all its prerequisites have been processed — enqueue it.\n4. **Cycle detection**: In a DAG, every node will eventually reach in-degree 0 and be dequeued. If the result has fewer nodes than the graph, some nodes are in a cycle (their in-degrees never reached 0).\n\n**Correctness**: When we add a node to the result, all nodes that point to it have already been added (they were processed first, which decremented this node's in-degree to 0). This guarantees the topological property.\n\n**vs DFS-based topological sort**: Kahn's is iterative (no recursion stack overflow risk) and cycle detection is trivial (just check result length). DFS-based requires tracking 'in progress' nodes and is slightly trickier to implement correctly.\n\n**Complexity**: O(V + E) — each node is enqueued/dequeued once, each edge is visited once.",
+  "test_cases": [
+    {
+      "name": "Simple linear chain",
+      "code": "graph = {'A': ['B'], 'B': ['C'], 'C': []}\nresult = topological_sort(graph)\nassert result == ['A', 'B', 'C']"
+    },
+    {
+      "name": "Diamond-shaped DAG",
+      "code": "graph = {\n    'A': ['B', 'C'],\n    'B': ['D'],\n    'C': ['D'],\n    'D': []\n}\nresult = topological_sort(graph)\n# A must come before B and C; B and C before D\nassert result.index('A') < result.index('B')\nassert result.index('A') < result.index('C')\nassert result.index('B') < result.index('D')\nassert result.index('C') < result.index('D')\nassert len(result) == 4"
+    },
+    {
+      "name": "Cycle detection raises ValueError",
+      "code": "import traceback\ngraph = {'A': ['B'], 'B': ['C'], 'C': ['A']}\ntry:\n    topological_sort(graph)\n    assert False, 'Expected ValueError'\nexcept ValueError as e:\n    assert 'cycle' in str(e).lower()"
+    },
+    {
+      "name": "Graph with isolated nodes",
+      "code": "graph = {1: [2], 2: [], 3: [], 4: [3]}\nresult = topological_sort(graph)\nassert result.index(1) < result.index(2)\nassert result.index(4) < result.index(3)\nassert len(result) == 4"
+    },
+    {
+      "name": "Complex ML compute graph ordering",
+      "code": "# Simulates: input -> [embed, norm] -> add -> output\ngraph = {\n    'input': ['embed', 'norm'],\n    'embed': ['add'],\n    'norm': ['add'],\n    'add': ['output'],\n    'output': []\n}\nresult = topological_sort(graph)\nassert result[0] == 'input'\nassert result[-1] == 'output'\nassert result.index('embed') < result.index('add')\nassert result.index('norm') < result.index('add')"
+    }
+  ],
+  "hints": [
+    "In-degree of a node = number of edges pointing TO it. Initialize in_degree for ALL nodes first, then increment as you scan edges.",
+    "Only nodes with in_degree == 0 can be placed at the start of the topological order (they have no dependencies).",
+    "When you process a node and decrement its neighbors' in-degrees, you're saying 'this dependency is now satisfied'. When a neighbor's in-degree hits 0, all its dependencies are done.",
+    "For cycle detection: in any cycle, every node has at least one incoming edge from within the cycle, so no node in the cycle ever reaches in-degree 0. If result length < number of nodes, there's a cycle.",
+    "You don't need to separately track visited nodes — the in-degree countdown handles it."
+  ],
+  "related_problems": ["30.3", "30.10"]
+}

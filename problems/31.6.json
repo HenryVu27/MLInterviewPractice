@@ -1,0 +1,51 @@
+{
+  "id": "31.6",
+  "title": "CNN Image Pipeline: Conv + BN + ReLU + Pool + Dense",
+  "difficulty": "Hard",
+  "category": "Composite ML Systems",
+  "tags": ["CNN", "conv2d", "batch-normalization", "maxpool", "global-average-pooling", "forward-pass", "image-classification"],
+  "description": "Implement a simple CNN forward pass from scratch using only numpy. Implement each layer:\n\n1. **Conv2D**: naive nested-loop convolution. Input (N, C_in, H, W), kernel (C_out, C_in, kH, kW), no padding, stride=1. Output shape: (N, C_out, H-kH+1, W-kW+1).\n2. **BatchNorm2D**: per-channel normalization. Normalizes each channel across (N, H, W), applies learnable gamma and beta per channel. Tracks running stats.\n3. **ReLU**: element-wise max(0, x).\n4. **MaxPool2D**: 2x2 max pooling with stride=2. Output halves spatial dimensions.\n5. **GlobalAvgPool**: averages over (H, W) spatial dims. Input (N, C, H, W) -> Output (N, C).\n6. **Dense**: standard linear layer (N, in_f) -> (N, out_f).\n\nChain them as: Conv2D(1, 8, 3) -> BN2D(8) -> ReLU -> MaxPool2D(2) -> Conv2D(8, 16, 3) -> BN2D(16) -> ReLU -> GlobalAvgPool -> Dense(16, num_classes).\n\nTest that output shape is (batch, num_classes) and values are finite logits.",
+  "constraints": [
+    "numpy and Python stdlib only",
+    "Conv2D must be implemented as explicit nested loops over output positions (no scipy.signal)",
+    "BatchNorm2D normalizes per channel: compute statistics over axes (0, 2, 3)",
+    "MaxPool2D uses 2x2 windows with stride=2",
+    "GlobalAvgPool averages over spatial dimensions (H, W)",
+    "All weights initialized with small random values",
+    "Forward pass only — no backward pass required",
+    "Input images shape: (N, C, H, W) format"
+  ],
+  "starter_code": "import numpy as np\n\nclass Conv2D:\n    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0):\n        pass\n    def forward(self, x):\n        pass\n\nclass BatchNorm2D:\n    def __init__(self, num_channels, eps=1e-5, momentum=0.1):\n        pass\n    def forward(self, x, training=True):\n        pass\n\nclass ReLU:\n    def forward(self, x):\n        pass\n\nclass MaxPool2D:\n    def __init__(self, kernel_size=2, stride=2):\n        pass\n    def forward(self, x):\n        pass\n\nclass GlobalAvgPool:\n    def forward(self, x):\n        pass\n\nclass Dense:\n    def __init__(self, in_features, out_features):\n        pass\n    def forward(self, x):\n        pass\n\nclass SimpleCNN:\n    def __init__(self, num_classes=10):\n        pass\n    def forward(self, x, training=True):\n        pass\n",
+  "solution_code": "import numpy as np\n\nclass Conv2D:\n    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0):\n        self.in_channels = in_channels\n        self.out_channels = out_channels\n        self.kernel_size = kernel_size\n        self.stride = stride\n        self.padding = padding\n        scale = np.sqrt(2.0 / (in_channels * kernel_size * kernel_size))\n        self.W = np.random.randn(out_channels, in_channels, kernel_size, kernel_size) * scale\n        self.b = np.zeros(out_channels)\n\n    def forward(self, x):\n        N, C, H, W = x.shape\n        kH = kW = self.kernel_size\n        s = self.stride\n        p = self.padding\n        if p > 0:\n            x = np.pad(x, ((0,0),(0,0),(p,p),(p,p)), mode='constant')\n            _, _, H, W = x.shape\n        out_H = (H - kH) // s + 1\n        out_W = (W - kW) // s + 1\n        out = np.zeros((N, self.out_channels, out_H, out_W))\n        for i in range(out_H):\n            for j in range(out_W):\n                patch = x[:, :, i*s:i*s+kH, j*s:j*s+kW]  # (N, C, kH, kW)\n                # out[:, :, i, j] = einsum('nckl,ockl->no', patch, W) + b\n                out[:, :, i, j] = patch.reshape(N, -1) @ self.W.reshape(self.out_channels, -1).T + self.b\n        return out\n\n\nclass BatchNorm2D:\n    def __init__(self, num_channels, eps=1e-5, momentum=0.1):\n        self.num_channels = num_channels\n        self.eps = eps\n        self.momentum = momentum\n        self.gamma = np.ones(num_channels)\n        self.beta = np.zeros(num_channels)\n        self.running_mean = np.zeros(num_channels)\n        self.running_var = np.ones(num_channels)\n\n    def forward(self, x, training=True):\n        # x: (N, C, H, W)\n        N, C, H, W = x.shape\n        if training:\n            # Per-channel mean/var over (N, H, W)\n            mu = x.mean(axis=(0, 2, 3))  # (C,)\n            var = x.var(axis=(0, 2, 3))  # (C,)\n            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mu\n            self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var\n        else:\n            mu = self.running_mean\n            var = self.running_var\n        x_hat = (x - mu[None, :, None, None]) / np.sqrt(var[None, :, None, None] + self.eps)\n        return self.gamma[None, :, None, None] * x_hat + self.beta[None, :, None, None]\n\n\nclass ReLU:\n    def forward(self, x):\n        return np.maximum(x, 0)\n\n\nclass MaxPool2D:\n    def __init__(self, kernel_size=2, stride=2):\n        self.kernel_size = kernel_size\n        self.stride = stride\n\n    def forward(self, x):\n        N, C, H, W = x.shape\n        k = self.kernel_size\n        s = self.stride\n        out_H = (H - k) // s + 1\n        out_W = (W - k) // s + 1\n        out = np.zeros((N, C, out_H, out_W))\n        for i in range(out_H):\n            for j in range(out_W):\n                out[:, :, i, j] = x[:, :, i*s:i*s+k, j*s:j*s+k].max(axis=(2, 3))\n        return out\n\n\nclass GlobalAvgPool:\n    def forward(self, x):\n        # x: (N, C, H, W) -> (N, C)\n        return x.mean(axis=(2, 3))\n\n\nclass Dense:\n    def __init__(self, in_features, out_features):\n        scale = np.sqrt(1.0 / in_features)\n        self.W = np.random.randn(out_features, in_features) * scale\n        self.b = np.zeros(out_features)\n\n    def forward(self, x):\n        return x @ self.W.T + self.b\n\n\nclass SimpleCNN:\n    def __init__(self, num_classes=10):\n        self.conv1 = Conv2D(1, 8, kernel_size=3)\n        self.bn1 = BatchNorm2D(8)\n        self.relu = ReLU()\n        self.pool = MaxPool2D(kernel_size=2, stride=2)\n        self.conv2 = Conv2D(8, 16, kernel_size=3)\n        self.bn2 = BatchNorm2D(16)\n        self.gap = GlobalAvgPool()\n        self.fc = Dense(16, num_classes)\n\n    def forward(self, x, training=True):\n        # x: (N, 1, H, W)\n        x = self.conv1.forward(x)\n        x = self.bn1.forward(x, training=training)\n        x = self.relu.forward(x)\n        x = self.pool.forward(x)\n        x = self.conv2.forward(x)\n        x = self.bn2.forward(x, training=training)\n        x = self.relu.forward(x)\n        x = self.gap.forward(x)\n        x = self.fc.forward(x)\n        return x\n",
+  "explanation": "This CNN forward pass implements each layer from scratch.\n\n**Conv2D**: Iterates over all output positions (i, j). For each position, extracts the receptive field patch of shape (N, C_in, kH, kW), reshapes it to (N, C_in*kH*kW), then matrix-multiplies by the reshaped kernel (C_out, C_in*kH*kW).T plus bias. This is equivalent to the sum-of-products definition but vectorized over the batch.\n\n**BatchNorm2D**: Per-channel normalization — statistics computed over axes (0, 2, 3) (batch, height, width), leaving the channel axis. Running stats tracked for eval mode. Broadcasting via [None, :, None, None] expands channel vectors to match (N, C, H, W).\n\n**MaxPool2D**: Nested loop over output positions, takes max over the 2x2 window using .max(axis=(2,3)).\n\n**GlobalAvgPool**: Simply averages over the spatial (H, W) dimensions.\n\n**SimpleCNN architecture**: Conv(1,8,3) output: (N,8,H-2,W-2); after MaxPool: (N,8,(H-2)/2,(W-2)/2); Conv(8,16,3) output: (N,16,...); after GlobalAvgPool: (N,16); Dense: (N,num_classes). For a 28x28 input: 26x26 -> 13x13 -> 11x11 -> 16 -> num_classes.",
+  "test_cases": [
+    {
+      "name": "test_output_shape",
+      "code": "import numpy as np\nnp.random.seed(42)\ncnn = SimpleCNN(num_classes=10)\nx = np.random.randn(4, 1, 28, 28)\nout = cnn.forward(x)\nassert out.shape == (4, 10), f'Expected (4, 10), got {out.shape}'"
+    },
+    {
+      "name": "test_output_values_finite",
+      "code": "import numpy as np\nnp.random.seed(0)\ncnn = SimpleCNN(num_classes=5)\nx = np.random.randn(2, 1, 28, 28)\nout = cnn.forward(x)\nassert np.all(np.isfinite(out)), 'All output logits must be finite'\nassert out.shape == (2, 5)"
+    },
+    {
+      "name": "test_conv2d_output_shape",
+      "code": "import numpy as np\nnp.random.seed(1)\nconv = Conv2D(3, 16, kernel_size=3)\nx = np.random.randn(2, 3, 12, 12)\nout = conv.forward(x)\nassert out.shape == (2, 16, 10, 10), f'Expected (2, 16, 10, 10), got {out.shape}'"
+    },
+    {
+      "name": "test_maxpool_halves_spatial",
+      "code": "import numpy as np\nnp.random.seed(2)\npool = MaxPool2D(kernel_size=2, stride=2)\nx = np.random.randn(3, 8, 16, 16)\nout = pool.forward(x)\nassert out.shape == (3, 8, 8, 8), f'Expected (3, 8, 8, 8), got {out.shape}'"
+    },
+    {
+      "name": "test_batchnorm2d_normalizes_per_channel",
+      "code": "import numpy as np\nnp.random.seed(3)\nbn = BatchNorm2D(4)\nx = np.random.randn(8, 4, 6, 6) * 10 + 5\nout = bn.forward(x, training=True)\n# After BN with default gamma=1, beta=0: per-channel mean should be ~0\nchannel_means = out.mean(axis=(0, 2, 3))\nassert np.allclose(channel_means, 0, atol=1e-5), f'Per-channel means should be ~0, got {channel_means}'"
+    }
+  ],
+  "hints": [
+    "The key trick for Conv2D: reshape patch (N, C_in, kH, kW) -> (N, C_in*kH*kW) and kernel (C_out, C_in, kH, kW) -> (C_out, C_in*kH*kW), then do matrix multiply",
+    "BatchNorm2D: axes=(0,2,3) gives per-channel statistics. Use [None,:,None,None] to broadcast channel vectors across (N,H,W)",
+    "GlobalAvgPool is just x.mean(axis=(2,3)) — averages over spatial dimensions",
+    "For a 28x28 input with two 3x3 convs and one 2x2 pool: 28 -> 26 -> 13 (pool) -> 11. Need at least 11x11 input for the second conv not to fail",
+    "MaxPool2D with stride=2 halves each spatial dimension: (H-k)//s+1 = (H-2)//2+1 = H//2 for even H"
+  ],
+  "related_problems": ["31.4", "31.2", "31.5"]
+}

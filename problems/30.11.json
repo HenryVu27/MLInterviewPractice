@@ -1,0 +1,49 @@
+{
+  "id": "30.11",
+  "title": "A* Search Algorithm",
+  "difficulty": "Hard",
+  "category": "Data Structures & Algorithms",
+  "tags": ["graphs", "shortest path", "heuristic", "heapq", "grid", "pathfinding"],
+  "description": "Implement the **A* search algorithm** to find the shortest path on a 2D grid.\n\nGiven:\n- `grid`: a 2D list where `0` = free cell and `1` = wall\n- `start`: `(row, col)` tuple for the starting position\n- `goal`: `(row, col)` tuple for the destination\n\nReturn the **path** as a list of `(row, col)` tuples from `start` to `goal` (inclusive), or an **empty list** if no path exists.\n\n```python\ndef astar(grid: list, start: tuple, goal: tuple) -> list:\n    ...\n```\n\nMovement is allowed in **4 directions** (up, down, left, right). No diagonal movement.\n\nUse **Manhattan distance** as the heuristic: `|row1 - row2| + |col1 - col2|`.\n\nA* uses f = g + h where:\n- `g` = actual cost from start to current node\n- `h` = heuristic estimate from current node to goal\n\nA* with a consistent/admissible heuristic is guaranteed to find the optimal (shortest) path.",
+  "constraints": [
+    "1 <= rows, cols <= 100",
+    "start and goal are valid free cells (grid value 0)",
+    "start and goal may be the same cell (return [start])",
+    "Return empty list if no path exists",
+    "Use a min-heap (heapq) for the open set",
+    "Manhattan distance is admissible and consistent for grid pathfinding with unit costs"
+  ],
+  "starter_code": "import heapq\n\ndef astar(grid: list, start: tuple, goal: tuple) -> list:\n    pass\n",
+  "solution_code": "import heapq\n\ndef astar(grid: list, start: tuple, goal: tuple) -> list:\n    if start == goal:\n        return [start]\n\n    rows, cols = len(grid), len(grid[0])\n    DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]\n\n    def heuristic(a, b):\n        return abs(a[0] - b[0]) + abs(a[1] - b[1])\n\n    # Min-heap: (f_score, g_score, node)\n    # f = g + h\n    h_start = heuristic(start, goal)\n    heap = [(h_start, 0, start)]\n\n    # g_score[node] = cost of cheapest known path from start to node\n    g_score = {start: 0}\n\n    # came_from[node] = parent node on the cheapest path\n    came_from = {}\n\n    # closed set: nodes already fully processed\n    closed = set()\n\n    while heap:\n        f, g, current = heapq.heappop(heap)\n\n        if current in closed:\n            continue\n        closed.add(current)\n\n        if current == goal:\n            # Reconstruct path\n            path = []\n            node = goal\n            while node in came_from:\n                path.append(node)\n                node = came_from[node]\n            path.append(start)\n            return path[::-1]\n\n        r, c = current\n        for dr, dc in DIRECTIONS:\n            nr, nc = r + dr, c + dc\n            neighbor = (nr, nc)\n\n            if not (0 <= nr < rows and 0 <= nc < cols):\n                continue\n            if grid[nr][nc] == 1:\n                continue\n            if neighbor in closed:\n                continue\n\n            tentative_g = g + 1  # Unit cost for each step\n            if tentative_g < g_score.get(neighbor, float('inf')):\n                g_score[neighbor] = tentative_g\n                came_from[neighbor] = current\n                h = heuristic(neighbor, goal)\n                heapq.heappush(heap, (tentative_g + h, tentative_g, neighbor))\n\n    return []  # No path found\n",
+  "explanation": "**A* (A-star)** is an informed search algorithm that uses a heuristic to guide exploration toward the goal, making it much faster than Dijkstra's algorithm in practice.\n\n**Key data structures**:\n- **Open set (heap)**: Cells to be evaluated, prioritized by f = g + h.\n- **g_score**: The known cost of the cheapest path from start to each cell.\n- **came_from**: For path reconstruction.\n- **closed set**: Cells already finalized (optimal path known).\n\n**Algorithm**:\n1. Start with only the start cell in the open set, with g=0.\n2. Pop the cell with smallest f=g+h.\n3. If it's the goal, reconstruct and return the path.\n4. For each 4-directional neighbor: if the new path through the current cell is cheaper than the known g_score, update g_score, came_from, and push to the heap.\n5. If the heap empties without reaching the goal, return [].\n\n**Why Manhattan distance works**: For a grid with unit step costs and 4-directional movement, Manhattan distance is both admissible (never overestimates true cost — you need at least |dr| + |dc| steps) and consistent (triangle inequality). This guarantees optimality.\n\n**A* vs Dijkstra**: Dijkstra expands in circles of equal cost. A* skews exploration toward the goal using the heuristic. With a perfect heuristic (h = true cost), A* explores only the optimal path. With h=0, it degenerates to Dijkstra.\n\n**Path reconstruction**: Follow `came_from` back from goal to start, then reverse.\n\n**Complexity**: O(E log V) worst case (same as Dijkstra), but typically much faster due to fewer expansions.",
+  "test_cases": [
+    {
+      "name": "Simple open grid shortest path",
+      "code": "grid = [\n    [0, 0, 0],\n    [0, 0, 0],\n    [0, 0, 0]\n]\npath = astar(grid, (0, 0), (2, 2))\nassert path[0] == (0, 0)\nassert path[-1] == (2, 2)\nassert len(path) == 5  # Minimum 5 steps for Manhattan distance 4"
+    },
+    {
+      "name": "Path around a wall",
+      "code": "grid = [\n    [0, 1, 0],\n    [0, 1, 0],\n    [0, 0, 0]\n]\npath = astar(grid, (0, 0), (0, 2))\nassert path[0] == (0, 0)\nassert path[-1] == (0, 2)\n# Must go around the wall\nassert len(path) > 2\nfor r, c in path:\n    assert grid[r][c] == 0  # No walls in path"
+    },
+    {
+      "name": "No path due to complete wall",
+      "code": "grid = [\n    [0, 1, 0],\n    [1, 1, 1],\n    [0, 1, 0]\n]\npath = astar(grid, (0, 0), (2, 2))\nassert path == []"
+    },
+    {
+      "name": "Start equals goal",
+      "code": "grid = [[0, 0], [0, 0]]\npath = astar(grid, (1, 1), (1, 1))\nassert path == [(1, 1)]"
+    },
+    {
+      "name": "Longer path with multiple obstacles",
+      "code": "grid = [\n    [0, 0, 0, 0, 0],\n    [1, 1, 1, 1, 0],\n    [0, 0, 0, 0, 0],\n    [0, 1, 1, 1, 1],\n    [0, 0, 0, 0, 0]\n]\npath = astar(grid, (0, 0), (4, 4))\nassert path is not None and len(path) > 0\nassert path[0] == (0, 0)\nassert path[-1] == (4, 4)\n# Verify path is valid (each step is adjacent and non-wall)\nfor i in range(len(path) - 1):\n    r1, c1 = path[i]\n    r2, c2 = path[i+1]\n    assert abs(r1-r2) + abs(c1-c2) == 1\n    assert grid[r2][c2] == 0"
+    }
+  ],
+  "hints": [
+    "The heap stores `(f, g, node)` tuples. Since f = g + h, two nodes at the same f might have different g values; including g in the tuple helps Python break ties deterministically.",
+    "Use the stale-entry pattern (closed set): after popping, check if the node is already in the closed set and skip it. This avoids the complexity of updating existing heap entries.",
+    "g_score[neighbor] should be initialized to `float('inf')` if not yet seen. Only update if the new path is strictly cheaper.",
+    "For path reconstruction, trace back through `came_from` from goal to start, collect nodes in a list, then reverse it.",
+    "Make sure to handle edge cases: start == goal (return immediately), and unreachable goals (return empty list when heap exhausts)."
+  ],
+  "related_problems": ["30.3", "30.4", "30.10"]
+}

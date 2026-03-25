@@ -1,0 +1,49 @@
+{
+  "id": "30.12",
+  "title": "LRU Cache with TTL",
+  "difficulty": "Hard",
+  "category": "Data Structures & Algorithms",
+  "tags": ["cache", "LRU", "TTL", "expiration", "OrderedDict", "design"],
+  "description": "Design an LRU (Least Recently Used) cache that also supports **time-to-live (TTL) expiration** for entries.\n\nImplement the `LRUCacheWithTTL` class:\n\n```python\nclass LRUCacheWithTTL:\n    def __init__(self, capacity: int, time_fn=None):\n        ...\n    def put(self, key, value, ttl: float) -> None:\n        ...\n    def get(self, key):\n        ...\n```\n\n- `__init__(capacity, time_fn=None)`: Initialize with max capacity. `time_fn` is an optional callable that returns the current time (defaults to `time.time`). Use this for deterministic testing.\n- `put(key, value, ttl)`: Store the key with its value and expiration time (`current_time + ttl`). If the key already exists, update its value, TTL, and move it to the most recently used position. If at capacity, **eagerly evict**: first try to evict expired entries (oldest first), then evict the LRU entry if still full.\n- `get(key)`: Return the value if the key exists and has not expired. Return `None` if the key doesn't exist or is expired. On expiry, **lazily evict** the key. On a valid hit, move the key to most recently used.\n\nUse `collections.OrderedDict` for O(1) LRU ordering (`move_to_end` and `popitem`).",
+  "constraints": [
+    "1 <= capacity <= 10^4",
+    "ttl > 0 (positive float, in seconds)",
+    "O(1) average for get and put",
+    "Expired entries may linger until accessed (lazy eviction) or until capacity is exceeded (eager eviction)",
+    "In tests, inject a mock time function to control time deterministically"
+  ],
+  "starter_code": "import time\nfrom collections import OrderedDict\n\nclass LRUCacheWithTTL:\n    def __init__(self, capacity: int, time_fn=None):\n        pass\n\n    def put(self, key, value, ttl: float) -> None:\n        pass\n\n    def get(self, key):\n        pass\n",
+  "solution_code": "import time\nfrom collections import OrderedDict\n\nclass LRUCacheWithTTL:\n    def __init__(self, capacity: int, time_fn=None):\n        self.capacity = capacity\n        self.time_fn = time_fn if time_fn is not None else time.time\n        # OrderedDict: key -> (value, expiry_time)\n        # Ordered from LRU (front/first) to MRU (back/last)\n        self._cache = OrderedDict()\n\n    def _is_expired(self, key) -> bool:\n        if key not in self._cache:\n            return True\n        _, expiry = self._cache[key]\n        return self.time_fn() >= expiry\n\n    def get(self, key):\n        if key not in self._cache:\n            return None\n        if self._is_expired(key):\n            # Lazy eviction: remove expired entry on access\n            del self._cache[key]\n            return None\n        # Move to MRU position\n        self._cache.move_to_end(key)\n        value, _ = self._cache[key]\n        return value\n\n    def put(self, key, value, ttl: float) -> None:\n        expiry = self.time_fn() + ttl\n        if key in self._cache:\n            # Update existing key: refresh value, expiry, and MRU position\n            self._cache.move_to_end(key)\n            self._cache[key] = (value, expiry)\n            return\n        # New key: check capacity\n        if len(self._cache) >= self.capacity:\n            self._evict()\n        self._cache[key] = (value, expiry)\n        self._cache.move_to_end(key)  # Ensure it's at the MRU end\n\n    def _evict(self) -> None:\n        # Eager eviction strategy:\n        # 1. Remove all expired entries first (scan LRU to MRU)\n        now = self.time_fn()\n        expired_keys = [k for k, (v, exp) in self._cache.items() if now >= exp]\n        for k in expired_keys:\n            del self._cache[k]\n        # 2. If still at capacity, evict the LRU non-expired entry\n        if len(self._cache) >= self.capacity:\n            self._cache.popitem(last=False)  # Remove LRU (first item)\n",
+  "explanation": "This problem combines two eviction policies: **LRU ordering** and **TTL expiration**.\n\n**Data structure**: `OrderedDict` from Python's `collections` module. It maintains insertion order and supports O(1) `move_to_end(key)` (mark as most recently used) and `popitem(last=False)` (remove least recently used).\n\nEach entry stores `(value, expiry_time)` where `expiry_time = insertion_time + ttl`.\n\n**get(key)**:\n1. If key not present, return `None`.\n2. If expired (current_time >= expiry), delete from cache (lazy eviction) and return `None`.\n3. Otherwise, `move_to_end` to mark as MRU and return value.\n\n**put(key, value, ttl)**:\n1. If key exists: update value and expiry, move to MRU.\n2. If new key and at capacity: call `_evict()`.\n3. Insert the new key at the MRU end.\n\n**_evict() — eager eviction**:\n1. First, remove ALL expired entries. This is a best-effort cleanup: if many entries have expired, we reclaim space without removing a valid LRU entry.\n2. If still at capacity after removing expired entries, `popitem(last=False)` removes the LRU valid entry.\n\n**Why lazy + eager?** Scanning all entries every second would be O(n). Instead, we only evict expired entries when we need the space (eager) or when they're directly accessed (lazy). This mirrors how Redis handles TTL.\n\n**Testability with `time_fn`**: Injecting the time function allows tests to control time precisely without `time.sleep()`. This is a dependency injection pattern used in production systems.",
+  "test_cases": [
+    {
+      "name": "Basic TTL expiration on get",
+      "code": "mock_time = [0.0]\ncache = LRUCacheWithTTL(3, time_fn=lambda: mock_time[0])\ncache.put('a', 1, ttl=10)\ncache.put('b', 2, ttl=5)\nassert cache.get('a') == 1\nassert cache.get('b') == 2\n# Advance time past TTL of 'b'\nmock_time[0] = 6.0\nassert cache.get('b') is None   # Expired\nassert cache.get('a') == 1      # Still valid (TTL=10)"
+    },
+    {
+      "name": "LRU eviction when no expired entries",
+      "code": "mock_time = [0.0]\ncache = LRUCacheWithTTL(2, time_fn=lambda: mock_time[0])\ncache.put('x', 10, ttl=100)\ncache.put('y', 20, ttl=100)\ncache.get('x')          # x is now MRU; y is LRU\ncache.put('z', 30, ttl=100)  # capacity=2, evicts y (LRU)\nassert cache.get('y') is None\nassert cache.get('x') == 10\nassert cache.get('z') == 30"
+    },
+    {
+      "name": "Eager eviction of expired entries before LRU eviction",
+      "code": "mock_time = [0.0]\ncache = LRUCacheWithTTL(2, time_fn=lambda: mock_time[0])\ncache.put('a', 1, ttl=5)\ncache.put('b', 2, ttl=100)\nmock_time[0] = 6.0  # 'a' is now expired\n# Adding 'c' should evict expired 'a', not LRU 'b'\ncache.put('c', 3, ttl=100)\nassert cache.get('a') is None   # Was expired and evicted\nassert cache.get('b') == 2      # Still present\nassert cache.get('c') == 3"
+    },
+    {
+      "name": "Update existing key refreshes TTL and MRU position",
+      "code": "mock_time = [0.0]\ncache = LRUCacheWithTTL(2, time_fn=lambda: mock_time[0])\ncache.put('k', 'old', ttl=5)\nmock_time[0] = 3.0\ncache.put('k', 'new', ttl=10)  # Refresh: expiry is now 3+10=13\nmock_time[0] = 8.0\nassert cache.get('k') == 'new'  # Not expired (expiry=13)\nmock_time[0] = 14.0\nassert cache.get('k') is None   # Now expired"
+    },
+    {
+      "name": "Cache with capacity 1",
+      "code": "mock_time = [0.0]\ncache = LRUCacheWithTTL(1, time_fn=lambda: mock_time[0])\ncache.put('only', 42, ttl=100)\nassert cache.get('only') == 42\ncache.put('new', 99, ttl=100)   # Evicts 'only'\nassert cache.get('only') is None\nassert cache.get('new') == 99"
+    }
+  ],
+  "hints": [
+    "Store `(value, expiry_time)` in each OrderedDict slot. `expiry_time = self.time_fn() + ttl`.",
+    "`OrderedDict.move_to_end(key)` makes a key the MRU (most recently used, at the back). `popitem(last=False)` removes the LRU (oldest, at the front).",
+    "For lazy eviction in `get`: check expiry BEFORE calling `move_to_end`. An expired key should be deleted, not promoted.",
+    "For eager eviction in `put`: first collect all expired keys and delete them, THEN check if still at capacity before doing `popitem(last=False)`.",
+    "When updating an existing key in `put`, call `move_to_end` BEFORE updating the value (or after — order doesn't matter for OrderedDict, the key stays at the back either way).",
+    "Injecting `time_fn` as a callable parameter is the standard way to make time-dependent code testable. In tests, use a mutable container like a list `[0.0]` so the lambda captures by reference."
+  ],
+  "related_problems": ["30.1", "30.2"]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "30.5",
+  "title": "Monotonic Stack",
+  "difficulty": "Medium",
+  "category": "Data Structures & Algorithms",
+  "tags": ["stack", "monotonic stack", "arrays", "next greater element"],
+  "description": "Implement two classic monotonic stack problems:\n\n**Problem 1 — Next Greater Element**:\n```python\ndef next_greater_element(nums: list) -> list:\n    ...\n```\nFor each element in `nums`, find the first element to its **right** that is strictly greater than it. Return a list where `result[i]` is that element, or `-1` if no such element exists.\n\n**Problem 2 — Daily Temperatures**:\n```python\ndef daily_temperatures(temps: list) -> list:\n    ...\n```\nGiven a list of daily temperatures, return a list `result` where `result[i]` is the number of days you have to wait after day `i` to get a warmer temperature. If there is no future warmer day, `result[i] = 0`.\n\nBoth must run in **O(n)** time using a monotonic stack.\n\nA **monotonic decreasing stack** maintains elements in decreasing order from bottom to top. When a new element is larger than the top, pop until the stack is non-decreasing again — each popped element has found its 'next greater'.",
+  "constraints": [
+    "1 <= len(nums) <= 10^5",
+    "Elements can be any comparable integers",
+    "O(n) time complexity required",
+    "O(n) space for the stack and result"
+  ],
+  "starter_code": "def next_greater_element(nums: list) -> list:\n    pass\n\ndef daily_temperatures(temps: list) -> list:\n    pass\n",
+  "solution_code": "def next_greater_element(nums: list) -> list:\n    n = len(nums)\n    result = [-1] * n\n    stack = []  # Monotonic decreasing stack of indices\n\n    for i in range(n):\n        # While the current element is greater than the element at stack top,\n        # the current element is the 'next greater' for the stack top.\n        while stack and nums[i] > nums[stack[-1]]:\n            idx = stack.pop()\n            result[idx] = nums[i]\n        stack.append(i)\n    # Remaining indices in stack have no next greater element; result stays -1\n    return result\n\n\ndef daily_temperatures(temps: list) -> list:\n    n = len(temps)\n    result = [0] * n\n    stack = []  # Monotonic decreasing stack of indices\n\n    for i in range(n):\n        while stack and temps[i] > temps[stack[-1]]:\n            idx = stack.pop()\n            result[idx] = i - idx  # Number of days to wait\n        stack.append(i)\n    return result\n",
+  "explanation": "**Monotonic Stack** is a stack that maintains elements in a sorted order (either increasing or decreasing). It efficiently answers 'next greater/smaller' queries in O(n) total time.\n\n**Next Greater Element — How it works**:\n- We iterate left to right, maintaining a stack of indices whose 'next greater' has NOT been found yet.\n- The stack is monotonically decreasing in terms of `nums[index]`.\n- When we encounter `nums[i]`, we check the top of the stack. If `nums[i] > nums[stack[-1]]`, then `nums[i]` IS the next greater element for `stack[-1]`. Pop and record, then check the new top.\n- Push the current index onto the stack.\n- After the loop, any index still on the stack has no next greater element (result stays -1).\n\n**Why O(n)?** Each index is pushed onto the stack exactly once and popped at most once. Total operations = 2n => O(n).\n\n**Daily Temperatures** is the same algorithm, but instead of storing the value, we store the *index difference* `i - idx` as the waiting days.\n\n**Key insight**: The monotonic stack pattern generalizes to many problems: next smaller element, largest rectangle in histogram, trapping rainwater, stock span, etc. Recognize it when you need to find, for each element, the next element that 'dominates' it in some comparison.",
+  "test_cases": [
+    {
+      "name": "next_greater_element basic",
+      "code": "assert next_greater_element([2, 1, 2, 4, 3]) == [4, 2, 4, -1, -1]"
+    },
+    {
+      "name": "next_greater_element all decreasing",
+      "code": "assert next_greater_element([5, 4, 3, 2, 1]) == [-1, -1, -1, -1, -1]"
+    },
+    {
+      "name": "next_greater_element all increasing",
+      "code": "assert next_greater_element([1, 2, 3, 4, 5]) == [2, 3, 4, 5, -1]"
+    },
+    {
+      "name": "daily_temperatures basic",
+      "code": "assert daily_temperatures([73, 74, 75, 71, 69, 72, 76, 73]) == [1, 1, 4, 2, 1, 1, 0, 0]"
+    },
+    {
+      "name": "daily_temperatures all same or decreasing",
+      "code": "assert daily_temperatures([30, 30, 30]) == [0, 0, 0]\nassert daily_temperatures([100, 50, 25]) == [0, 0, 0]"
+    }
+  ],
+  "hints": [
+    "Store indices in the stack, not values. You need the index to record the result and also to compute day differences.",
+    "The stack is monotonically DECREASING by value. When you see a value larger than the stack top, that value is the 'answer' for the top element.",
+    "The inner while loop handles consecutive pops: one element can be the next greater for multiple previous elements.",
+    "Elements that remain on the stack after the loop have no next greater element (they are in descending order with nothing larger to the right).",
+    "For daily_temperatures, the answer for index `idx` is `i - idx` where `i` is the current index being processed when `idx` gets popped."
+  ],
+  "related_problems": ["30.6"]
+}

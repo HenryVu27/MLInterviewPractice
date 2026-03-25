@@ -1,0 +1,48 @@
+{
+  "id": "30.9",
+  "title": "Binary Search Tree",
+  "difficulty": "Medium",
+  "category": "Data Structures & Algorithms",
+  "tags": ["binary search tree", "tree", "recursion", "inorder traversal", "delete"],
+  "description": "Implement a Binary Search Tree (BST) with the following operations:\n\n```python\nclass BST:\n    def insert(self, val) -> None\n    def search(self, val) -> bool\n    def delete(self, val) -> None\n    def inorder(self) -> list\n    def kth_smallest(self, k: int) -> int\n```\n\n**insert(val)**: Insert a value into the BST. Duplicates are not stored (ignore if already present).\n\n**search(val)**: Return `True` if the value exists in the BST, `False` otherwise.\n\n**delete(val)**: Remove a value from the BST. Handle all three cases:\n1. **Leaf node**: Simply remove it.\n2. **One child**: Replace the node with its single child.\n3. **Two children**: Replace the node's value with its **in-order successor** (smallest value in the right subtree), then delete the in-order successor from the right subtree.\n\n**inorder()**: Return all values in sorted order (in-order traversal: left, root, right).\n\n**kth_smallest(k)**: Return the k-th smallest value (1-indexed). Raise `IndexError` if k is out of range.",
+  "constraints": [
+    "1 <= k <= number of nodes",
+    "Values are comparable (integers for simplicity)",
+    "Duplicates are ignored on insert",
+    "O(h) for insert/search/delete where h is tree height",
+    "O(n) for inorder and kth_smallest"
+  ],
+  "starter_code": "class TreeNode:\n    def __init__(self, val):\n        self.val = val\n        self.left = None\n        self.right = None\n\nclass BST:\n    def __init__(self):\n        self.root = None\n\n    def insert(self, val) -> None:\n        pass\n\n    def search(self, val) -> bool:\n        pass\n\n    def delete(self, val) -> None:\n        pass\n\n    def inorder(self) -> list:\n        pass\n\n    def kth_smallest(self, k: int) -> int:\n        pass\n",
+  "solution_code": "class TreeNode:\n    def __init__(self, val):\n        self.val = val\n        self.left = None\n        self.right = None\n\n\nclass BST:\n    def __init__(self):\n        self.root = None\n\n    def insert(self, val) -> None:\n        self.root = self._insert(self.root, val)\n\n    def _insert(self, node, val):\n        if node is None:\n            return TreeNode(val)\n        if val < node.val:\n            node.left = self._insert(node.left, val)\n        elif val > node.val:\n            node.right = self._insert(node.right, val)\n        # val == node.val: duplicate, do nothing\n        return node\n\n    def search(self, val) -> bool:\n        return self._search(self.root, val)\n\n    def _search(self, node, val) -> bool:\n        if node is None:\n            return False\n        if val == node.val:\n            return True\n        if val < node.val:\n            return self._search(node.left, val)\n        return self._search(node.right, val)\n\n    def delete(self, val) -> None:\n        self.root = self._delete(self.root, val)\n\n    def _delete(self, node, val):\n        if node is None:\n            return None\n        if val < node.val:\n            node.left = self._delete(node.left, val)\n        elif val > node.val:\n            node.right = self._delete(node.right, val)\n        else:\n            # Found the node to delete\n            if node.left is None:\n                return node.right  # Case 1 & 2: no left child\n            if node.right is None:\n                return node.left   # Case 2: no right child\n            # Case 3: two children — find in-order successor (min of right subtree)\n            successor = self._find_min(node.right)\n            node.val = successor.val\n            node.right = self._delete(node.right, successor.val)\n        return node\n\n    def _find_min(self, node):\n        while node.left is not None:\n            node = node.left\n        return node\n\n    def inorder(self) -> list:\n        result = []\n        self._inorder(self.root, result)\n        return result\n\n    def _inorder(self, node, result):\n        if node is None:\n            return\n        self._inorder(node.left, result)\n        result.append(node.val)\n        self._inorder(node.right, result)\n\n    def kth_smallest(self, k: int) -> int:\n        result = self.inorder()\n        if k < 1 or k > len(result):\n            raise IndexError(f'k={k} is out of range for tree with {len(result)} nodes')\n        return result[k - 1]\n",
+  "explanation": "**Binary Search Tree property**: For every node `n`, all values in its left subtree are less than `n.val`, and all values in its right subtree are greater. This invariant enables O(h) search where h is tree height (O(log n) average, O(n) worst case for a skewed tree).\n\n**Insert**: Recurse left if `val < node.val`, right if `val > node.val`. When we reach `None`, that's the insertion point. Return the new node upward through the recursion to link it.\n\n**Delete** (three cases):\n1. **Leaf**: `node` has no children. Return `None` to detach it from its parent.\n2. **One child**: Return the non-None child. The parent will link to it directly.\n3. **Two children**: We cannot simply remove the node because both subtrees need to be reconnected. Instead, find the **in-order successor** (leftmost node in the right subtree — the smallest value greater than the deleted value). Copy its value into the current node, then delete the successor from the right subtree (it has at most one child — a right child).\n\n**In-order traversal** visits left, then root, then right. For a BST, this produces sorted order.\n\n**kth_smallest**: The in-order traversal gives all values sorted. The k-th element (1-indexed) is `result[k-1]`. For large trees, an iterative approach with early stopping is more efficient, but O(n) is acceptable here.\n\n**Why in-order successor for delete?** It's the smallest value still larger than the deleted value, so replacing the node with it preserves the BST property. The predecessor (max of left subtree) also works.",
+  "test_cases": [
+    {
+      "name": "Insert and inorder",
+      "code": "bst = BST()\nfor v in [5, 3, 7, 1, 4, 6, 8]:\n    bst.insert(v)\nassert bst.inorder() == [1, 3, 4, 5, 6, 7, 8]"
+    },
+    {
+      "name": "Search existing and missing values",
+      "code": "bst = BST()\nfor v in [10, 5, 15, 3, 7]:\n    bst.insert(v)\nassert bst.search(7) == True\nassert bst.search(10) == True\nassert bst.search(99) == False\nassert bst.search(4) == False"
+    },
+    {
+      "name": "Delete leaf, one-child, and two-children nodes",
+      "code": "bst = BST()\nfor v in [5, 3, 7, 1, 4, 6, 8]:\n    bst.insert(v)\nbst.delete(1)   # Leaf\nassert bst.inorder() == [3, 4, 5, 6, 7, 8]\nbst.delete(3)   # One child (only right child 4)\nassert bst.inorder() == [4, 5, 6, 7, 8]\nbst.delete(7)   # Two children (6 and 8), successor is 8\nassert bst.inorder() == [4, 5, 6, 8]"
+    },
+    {
+      "name": "kth smallest",
+      "code": "bst = BST()\nfor v in [5, 3, 8, 1, 4, 7, 9]:\n    bst.insert(v)\nassert bst.kth_smallest(1) == 1\nassert bst.kth_smallest(3) == 4\nassert bst.kth_smallest(7) == 9\ntry:\n    bst.kth_smallest(8)\n    assert False\nexcept IndexError:\n    pass"
+    },
+    {
+      "name": "Duplicates are ignored",
+      "code": "bst = BST()\nfor v in [5, 5, 5, 3, 3, 7]:\n    bst.insert(v)\nassert bst.inorder() == [3, 5, 7]"
+    }
+  ],
+  "hints": [
+    "Use recursive helpers that return the (possibly modified) node. This makes insert and delete much cleaner: `node.left = self._insert(node.left, val)` handles the linking automatically.",
+    "For delete with two children: the in-order successor is always the leftmost node in the right subtree. It has at most one right child (no left child by definition), so deleting it is straightforward.",
+    "After copying the successor's value into the current node, delete the SUCCESSOR'S VALUE from the right subtree — not the original value. `self._delete(node.right, successor.val)`.",
+    "In-order traversal (left -> root -> right) on a BST always yields sorted order. This is by the BST invariant.",
+    "For kth_smallest, calling `inorder()` and indexing is simple and correct. For production code, you'd maintain a subtree size counter to do O(h) kth_smallest."
+  ],
+  "related_problems": ["30.7", "30.8", "30.4"]
+}

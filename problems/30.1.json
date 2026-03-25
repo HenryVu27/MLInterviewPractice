@@ -1,0 +1,48 @@
+{
+  "id": "30.1",
+  "title": "LFU Cache",
+  "difficulty": "Hard",
+  "category": "Data Structures & Algorithms",
+  "tags": ["hash map", "doubly linked list", "ordered dict", "cache", "design"],
+  "description": "Design and implement a Least Frequently Used (LFU) cache with O(1) time complexity for both `get` and `put` operations.\n\nThe cache is initialized with a positive capacity. When the cache reaches capacity and a new key must be inserted, evict the least frequently used key. If there is a tie in frequency, evict the least recently used among the tied keys (i.e., the one that was accessed least recently).\n\nImplement the `LFUCache` class:\n- `__init__(self, capacity: int)` — Initialize the cache with the given capacity.\n- `get(self, key: int) -> int` — Return the value associated with the key, or -1 if the key does not exist. Also increments that key's frequency.\n- `put(self, key: int, value: int) -> None` — Insert or update the key-value pair. If the key already exists, update its value and increment its frequency. If the cache is at capacity, evict the LFU key (LRU among ties) before inserting the new key.\n\nA capacity of 0 means the cache never stores anything.",
+  "constraints": [
+    "0 <= capacity <= 10^4",
+    "0 <= key <= 10^5",
+    "0 <= value <= 10^9",
+    "At most 2 * 10^5 calls will be made to get and put",
+    "Both get and put must run in O(1) average time"
+  ],
+  "starter_code": "from collections import OrderedDict\n\nclass LFUCache:\n    def __init__(self, capacity: int):\n        pass\n\n    def get(self, key: int) -> int:\n        pass\n\n    def put(self, key: int, value: int) -> None:\n        pass\n",
+  "solution_code": "from collections import OrderedDict\n\nclass LFUCache:\n    def __init__(self, capacity: int):\n        self.capacity = capacity\n        self.min_freq = 0\n        self.key_val = {}       # key -> value\n        self.key_freq = {}      # key -> frequency\n        self.freq_keys = {}     # freq -> OrderedDict of keys (insertion order = LRU order)\n\n    def _increment_freq(self, key: int) -> None:\n        freq = self.key_freq[key]\n        self.key_freq[key] = freq + 1\n        # Remove from current frequency bucket\n        del self.freq_keys[freq][key]\n        if not self.freq_keys[freq]:\n            del self.freq_keys[freq]\n            if self.min_freq == freq:\n                self.min_freq = freq + 1\n        # Add to new frequency bucket\n        new_freq = freq + 1\n        if new_freq not in self.freq_keys:\n            self.freq_keys[new_freq] = OrderedDict()\n        self.freq_keys[new_freq][key] = True\n\n    def get(self, key: int) -> int:\n        if key not in self.key_val:\n            return -1\n        self._increment_freq(key)\n        return self.key_val[key]\n\n    def put(self, key: int, value: int) -> None:\n        if self.capacity == 0:\n            return\n        if key in self.key_val:\n            self.key_val[key] = value\n            self._increment_freq(key)\n            return\n        # Evict if at capacity\n        if len(self.key_val) == self.capacity:\n            # Remove the LRU key from the min_freq bucket\n            evict_key, _ = self.freq_keys[self.min_freq].popitem(last=False)\n            if not self.freq_keys[self.min_freq]:\n                del self.freq_keys[self.min_freq]\n            del self.key_val[evict_key]\n            del self.key_freq[evict_key]\n        # Insert new key with frequency 1\n        self.key_val[key] = value\n        self.key_freq[key] = 1\n        if 1 not in self.freq_keys:\n            self.freq_keys[1] = OrderedDict()\n        self.freq_keys[1][key] = True\n        self.min_freq = 1\n",
+  "explanation": "The LFU cache uses three hash maps working in concert to achieve O(1) for all operations:\n\n1. `key_val`: maps each key to its value for O(1) value lookup.\n2. `key_freq`: maps each key to its current access frequency.\n3. `freq_keys`: maps each frequency to an OrderedDict of keys at that frequency. OrderedDict preserves insertion order, so the first (oldest) entry is the LRU item within that frequency bucket.\n\nWe also maintain `min_freq`, the current minimum frequency in the cache.\n\n**get(key):** Look up in `key_val`. If found, call `_increment_freq` to move the key from its current frequency bucket to the next one, update `min_freq` if needed, and return the value.\n\n**put(key, value):** If the key already exists, update its value and call `_increment_freq`. If the cache is full, evict: `freq_keys[min_freq].popitem(last=False)` removes the oldest (LRU) key at the minimum frequency in O(1). Then insert the new key at frequency 1, and reset `min_freq = 1`.\n\n**_increment_freq:** Removes the key from `freq_keys[freq]`. If that bucket becomes empty and it was the `min_freq` bucket, increment `min_freq` by 1 (the new key being promoted is the only candidate for the new minimum). Adds the key to `freq_keys[freq+1]`.\n\n**Why O(1)?** Every operation is a constant number of dict lookups/inserts and OrderedDict operations (all O(1) amortized).",
+  "test_cases": [
+    {
+      "name": "Basic get put and LFU eviction",
+      "code": "cache = LFUCache(2)\ncache.put(1, 1)\ncache.put(2, 2)\nassert cache.get(1) == 1        # freq[1]=2, freq[2]=1\ncache.put(3, 3)                 # evicts key 2 (freq=1, LRU)\nassert cache.get(2) == -1       # key 2 was evicted\nassert cache.get(3) == 3\nassert cache.get(1) == 1"
+    },
+    {
+      "name": "LRU tiebreaking within same frequency",
+      "code": "cache = LFUCache(3)\ncache.put(1, 10)\ncache.put(2, 20)\ncache.put(3, 30)\n# Access to raise frequencies\ncache.get(1)  # freq[1]=2\ncache.get(2)  # freq[2]=2\n# freq[3]=1 still, so 3 is min_freq candidate\ncache.put(4, 40)  # evicts key 3 (min freq=1)\nassert cache.get(3) == -1\nassert cache.get(1) == 10\nassert cache.get(2) == 20\nassert cache.get(4) == 40"
+    },
+    {
+      "name": "Update existing key resets LFU order",
+      "code": "cache = LFUCache(2)\ncache.put(1, 1)\ncache.put(2, 2)\ncache.get(1)      # freq[1]=2, freq[2]=1\ncache.put(2, 22)  # update key 2: freq[2]=2, value=22\ncache.put(3, 3)   # cache full, both freq=2; key 1 inserted before key 2's update, evict 1 (LRU at freq=2)\nassert cache.get(1) == -1\nassert cache.get(2) == 22\nassert cache.get(3) == 3"
+    },
+    {
+      "name": "Zero capacity cache stores nothing",
+      "code": "cache = LFUCache(0)\ncache.put(1, 1)\nassert cache.get(1) == -1"
+    },
+    {
+      "name": "Single capacity cache always evicts on new insert",
+      "code": "cache = LFUCache(1)\ncache.put(1, 100)\nassert cache.get(1) == 100\ncache.put(2, 200)\nassert cache.get(1) == -1\nassert cache.get(2) == 200\ncache.put(3, 300)\nassert cache.get(2) == -1\nassert cache.get(3) == 300"
+    }
+  ],
+  "hints": [
+    "You need O(1) eviction: store a `min_freq` variable and maintain a mapping from frequency to an ordered collection of keys at that frequency.",
+    "Use `collections.OrderedDict` for each frequency bucket. `popitem(last=False)` removes the LRU (oldest) entry in O(1).",
+    "When incrementing a key's frequency from f to f+1, if the f bucket becomes empty and f == min_freq, you can safely set min_freq = f+1 (no other key at frequency f exists).",
+    "On a new `put`, `min_freq` must be reset to 1 because the new key starts at frequency 1 and it's definitely the minimum.",
+    "On an existing key `put`, do NOT reset min_freq — the key's frequency is being incremented, not starting fresh."
+  ],
+  "related_problems": ["30.12", "30.2", "29.1"]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "13.18",
+  "title": "Precision@K and Recall@K",
+  "difficulty": "Easy",
+  "category": "Evaluation Metrics",
+  "tags": ["retrieval", "metrics", "ranking"],
+  "description": "Implement Precision@K and Recall@K for evaluating a retrieval system.\n\nGiven a ranked list of retrieved document IDs and a set of relevant document IDs:\n\n- **Precision@K** = |relevant docs in top-K retrieved| / K\n- **Recall@K** = |relevant docs in top-K retrieved| / |total relevant docs|\n\n**Example — step-by-step computation:**\n\n```\nretrieved = [\"d1\", \"d3\", \"d5\", \"d2\", \"d8\"]   # ranked list from retrieval system\nrelevant  = {\"d1\", \"d2\", \"d5\", \"d9\"}            # ground-truth relevant docs\nK = 3\n\nTop-3 retrieved: [\"d1\", \"d3\", \"d5\"]\n\nWhich of these are relevant?\n  \"d1\" -> YES (in relevant set)\n  \"d3\" -> NO\n  \"d5\" -> YES (in relevant set)\n\n|relevant in top-3| = 2\n\nPrecision@3 = 2 / 3 = 0.6667\nRecall@3    = 2 / 4 = 0.5000   (4 = total number of relevant docs)\n```\n\nImplement both functions below.",
+  "constraints": [
+    "If K > len(retrieved), cap K at len(retrieved)",
+    "If there are no relevant documents (empty relevant set), Recall@K should return 0.0",
+    "Return float values"
+  ],
+  "starter_code": "def precision_at_k(retrieved: list, relevant: set, k: int) -> float:\n    \"\"\"Compute Precision@K.\n\n    Args:\n        retrieved: List of document IDs in ranked order\n        relevant: Set of relevant document IDs\n        k: Cutoff position\n\n    Returns:\n        Precision@K as a float\n    \"\"\"\n    pass\n\n\ndef recall_at_k(retrieved: list, relevant: set, k: int) -> float:\n    \"\"\"Compute Recall@K.\n\n    Args:\n        retrieved: List of document IDs in ranked order\n        relevant: Set of relevant document IDs\n        k: Cutoff position\n\n    Returns:\n        Recall@K as a float\n    \"\"\"\n    pass",
+  "solution_code": "def precision_at_k(retrieved: list, relevant: set, k: int) -> float:\n    k = min(k, len(retrieved))\n    if k == 0:\n        return 0.0\n    top_k = retrieved[:k]\n    relevant_in_top_k = sum(1 for doc in top_k if doc in relevant)\n    return relevant_in_top_k / k\n\n\ndef recall_at_k(retrieved: list, relevant: set, k: int) -> float:\n    if len(relevant) == 0:\n        return 0.0\n    k = min(k, len(retrieved))\n    top_k = retrieved[:k]\n    relevant_in_top_k = sum(1 for doc in top_k if doc in relevant)\n    return relevant_in_top_k / len(relevant)",
+  "explanation": "Precision@K measures what fraction of the top-K retrieved documents are actually relevant. It penalizes retrieving irrelevant documents. Recall@K measures what fraction of all relevant documents appear in the top-K results. It penalizes missing relevant documents.\n\nThese two metrics capture a fundamental trade-off: increasing K tends to improve recall (you retrieve more relevant docs) but can hurt precision (you also retrieve more irrelevant docs). Together they give a balanced view of retrieval quality.\n\nThe implementation is straightforward: slice the retrieved list to the top K items, count how many are in the relevant set, then divide by K (for precision) or by the total number of relevant documents (for recall).",
+  "test_cases": [
+    {"name": "Basic precision and recall", "code": "retrieved = ['d1', 'd3', 'd5', 'd2', 'd8']\nrelevant = {'d1', 'd2', 'd5', 'd9'}\nassert abs(precision_at_k(retrieved, relevant, 3) - 2/3) < 1e-9\nassert abs(recall_at_k(retrieved, relevant, 3) - 0.5) < 1e-9"},
+    {"name": "Perfect precision at K=1", "code": "retrieved = ['d1', 'd3', 'd5']\nrelevant = {'d1', 'd2'}\nassert abs(precision_at_k(retrieved, relevant, 1) - 1.0) < 1e-9\nassert abs(recall_at_k(retrieved, relevant, 1) - 0.5) < 1e-9"},
+    {"name": "No relevant docs in top-K", "code": "retrieved = ['d3', 'd4', 'd6']\nrelevant = {'d1', 'd2'}\nassert precision_at_k(retrieved, relevant, 3) == 0.0\nassert recall_at_k(retrieved, relevant, 3) == 0.0"},
+    {"name": "K larger than retrieved list", "code": "retrieved = ['d1', 'd2']\nrelevant = {'d1', 'd2', 'd3'}\nassert abs(precision_at_k(retrieved, relevant, 10) - 1.0) < 1e-9\nassert abs(recall_at_k(retrieved, relevant, 10) - 2/3) < 1e-9"},
+    {"name": "Empty relevant set returns 0 recall", "code": "retrieved = ['d1', 'd2', 'd3']\nrelevant = set()\nassert recall_at_k(retrieved, relevant, 2) == 0.0"},
+    {"name": "All retrieved are relevant (perfect)", "code": "retrieved = ['d1', 'd2', 'd3']\nrelevant = {'d1', 'd2', 'd3'}\nassert abs(precision_at_k(retrieved, relevant, 3) - 1.0) < 1e-9\nassert abs(recall_at_k(retrieved, relevant, 3) - 1.0) < 1e-9"}
+  ],
+  "hints": [
+    "Slice the retrieved list to get only the first K items, capping K at the list length.",
+    "Use a set membership check to count how many of the top-K documents are relevant.",
+    "Be careful with the denominator: Precision divides by K, Recall divides by total relevant docs."
+  ],
+  "related_problems": ["13.10", "12.6"]
+}

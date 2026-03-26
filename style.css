@@ -403,6 +403,24 @@ select, input {
 .difficulty-badge.diff-medium { color: var(--medium); background: rgba(255, 152, 0, 0.12); }
 .difficulty-badge.diff-hard   { color: var(--hard);   background: rgba(244, 67, 54, 0.12); }
 
+/* Featured (Samsung Prep) rows */
+.featured-row {
+  border-left: 3px solid #fbbf24;
+}
+.featured-star {
+  color: #fbbf24;
+  font-size: 0.85rem;
+}
+.featured-btn {
+  color: #fbbf24 !important;
+  border-color: #fbbf24 !important;
+  font-weight: 600;
+}
+.featured-btn.active {
+  background: rgba(251, 191, 36, 0.15) !important;
+  color: #fbbf24 !important;
+}
+
 /* Status indicator */
 .status-dot {
   display: inline-flex;

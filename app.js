@@ -7,6 +7,7 @@ const filters = {
   difficulties: new Set(['easy', 'medium', 'hard']),
   status: '',
   search: '',
+  featuredOnly: false,
 };
 
 let manifest = [];
@@ -123,6 +124,9 @@ function renderTable() {
       const status = state ? state.status : 'unsolved';
       if (filters.status && status !== filters.status) return false;
 
+      // Featured
+      if (filters.featuredOnly && !p.featured) return false;
+
       // Search
       if (searchLower) {
         const haystack = [
@@ -148,9 +152,12 @@ function renderTable() {
 
       const bestTime = bestTimeMs !== null ? formatTime(bestTimeMs) : '';
 
-      return `<tr class="problem-row" data-id="${p.id}" tabindex="0" role="button" aria-label="${p.title}">
+      const featuredClass = p.featured ? ' featured-row' : '';
+      const featuredStar = p.featured ? '<span class="featured-star" title="Samsung Interview Prep">&#9733;</span> ' : '';
+
+      return `<tr class="problem-row${featuredClass}" data-id="${p.id}" tabindex="0" role="button" aria-label="${p.title}">
         <td class="col-num">${p.id}</td>
-        <td class="col-title">${escapeHtml(p.title)}</td>
+        <td class="col-title">${featuredStar}${escapeHtml(p.title)}</td>
         <td class="col-difficulty"><span class="${diffClass}">${escapeHtml(p.difficulty)}</span></td>
         <td class="col-category">${escapeHtml(p.category)}</td>
         <td class="col-status">${statusSymbol}</td>
@@ -191,6 +198,16 @@ function setupListeners() {
     filters.search = e.target.value;
     renderTable();
   });
+
+  const featuredBtn = document.getElementById('filter-featured');
+  if (featuredBtn) {
+    featuredBtn.addEventListener('click', () => {
+      filters.featuredOnly = !filters.featuredOnly;
+      featuredBtn.classList.toggle('active', filters.featuredOnly);
+      featuredBtn.setAttribute('aria-pressed', String(filters.featuredOnly));
+      renderTable();
+    });
+  }
 
   for (const btn of document.querySelectorAll('.difficulty-filters [data-difficulty]')) {
     btn.addEventListener('click', () => {

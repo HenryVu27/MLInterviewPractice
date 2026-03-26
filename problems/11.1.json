@@ -4,7 +4,7 @@
   "difficulty": "Easy",
   "category": "Embeddings & Similarity Search",
   "tags": ["cosine similarity", "vector search", "embeddings"],
-  "description": "Implement a simple vector index that supports adding vectors and searching for the most similar vector to a query using cosine similarity.\n\nYou need to implement a `SimpleVectorIndex` class with two methods:\n- `add(vector, doc_id)`: Add a vector with an associated document ID to the index.\n- `search(query, top_k=1)`: Return the top-k document IDs sorted by cosine similarity to the query vector (highest first).",
+  "description": "Implement a simple vector index that supports adding vectors and searching for the most similar vector to a query using cosine similarity.\n\nYou need to implement a `SimpleVectorIndex` class with two methods:\n- `add(vector, doc_id)`: Add a vector with an associated document ID to the index.\n- `search(query, top_k=1)`: Return the top-k document IDs sorted by cosine similarity to the query vector (highest first).\n\n**Example — 3 vectors in 2D:**\n\n```\nindex.add([1.0, 0.0], 'doc_A')   # points right\nindex.add([0.0, 1.0], 'doc_B')   # points up\nindex.add([0.7, 0.7], 'doc_C')   # points diagonal\n\nquery = [0.9, 0.1]               # mostly right\n\nCosine similarities (after normalization):\n  sim(query, doc_A) = cos(~6.3 deg)  = 0.994\n  sim(query, doc_B) = cos(~83.7 deg) = 0.110\n  sim(query, doc_C) = cos(~38.7 deg) = 0.781\n\nsearch(query, top_k=2) -> ['doc_A', 'doc_C']\n```\n\nPre-normalizing stored vectors turns cosine similarity into a simple dot product.",
   "constraints": [
     "Vectors are numpy arrays of shape (d,) where d is the embedding dimension.",
     "All vectors have the same dimensionality.",

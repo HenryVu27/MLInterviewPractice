@@ -390,6 +390,90 @@ function runInWorker(userCode, tests) {
 }
 
 // ---------------------------------------------------------------------------
+// Study assistant panel
+// ---------------------------------------------------------------------------
+
+function setupStudyPanel(problem) {
+  const panel = document.getElementById('study-panel');
+  const btnStudy = document.getElementById('btn-study');
+  const btnClose = document.getElementById('btn-close-study');
+
+  // Populate explanation
+  const explanationEl = document.getElementById('study-explanation');
+  if (problem.explanation) {
+    explanationEl.innerHTML = marked.parse(problem.explanation);
+  } else {
+    explanationEl.innerHTML = '<p style="color:var(--text-muted);font-style:italic;">No explanation available for this problem yet.</p>';
+  }
+
+  // Populate hints (progressive reveal)
+  const hintsSection = document.getElementById('study-hints-section');
+  const hintsEl = document.getElementById('study-hints');
+  hintsEl.innerHTML = '';
+
+  if (Array.isArray(problem.hints) && problem.hints.length > 0) {
+    problem.hints.forEach((hint, idx) => {
+      const item = document.createElement('div');
+      item.className = 'study-hint-item';
+
+      const btn = document.createElement('button');
+      btn.className = 'study-hint-btn';
+      btn.textContent = `Reveal Hint ${idx + 1}`;
+
+      const text = document.createElement('div');
+      text.className = 'study-hint-text';
+      text.textContent = hint;
+
+      btn.addEventListener('click', () => {
+        const isVisible = text.classList.contains('visible');
+        text.classList.toggle('visible');
+        btn.classList.toggle('revealed');
+        btn.textContent = isVisible ? `Reveal Hint ${idx + 1}` : `Hint ${idx + 1}`;
+      });
+
+      item.appendChild(btn);
+      item.appendChild(text);
+      hintsEl.appendChild(item);
+    });
+    hintsSection.style.display = '';
+  } else {
+    hintsSection.style.display = 'none';
+  }
+
+  // Populate solution walkthrough
+  const solutionEl = document.getElementById('study-solution');
+  if (problem.solution_code) {
+    solutionEl.innerHTML = `
+      <p class="study-solution-note">Study the solution line by line. Try to understand each step before looking at the next problem.</p>
+      <pre class="study-solution-code">${escapeHtml(problem.solution_code)}</pre>
+    `;
+  } else {
+    solutionEl.innerHTML = '<p style="color:var(--text-muted);font-style:italic;">No solution available.</p>';
+  }
+
+  // Toggle panel
+  function showStudy() {
+    panel.classList.add('visible');
+    btnStudy.classList.add('active');
+  }
+
+  function hideStudy() {
+    panel.classList.remove('visible');
+    btnStudy.classList.remove('active');
+  }
+
+  btnStudy.addEventListener('click', () => {
+    if (panel.classList.contains('visible')) {
+      hideStudy();
+    } else {
+      showStudy();
+    }
+  });
+
+  btnClose.addEventListener('click', hideStudy);
+}
+
+// ---------------------------------------------------------------------------
 // Solution panel
 // ---------------------------------------------------------------------------
 
@@ -494,6 +578,9 @@ async function init() {
 
   // Set up solution panel
   setupSolutionPanel(problem);
+
+  // Set up study assistant panel
+  setupStudyPanel(problem);
 
   // Initialize Pyodide worker
   showOverlay('Initializing Python runtime...');

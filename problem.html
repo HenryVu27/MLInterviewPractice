@@ -101,6 +101,9 @@
           Reset Code
         </button>
         <div class="spacer"></div>
+        <button class="btn btn-study" id="btn-study" title="Study Assistant">
+          Study
+        </button>
         <button class="btn btn-danger" id="btn-solution">
           Show Solution
         </button>
@@ -135,6 +138,33 @@
             <span class="console-prompt">&gt;&gt;&gt;</span>
             <input type="text" class="console-input" id="console-input" placeholder="Type Python here... (Enter to run)" autocomplete="off" spellcheck="false" disabled />
           </div>
+        </div>
+      </div>
+
+      <!-- Study Assistant Panel (slide-out overlay) -->
+      <div class="study-panel" id="study-panel" aria-label="Study assistant">
+        <div class="study-panel-header">
+          <span>Study Assistant</span>
+          <button class="btn btn-secondary" id="btn-close-study" aria-label="Close study assistant">&#10005;</button>
+        </div>
+        <div class="study-panel-body" id="study-panel-body">
+          <!-- Approach section -->
+          <details class="study-section" open>
+            <summary class="study-section-title">Approach &amp; Key Concepts</summary>
+            <div class="study-section-content" id="study-explanation"></div>
+          </details>
+
+          <!-- Hints (progressive) -->
+          <details class="study-section" id="study-hints-section">
+            <summary class="study-section-title">Hints (step by step)</summary>
+            <div class="study-section-content" id="study-hints"></div>
+          </details>
+
+          <!-- Solution walkthrough -->
+          <details class="study-section">
+            <summary class="study-section-title">Solution Walkthrough</summary>
+            <div class="study-section-content" id="study-solution"></div>
+          </details>
         </div>
       </div>
 

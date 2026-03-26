@@ -4,7 +4,7 @@
   "difficulty": "Medium",
   "category": "NLP",
   "tags": ["nlp", "decoding", "sampling", "nucleus-sampling", "top-p"],
-  "description": "Implement Top-P (Nucleus) sampling for text generation.\n\nAlgorithm:\n1. Sort tokens by probability descending\n2. Find the smallest set of tokens whose cumulative probability >= p\n3. Zero out all other tokens\n4. Renormalize and sample\n\nThis dynamically adjusts the candidate set: wide distribution → many tokens; peaked distribution → few tokens.\n\n**Example:** With p=0.9 and sorted probs=[0.5, 0.3, 0.15, 0.05], nucleus = {0,1,2} (cumsum = [0.5, 0.8, 0.95] ≥ 0.9 at index 2).",
+  "description": "Implement Top-P (Nucleus) sampling for text generation.\n\nAlgorithm:\n1. Sort tokens by probability descending\n2. Find the smallest set of tokens whose cumulative probability >= p\n3. Zero out all other tokens\n4. Renormalize and sample\n\nThis dynamically adjusts the candidate set: wide distribution → many tokens; peaked distribution → few tokens.\n\n**Example — step-by-step with p=0.9:**\n\nLogits: [2.0, 1.0, 0.5, -1.0]\nSoftmax probs: [0.47, 0.17, 0.10, 0.02] (approx, after normalization)\nSort descending: [0.47, 0.17, 0.10, 0.02] (tokens: 0, 1, 2, 3)\nCumulative sum:  [0.47, 0.64, 0.74, 0.76] -- wait, let us use exact values.\n\nSimpler example with probs already given:\n```\nSorted probs:  [0.50, 0.30, 0.15, 0.05]  (tokens: A, B, C, D)\nCumulative:    [0.50, 0.80, 0.95, 1.00]\n```\nWith p=0.9: first index where cumsum >= 0.9 is index 2 (0.95).\nNucleus = {A, B, C}. Renormalize: [0.526, 0.316, 0.158]. Sample from these three.\nToken D (prob 0.05) is excluded -- it was too unlikely.",
   "constraints": [
     "p in (0, 1]",
     "Always include at least 1 token",

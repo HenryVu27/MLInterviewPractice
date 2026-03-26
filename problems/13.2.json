@@ -4,7 +4,7 @@
   "difficulty": "Easy",
   "category": "Evaluation Metrics",
   "tags": ["classification", "metrics", "confusion-matrix"],
-  "description": "Given a binary confusion matrix (TP, FP, FN, TN), compute Precision, Recall, and F1 score.\n\n**Formulas:**\n- `Precision = TP / (TP + FP)`\n- `Recall = TP / (TP + FN)`\n- `F1 = 2 * Precision * Recall / (Precision + Recall)`\n\nReturn 0.0 for any metric where the denominator is zero.",
+  "description": "Given a binary confusion matrix (TP, FP, FN, TN), compute Precision, Recall, and F1 score.\n\n**Formulas:**\n- `Precision = TP / (TP + FP)`\n- `Recall = TP / (TP + FN)`\n- `F1 = 2 * Precision * Recall / (Precision + Recall)`\n\nReturn 0.0 for any metric where the denominator is zero.\n\n**Example:**\n\n```\nConfusion matrix:\n                Predicted\n              Pos    Neg\nActual Pos |  8  |   4  |  -> 12 actual positives\nActual Neg |  2  |   6  |  -> 8 actual negatives\n\nTP=8, FP=2, FN=4, TN=6\n\nPrecision = 8 / (8+2) = 0.80  (of 10 predicted pos, 8 correct)\nRecall    = 8 / (8+4) = 0.667 (of 12 actual pos, 8 found)\nF1        = 2 * 0.80 * 0.667 / (0.80 + 0.667) = 0.727\n```",
   "constraints": [
     "Handle zero denominators gracefully",
     "Return a tuple (precision, recall, f1)",

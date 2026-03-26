@@ -4,7 +4,7 @@
   "difficulty": "Medium",
   "category": "NLP",
   "tags": ["nlp", "edit-distance", "dynamic-programming", "string-matching"],
-  "description": "Implement Levenshtein edit distance between two strings using dynamic programming.\n\nThe edit distance is the minimum number of single-character operations (insert, delete, substitute) to transform string `s` into string `t`.\n\n**Recurrence:**\n```\ndp[i][j] = min(\n    dp[i-1][j] + 1,       # delete from s\n    dp[i][j-1] + 1,       # insert into s\n    dp[i-1][j-1] + (0 if s[i-1]==t[j-1] else 1)  # substitute\n)\n```\n\n**Example:**\n```\nedit_distance('kitten', 'sitting') = 3\n```",
+  "description": "Implement Levenshtein edit distance between two strings using dynamic programming.\n\nThe edit distance is the minimum number of single-character operations (insert, delete, substitute) to transform string `s` into string `t`.\n\n**Recurrence:**\n```\ndp[i][j] = min(\n    dp[i-1][j] + 1,       # delete from s\n    dp[i][j-1] + 1,       # insert into s\n    dp[i-1][j-1] + (0 if s[i-1]==t[j-1] else 1)  # substitute\n)\n```\n\n**Example:**\n```\nedit_distance('kitten', 'sitting') = 3\n```\n\nStep-by-step for s='cat', t='car':\n```\n    \"\"  c   a   r\n\"\"  0   1   2   3\nc   1   0   1   2\na   2   1   0   1\nt   3   2   1   1   <- substitute t->r\n```\nAnswer: dp[3][3] = 1 (one substitution: t -> r).",
   "constraints": [
     "Handle empty strings",
     "Return integer",

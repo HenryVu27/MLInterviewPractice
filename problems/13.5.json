@@ -4,7 +4,7 @@
   "difficulty": "Medium",
   "category": "Evaluation Metrics",
   "tags": ["classification", "metrics", "roc", "auc"],
-  "description": "Implement ROC curve computation and AUC via the trapezoidal rule.\n\nThe ROC curve plots True Positive Rate (TPR) vs False Positive Rate (FPR) at varying decision thresholds.\n- `TPR = TP / (TP + FN)` (Recall / Sensitivity)\n- `FPR = FP / (FP + TN)` (1 - Specificity)\n\nAUC = area under the ROC curve using the trapezoidal rule.\n\n**Example:**\n```\ny_true   = [0, 0, 1, 1]\ny_scores = [0.1, 0.4, 0.35, 0.8]\n=> AUC = 0.75\n```",
+  "description": "Implement ROC curve computation and AUC via the trapezoidal rule.\n\nThe ROC curve plots True Positive Rate (TPR) vs False Positive Rate (FPR) at varying decision thresholds.\n- `TPR = TP / (TP + FN)` (Recall / Sensitivity)\n- `FPR = FP / (FP + TN)` (1 - Specificity)\n\nAUC = area under the ROC curve using the trapezoidal rule.\n\n**Example:**\n```\ny_true   = [0, 0, 1, 1]\ny_scores = [0.1, 0.4, 0.35, 0.8]\n=> AUC = 0.75\n```\n\n**Example — step-by-step ROC computation:**\n\n```\ny_true   = [0, 0, 1, 1]\ny_scores = [0.1, 0.4, 0.35, 0.8]\n\nSorted thresholds (desc): [0.8, 0.4, 0.35, 0.1]\nP=2 positives, N=2 negatives\n\nThreshold  Pred      TP  FP   TPR    FPR\n  (start)   all neg   0   0   0.0    0.0\n  >= 0.8    [0,0,0,1] 1   0   0.5    0.0\n  >= 0.4    [0,1,0,1] 1   1   0.5    0.5\n  >= 0.35   [0,1,1,1] 2   1   1.0    0.5\n  >= 0.1    [1,1,1,1] 2   2   1.0    1.0\n\nROC points: (0,0) -> (0,0.5) -> (0.5,0.5) -> (0.5,1.0) -> (1,1)\nAUC = trapezoid area = 0.75\n```",
   "constraints": [
     "Sort thresholds in descending order of score",
     "Include (FPR=0, TPR=0) and (FPR=1, TPR=1) endpoints",

@@ -4,7 +4,7 @@
   "difficulty": "Medium",
   "category": "NLP",
   "tags": ["nlp", "lcs", "dynamic-programming", "rouge"],
-  "description": "Implement Longest Common Subsequence (LCS) using dynamic programming.\n\nLCS finds the longest subsequence common to two sequences (not necessarily contiguous).\n\n**Recurrence:**\n```\ndp[i][j] = dp[i-1][j-1] + 1         if s[i-1] == t[j-1]\n         = max(dp[i-1][j], dp[i][j-1])  otherwise\n```\n\nLCS length is used in ROUGE-L metric computation.\n\n**Example:**\n```\nlcs('ABCBDAB', 'BDCAB') = 4  (BCAB or BDAB)\n```",
+  "description": "Implement Longest Common Subsequence (LCS) using dynamic programming.\n\nLCS finds the longest subsequence common to two sequences (not necessarily contiguous).\n\n**Recurrence:**\n```\ndp[i][j] = dp[i-1][j-1] + 1         if s[i-1] == t[j-1]\n         = max(dp[i-1][j], dp[i][j-1])  otherwise\n```\n\nLCS length is used in ROUGE-L metric computation.\n\n**Example:**\n```\nlcs('ABCBDAB', 'BDCAB') = 4  (BCAB or BDAB)\n```\n\nStep-by-step for s='ABCB', t='BDCAB':\n```\n      \"\"  B  D  C  A  B\n \"\"    0  0  0  0  0  0\n  A    0  0  0  0  1  1\n  B    0  1  1  1  1  2\n  C    0  1  1  2  2  2\n  B    0  1  1  2  2  3\n```\nReading dp[4][5] = 3. One LCS is 'BCB':\n  A B C B\n    | | |\n  B D C A B",
   "constraints": [
     "Handle empty sequences",
     "Return integer (LCS length)",

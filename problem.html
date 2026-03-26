@@ -115,6 +115,18 @@
         <button class="output-tab" data-tab="console">Console</button>
       </div>
 
+      <!-- Framework toggle (NumPy / PyTorch) -->
+      <div class="framework-tabs" id="framework-tabs">
+        <button class="framework-tab active" data-framework="numpy">NumPy</button>
+        <button class="framework-tab" data-framework="pytorch">PyTorch</button>
+      </div>
+
+      <!-- PyTorch banner (hidden by default) -->
+      <div class="pytorch-banner" id="pytorch-banner" style="display:none;">
+        <span>PyTorch code is for reference — run locally with <code>torch</code> installed.</span>
+        <button class="btn btn-secondary btn-sm" id="btn-copy-pytorch">Copy Code</button>
+      </div>
+
       <!-- Code Editor (CodeMirror mounts here) -->
       <div class="editor-container" id="editor-container" aria-label="Code editor">
         <!-- CodeMirror instance injected by problem.js -->

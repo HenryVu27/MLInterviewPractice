@@ -873,6 +873,61 @@ select, input {
 }
 
 /* ==========================================================================
+   Framework Tabs (NumPy / PyTorch)
+   ========================================================================== */
+.framework-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.framework-tab {
+  padding: 0.4rem 1rem;
+  font-size: 0.78rem;
+  font-family: var(--font-sans);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.framework-tab:hover { color: var(--text); }
+
+.framework-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* PyTorch banner */
+.pytorch-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 1rem;
+  background: #2a2520;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: #e0b860;
+  flex-shrink: 0;
+}
+
+.pytorch-banner code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+
+.pytorch-banner .btn-sm {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.72rem;
+  margin-left: auto;
+}
+
+/* ==========================================================================
    Output Tabs
    ========================================================================== */
 .output-tabs {

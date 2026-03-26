@@ -1,6 +1,6 @@
 import { createEditor } from './editor.js';
 import {
-  getProblemState, saveCode, markAttempted, markSolved, markPeeked,
+  getProblemState, saveCode, getSavedCode, markAttempted, markSolved, markPeeked,
   saveBestTime, getTimerState, startTimer, stopTimer, getElapsedMs, formatTime
 } from './state.js';
 import { marked } from 'https://esm.sh/marked@15';
@@ -332,6 +332,8 @@ function renderResults(results, problemId) {
 let worker = null;
 let runTimeout = null;
 let runResolve = null;
+let currentFramework = 'numpy';
+let workerReady = false;
 
 function createWorker() {
   worker = new Worker('pyodide-worker.js');
@@ -343,7 +345,10 @@ function createWorker() {
       showOverlay(progress || 'Loading...');
     } else if (type === 'ready') {
       hideOverlay();
-      document.getElementById('btn-run').disabled = false;
+      workerReady = true;
+      if (currentFramework !== 'pytorch') {
+        document.getElementById('btn-run').disabled = false;
+      }
     } else if (type === 'error') {
       showOverlayError(`Python runtime failed: ${event.data.message || 'Unknown error'}`);
     } else if (type === 'result') {
@@ -440,16 +445,24 @@ function setupStudyPanel(problem) {
     hintsSection.style.display = 'none';
   }
 
-  // Populate solution walkthrough
+  // Populate solution walkthrough (called on init and framework switch)
   const solutionEl = document.getElementById('study-solution');
-  if (problem.solution_code) {
-    solutionEl.innerHTML = `
-      <p class="study-solution-note">Study the solution line by line. Try to understand each step before looking at the next problem.</p>
-      <pre class="study-solution-code">${escapeHtml(problem.solution_code)}</pre>
-    `;
-  } else {
-    solutionEl.innerHTML = '<p style="color:var(--text-muted);font-style:italic;">No solution available.</p>';
+  function updateStudySolution() {
+    const solCode = currentFramework === 'pytorch'
+      ? (problem.pytorch_solution_code || problem.solution_code)
+      : problem.solution_code;
+    if (solCode) {
+      solutionEl.innerHTML = `
+        <p class="study-solution-note">Study the solution line by line. Try to understand each step before looking at the next problem.</p>
+        <pre class="study-solution-code">${escapeHtml(solCode)}</pre>
+      `;
+    } else {
+      solutionEl.innerHTML = '<p style="color:var(--text-muted);font-style:italic;">No solution available.</p>';
+    }
   }
+  updateStudySolution();
+  // Expose for framework switching (called from init scope)
+  problem.updateStudySolution = updateStudySolution;
 
   // Toggle panel
   function showStudy() {
@@ -484,7 +497,10 @@ function setupSolutionPanel(problem) {
   const solutionCode = document.getElementById('solution-code');
 
   function showSolution() {
-    solutionCode.textContent = problem.solution_code || '';
+    const solCode = currentFramework === 'pytorch'
+      ? (problem.pytorch_solution_code || problem.solution_code || '')
+      : (problem.solution_code || '');
+    solutionCode.textContent = solCode;
     panel.classList.add('visible');
     btnSolution.textContent = 'Hide Solution';
     markPeeked(problem.id);
@@ -558,18 +574,72 @@ async function init() {
   setupNavigation(problemId, manifest);
 
   // Set up editor
-  const state = getProblemState(problemId);
-  const initialCode = state.code || problem.starter_code || '';
+  function getCodeForFramework(fw) {
+    const saved = getSavedCode(problemId, fw);
+    if (saved) return saved;
+    return fw === 'pytorch'
+      ? (problem.pytorch_starter_code || '')
+      : (problem.starter_code || '');
+  }
+
+  const initialCode = getCodeForFramework('numpy');
   const editorContainer = document.getElementById('editor-container');
   const editor = createEditor(editorContainer, initialCode, debounce((code) => {
-    saveCode(problemId, code);
+    saveCode(problemId, code, currentFramework);
   }, 1000));
+
+  // Framework tabs (NumPy / PyTorch)
+  const frameworkTabs = document.querySelectorAll('.framework-tab');
+  const pytorchBanner = document.getElementById('pytorch-banner');
+  const hasPytorch = !!problem.pytorch_starter_code;
+  document.getElementById('framework-tabs').style.display = hasPytorch ? '' : 'none';
+
+  function switchFramework(fw) {
+    if (fw === currentFramework) return;
+
+    // Save current code to outgoing framework
+    saveCode(problemId, editor.getCode(), currentFramework);
+
+    currentFramework = fw;
+
+    // Load code for new framework
+    editor.setCode(getCodeForFramework(fw));
+
+    // Update tab active states
+    frameworkTabs.forEach(t => t.classList.toggle('active', t.dataset.framework === fw));
+
+    // Toggle PyTorch banner
+    pytorchBanner.style.display = fw === 'pytorch' ? '' : 'none';
+
+    // Disable/enable run buttons
+    const isPytorch = fw === 'pytorch';
+    document.getElementById('btn-run').disabled = isPytorch || !workerReady;
+    document.getElementById('btn-run-code').disabled = isPytorch || !workerReady;
+
+    // Update solution displays for new framework
+    if (problem.updateStudySolution) problem.updateStudySolution();
+  }
+
+  frameworkTabs.forEach(tab => {
+    tab.addEventListener('click', () => switchFramework(tab.dataset.framework));
+  });
+
+  // Copy-to-clipboard for PyTorch code
+  document.getElementById('btn-copy-pytorch').addEventListener('click', () => {
+    navigator.clipboard.writeText(editor.getCode());
+    const btn = document.getElementById('btn-copy-pytorch');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy Code'; }, 2000);
+  });
 
   // Reset Code button
   document.getElementById('btn-reset').addEventListener('click', () => {
     if (confirm('Reset to starter code? Your current code will be lost.')) {
-      editor.setCode(problem.starter_code || '');
-      saveCode(problemId, problem.starter_code || '');
+      const starterCode = currentFramework === 'pytorch'
+        ? (problem.pytorch_starter_code || '')
+        : (problem.starter_code || '');
+      editor.setCode(starterCode);
+      saveCode(problemId, starterCode, currentFramework);
     }
   });
 

@@ -9,6 +9,7 @@ const KEYS = {
 const DEFAULT_PROBLEM_STATE = {
   status: 'unsolved',
   code: null,
+  pytorchCode: null,
   bestTimeMs: null,
   peeked: false,
   lastAttempted: null,
@@ -99,8 +100,17 @@ export function markAttempted(problemId) {
 
 // --- Code persistence ---
 
-export function saveCode(problemId, code) {
-  setProblemState(problemId, { code });
+export function saveCode(problemId, code, framework = 'numpy') {
+  if (framework === 'pytorch') {
+    setProblemState(problemId, { pytorchCode: code });
+  } else {
+    setProblemState(problemId, { code });
+  }
+}
+
+export function getSavedCode(problemId, framework = 'numpy') {
+  const state = getProblemState(problemId);
+  return framework === 'pytorch' ? state.pytorchCode : state.code;
 }
 
 // --- Solution peeking ---

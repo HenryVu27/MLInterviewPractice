@@ -286,6 +286,8 @@ select, input {
   font-size: 0.82rem;
   font-weight: 600;
   border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
   opacity: 0.4;
   transition: opacity 0.15s, border-color 0.15s, background 0.15s;
 }
@@ -415,8 +417,13 @@ select, input {
   color: #fbbf24 !important;
   border-color: #fbbf24 !important;
   font-weight: 600;
+  opacity: 0.6;
+}
+.featured-btn:hover {
+  opacity: 0.85;
 }
 .featured-btn.active {
+  opacity: 1;
   background: rgba(251, 191, 36, 0.15) !important;
   color: #fbbf24 !important;
 }

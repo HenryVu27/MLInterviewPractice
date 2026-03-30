@@ -81,28 +81,41 @@ print(clean_text("Check &lt;b&gt;THIS&lt;/b&gt; out: https://example.com !!!"))
         <pre><code>import random
 from nltk.corpus import wordnet
 
-def synonym_replace(words: list[str], n: int = 1) -> list[str]:
+def synonym_replace(words, n=1):
     """Replace n random words with WordNet synonyms."""
     new_words = words.copy()
     targets = [w for w in words if wordnet.synsets(w)]
     random.shuffle(targets)
+
     for word in targets[:n]:
         syns = wordnet.synsets(word)
-        lemmas = [l.name() for s in syns for l in s.lemmas() if l.name() != word]
+        # Collect all synonym lemmas (excluding the word itself)
+        lemmas = []
+        for s in syns:
+            for l in s.lemmas():
+                if l.name() != word:
+                    lemmas.append(l.name())
         if lemmas:
-            new_words = [random.choice(lemmas) if w == word else w for w in new_words]
+            replacement = random.choice(lemmas)
+            new_words = [replacement if w == word else w for w in new_words]
     return new_words
 
-def random_insertion(words: list[str], n: int = 1) -> list[str]:
+def random_insertion(words, n=1):
     """Insert n random synonyms at random positions."""
     new_words = words.copy()
     for _ in range(n):
-        syns = []
-        while not syns:
-            w = random.choice(new_words)
-            all_syns = wordnet.synsets(w)
-            syns = [l.name() for s in all_syns for l in s.lemmas() if l.name() != w]
-        new_words.insert(random.randint(0, len(new_words)), random.choice(syns))
+        # Pick a random word and find its synonyms
+        w = random.choice(new_words)
+        syns = wordnet.synsets(w)
+        lemmas = []
+        for s in syns:
+            for l in s.lemmas():
+                if l.name() != w:
+                    lemmas.append(l.name())
+        if lemmas:
+            synonym = random.choice(lemmas)
+            pos = random.randint(0, len(new_words))
+            new_words.insert(pos, synonym)
     return new_words
 
 # Back-translation sketch (requires translation API):
@@ -119,8 +132,8 @@ weights = weights / weights.sum()
 loss_fn = torch.nn.CrossEntropyLoss(weight=weights)
 
 # Method 2: WeightedRandomSampler for oversampling minority class
-labels = [0]*8000 + [1]*2000
-sample_weights = [1.0/class_counts[l] for l in labels]
+labels = [0] * 8000 + [1] * 2000
+sample_weights = [1.0 / class_counts[l] for l in labels]
 sampler = WeightedRandomSampler(sample_weights, num_samples=len(labels), replacement=True)
 loader = DataLoader(dataset, batch_size=32, sampler=sampler)</code></pre>
 
@@ -235,9 +248,13 @@ class SpamDataset(Dataset):
     def __init__(self, texts, labels, tokenizer, max_len=128):
         self.encodings = tokenizer(texts, truncation=True, padding="max_length", max_length=max_len, return_tensors="pt")
         self.labels = torch.tensor(labels)
-    def __len__(self): return len(self.labels)
+
+    def __len__(self):
+        return len(self.labels)
+
     def __getitem__(self, idx):
-        return {k: v[idx] for k, v in self.encodings.items()}, self.labels[idx]
+        item = {k: v[idx] for k, v in self.encodings.items()}
+        return item, self.labels[idx]
 
 train_loader = DataLoader(SpamDataset(train_texts, train_labels, tokenizer), batch_size=2, shuffle=True)
 val_loader = DataLoader(SpamDataset(val_texts, val_labels, tokenizer), batch_size=2)
@@ -286,61 +303,46 @@ print(classification_report(val_labels, preds, target_names=["ham", "spam"]))</c
 
       <!-- Section: K-Means & Clustering -->
       <section class="section">
-        <h2>3. K-Means &amp; Clustering</h2>
+        <h2>3. K-Means Clustering</h2>
 
         <h3>K-Means from Scratch (NumPy)</h3>
         <pre><code>import numpy as np
 
-def kmeans(X: np.ndarray, k: int, max_iters: int = 100, seed: int = 42) -> tuple:
-    """K-Means with k-means++ initialization. Returns (centroids, assignments)."""
+def kmeans(X, k, max_iters=100, seed=42):
     rng = np.random.RandomState(seed)
-    n, d = X.shape
-    # K-means++ init
-    centroids = [X[rng.randint(n)]]
-    for _ in range(1, k):
-        dists = np.min([np.sum((X - c)**2, axis=1) for c in centroids], axis=0)
-        probs = dists / dists.sum()
-        centroids.append(X[rng.choice(n, p=probs)])
-    centroids = np.array(centroids)
+    n = X.shape[0]
+
+    # Random initialization: pick k random points as centroids
+    indices = rng.choice(n, size=k, replace=False)
+    centroids = X[indices]
 
     for _ in range(max_iters):
+        # Assign each point to nearest centroid
         dists = np.linalg.norm(X[:, None] - centroids[None], axis=2)  # (n, k)
         assignments = np.argmin(dists, axis=1)
-        new_centroids = np.array([X[assignments == j].mean(axis=0) if (assignments == j).any() else centroids[j] for j in range(k)])
-        if np.allclose(centroids, new_centroids): break
+
+        # Update centroids to mean of assigned points
+        new_centroids = np.empty_like(centroids)
+        for j in range(k):
+            members = X[assignments == j]
+            if len(members) > 0:
+                new_centroids[j] = members.mean(axis=0)
+            else:
+                new_centroids[j] = centroids[j]
+
+        if np.allclose(centroids, new_centroids):
+            break
         centroids = new_centroids
+
     return centroids, assignments
 
 X = np.random.randn(200, 5)
 centroids, labels = kmeans(X, k=3)
-print(f"Cluster sizes: {[np.sum(labels == i) for i in range(3)]}")</code></pre>
-
-        <h3>K-Means with Sklearn</h3>
-        <pre><code>import numpy as np
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-
-X = np.random.randn(500, 10)
-
-# Elbow method
-inertias = []
-K_range = range(2, 11)
-for k in K_range:
-    km = KMeans(n_clusters=k, n_init=10, random_state=42).fit(X)
-    inertias.append(km.inertia_)
-print("Inertias:", [f"{v:.0f}" for v in inertias])
-
-# Pick best k via silhouette
-best_k, best_score = 2, -1
-for k in K_range:
-    km = KMeans(n_clusters=k, n_init=10, random_state=42).fit(X)
-    score = silhouette_score(X, km.labels_)
-    if score > best_score: best_k, best_score = k, score
-print(f"Best k={best_k}, silhouette={best_score:.3f}")</code></pre>
+for i in range(3):
+    print(f"Cluster {i}: {np.sum(labels == i)} points")</code></pre>
 
         <h3>Embedding Clustering</h3>
         <pre><code>from sentence_transformers import SentenceTransformer
-from sklearn.cluster import KMeans
 import numpy as np
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -351,13 +353,14 @@ texts = [
 ]
 embeddings = model.encode(texts, convert_to_numpy=True)
 
-km = KMeans(n_clusters=3, n_init=10, random_state=42).fit(embeddings)
+# Use our kmeans from above
+centroids, labels = kmeans(embeddings, k=3)
 for i in range(3):
-    members = [texts[j] for j in range(len(texts)) if km.labels_[j] == i]
+    members = [texts[j] for j in range(len(texts)) if labels[j] == i]
     print(f"Cluster {i}: {members}")</code></pre>
 
         <div class="callout">
-          <strong>Use silhouette score and elbow method to pick k.</strong> For high-dimensional embeddings, apply PCA or UMAP first for better clustering and visualization.
+          <strong>K-Means algorithm: 1) pick k random centroids, 2) assign points to nearest centroid, 3) recompute centroids as cluster means, 4) repeat until convergence.</strong> For high-dimensional embeddings, apply PCA or UMAP first for better clustering and visualization.
         </div>
       </section>
 
@@ -514,12 +517,7 @@ print(batch["input_ids"].shape)  # (3, longest_seq_len)</code></pre>
         <h3>Handling Long Documents (Chunking with Overlap)</h3>
         <pre><code>from transformers import AutoTokenizer
 
-def chunk_document(
-    text: str,
-    tokenizer,
-    max_length: int = 512,
-    stride: int = 128,
-) -> list[dict]:
+def chunk_document(text, tokenizer, max_length=512, stride=128):
     """Split a long document into overlapping chunks for embedding."""
     encoding = tokenizer(
         text,
@@ -530,12 +528,14 @@ def chunk_document(
         return_tensors="pt",
         padding="max_length",
     )
+    num_chunks = encoding["input_ids"].shape[0]
     chunks = []
-    for i in range(encoding["input_ids"].shape[0]):
-        chunks.append({
+    for i in range(num_chunks):
+        chunk = {
             "input_ids": encoding["input_ids"][i].unsqueeze(0),
             "attention_mask": encoding["attention_mask"][i].unsqueeze(0),
-        })
+        }
+        chunks.append(chunk)
     return chunks
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
@@ -576,13 +576,14 @@ print(cls_embedding.shape)  # (1, 768)</code></pre>
         <pre><code>import torch
 from transformers import AutoModel, AutoTokenizer
 
-def mean_pooling(model_output, attention_mask: torch.Tensor) -> torch.Tensor:
+def mean_pooling(model_output, attention_mask):
     """Mean pooling ignoring padding tokens."""
-    token_embeddings = model_output.last_hidden_state
-    mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    sum_embeddings = torch.sum(token_embeddings * mask_expanded, dim=1)
-    sum_mask = torch.clamp(mask_expanded.sum(dim=1), min=1e-9)
-    return sum_embeddings / sum_mask
+    hidden = model_output.last_hidden_state          # (batch, seq_len, dim)
+    mask = attention_mask.unsqueeze(-1).float()       # (batch, seq_len, 1)
+    mask = mask.expand(hidden.size())                 # (batch, seq_len, dim)
+    summed = torch.sum(hidden * mask, dim=1)          # (batch, dim)
+    counts = torch.clamp(mask.sum(dim=1), min=1e-9)   # (batch, dim)
+    return summed / counts
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 model = AutoModel.from_pretrained("bert-base-uncased")
@@ -601,28 +602,25 @@ print(embedding.shape)  # (1, 768)</code></pre>
         <pre><code>import torch
 from transformers import AutoModel, AutoTokenizer
 
-def embed_batch(
-    texts: list[str],
-    model,
-    tokenizer,
-    max_length: int = 128,
-    device: str = "cpu",
-) -> torch.Tensor:
+def embed_batch(texts, model, tokenizer, max_length=128, device="cpu"):
     """Embed texts using mean pooling. Returns (N, hidden_dim)."""
-    tokens = tokenizer(
-        texts, return_tensors="pt", padding=True, truncation=True, max_length=max_length
-    ).to(device)
+    tokens = tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=max_length)
+    tokens = tokens.to(device)
     model.to(device)
     model.eval()
 
     with torch.no_grad():
         outputs = model(**tokens)
 
-    mask = tokens["attention_mask"].unsqueeze(-1).expand(outputs.last_hidden_state.size()).float()
-    summed = torch.sum(outputs.last_hidden_state * mask, dim=1)
-    counts = torch.clamp(mask.sum(dim=1), min=1e-9)
+    # Mean pooling: average token embeddings, ignoring padding
+    hidden = outputs.last_hidden_state                        # (N, seq_len, dim)
+    mask = tokens["attention_mask"].unsqueeze(-1).float()      # (N, seq_len, 1)
+    mask = mask.expand(hidden.size())                          # (N, seq_len, dim)
+    summed = torch.sum(hidden * mask, dim=1)                   # (N, dim)
+    counts = torch.clamp(mask.sum(dim=1), min=1e-9)            # (N, dim)
     embeddings = summed / counts
 
+    # L2 normalize
     return torch.nn.functional.normalize(embeddings, p=2, dim=1)
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
@@ -1073,6 +1071,7 @@ class MiniRAG:
         context_docs = self.retrieve(query, top_k)
         context = "\n".join(f"- {doc}" for doc in context_docs)
         prompt = f"Context:\n{context}\n\nQuestion: {query}\nAnswer:"
+
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
         with torch.no_grad():
             output_ids = self.generator.generate(
@@ -1082,7 +1081,11 @@ class MiniRAG:
                 temperature=0.7,
                 top_p=0.9,
             )
-        response = self.tokenizer.decode(output_ids[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+
+        # Decode only the generated tokens (skip the prompt)
+        prompt_len = inputs["input_ids"].shape[1]
+        generated_tokens = output_ids[0][prompt_len:]
+        response = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
         return response
 
 rag = MiniRAG()
@@ -1102,24 +1105,20 @@ print(answer)</code></pre>
         <pre><code>import torch
 from sentence_transformers import CrossEncoder
 
-def retrieve_and_rerank(
-    query: str,
-    candidates: list[str],
-    bi_encoder: "SentenceTransformer",
-    cross_encoder: CrossEncoder,
-    initial_k: int = 20,
-    final_k: int = 5,
-) -> list[tuple[str, float]]:
+def retrieve_and_rerank(query, candidates, bi_encoder, cross_encoder, initial_k=20, final_k=5):
     """Two-stage retrieval: bi-encoder recall + cross-encoder reranking."""
+    # Stage 1: bi-encoder retrieves top candidates
     query_emb = bi_encoder.encode([query], normalize_embeddings=True)
     doc_embs = bi_encoder.encode(candidates, normalize_embeddings=True)
     scores = (query_emb @ doc_embs.T)[0]
     top_indices = scores.argsort()[::-1][:initial_k]
     shortlist = [candidates[i] for i in top_indices]
 
+    # Stage 2: cross-encoder reranks the shortlist
     pairs = [[query, doc] for doc in shortlist]
     rerank_scores = cross_encoder.predict(pairs)
 
+    # Sort by rerank score descending
     ranked = sorted(zip(shortlist, rerank_scores), key=lambda x: x[1], reverse=True)
     return ranked[:final_k]
 
@@ -1149,11 +1148,7 @@ for doc, score in results:
         <pre><code>import torch
 import numpy as np
 
-def recall_at_k(
-    retrieved_indices: torch.Tensor,
-    relevant_indices: list[list[int]],
-    k: int,
-) -> float:
+def recall_at_k(retrieved_indices, relevant_indices, k):
     """Recall@K: fraction of relevant items found in top-K."""
     recalls = []
     for i in range(len(relevant_indices)):
@@ -1161,25 +1156,26 @@ def recall_at_k(
         relevant = set(relevant_indices[i])
         if len(relevant) == 0:
             continue
-        recalls.append(len(top_k & relevant) / len(relevant))
+        hit_count = len(top_k & relevant)
+        recalls.append(hit_count / len(relevant))
     return np.mean(recalls)
 
-def ndcg_at_k(
-    retrieved_indices: torch.Tensor,
-    relevance_scores: list[dict[int, float]],
-    k: int,
-) -> float:
+def ndcg_at_k(retrieved_indices, relevance_scores, k):
     """NDCG@K: normalized discounted cumulative gain."""
     ndcgs = []
     for i in range(len(relevance_scores)):
+        # Compute DCG from retrieved order
         dcg = 0.0
         for rank in range(min(k, retrieved_indices.shape[1])):
             doc_id = retrieved_indices[i, rank].item()
             rel = relevance_scores[i].get(doc_id, 0.0)
             dcg += (2**rel - 1) / np.log2(rank + 2)
 
+        # Compute ideal DCG (best possible ordering)
         ideal_rels = sorted(relevance_scores[i].values(), reverse=True)[:k]
-        idcg = sum((2**r - 1) / np.log2(j + 2) for j, r in enumerate(ideal_rels))
+        idcg = 0.0
+        for j, r in enumerate(ideal_rels):
+            idcg += (2**r - 1) / np.log2(j + 2)
 
         ndcgs.append(dcg / idcg if idcg > 0 else 0.0)
     return np.mean(ndcgs)
@@ -1228,11 +1224,7 @@ class ABTestResult:
     lift_percent: float
     confidence_interval: tuple[float, float]
 
-def run_ab_test(
-    group_a: np.ndarray,
-    group_b: np.ndarray,
-    alpha: float = 0.05,
-) -> ABTestResult:
+def run_ab_test(group_a, group_b, alpha=0.05):
     """Two-sample Welch's t-test for A/B testing."""
     t_stat, p_value = stats.ttest_ind(group_a, group_b, equal_var=False)
 
@@ -1240,7 +1232,8 @@ def run_ab_test(
     mean_b = np.mean(group_b)
     lift = (mean_b - mean_a) / mean_a * 100
 
-    diff = group_b.mean() - group_a.mean()
+    # 95% confidence interval for the difference
+    diff = mean_b - mean_a
     se = np.sqrt(np.var(group_a) / len(group_a) + np.var(group_b) / len(group_b))
     ci = (diff - 1.96 * se, diff + 1.96 * se)
 

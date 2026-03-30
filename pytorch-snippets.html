@@ -124,8 +124,93 @@ sample_weights = [1.0/class_counts[l] for l in labels]
 sampler = WeightedRandomSampler(sample_weights, num_samples=len(labels), replacement=True)
 loader = DataLoader(dataset, batch_size=32, sampler=sampler)</code></pre>
 
+        <h3>Deduplication</h3>
+        <pre><code>import hashlib
+
+# Exact deduplication
+df = df.drop_duplicates(subset=["text"], keep="first")
+
+# Near-duplicate detection via hashing (MinHash sketch)
+def shingle_hash(text: str, k: int = 3) -> set[str]:
+    tokens = text.lower().split()
+    return {" ".join(tokens[i:i+k]) for i in range(len(tokens)-k+1)}
+
+def jaccard_sim(a: set, b: set) -> float:
+    return len(a & b) / len(a | b) if a | b else 0.0
+
+# Flag near-dupes above threshold
+seen = []
+to_drop = []
+for idx, row in df.iterrows():
+    shingles = shingle_hash(row["text"])
+    if any(jaccard_sim(shingles, s) > 0.8 for s in seen):
+        to_drop.append(idx)
+    else:
+        seen.append(shingles)
+df = df.drop(to_drop)</code></pre>
+
+        <h3>Missing Value Handling</h3>
+        <pre><code>import numpy as np
+
+# Inspect
+print(df.isnull().sum())
+print(f"Rows with any null: {df.isnull().any(axis=1).sum()}")
+
+# Drop rows where target is missing
+df = df.dropna(subset=["label"])
+
+# Fill numeric columns with median, categorical with mode
+for col in df.select_dtypes(include=[np.number]).columns:
+    df[col] = df[col].fillna(df[col].median())
+for col in df.select_dtypes(include=["object"]).columns:
+    df[col] = df[col].fillna(df[col].mode()[0])</code></pre>
+
+        <h3>Feature Scaling &amp; Encoding</h3>
+        <pre><code>from sklearn.preprocessing import StandardScaler, LabelEncoder
+import pandas as pd
+
+# Numeric scaling
+scaler = StandardScaler()
+num_cols = ["age", "income", "score"]
+df[num_cols] = scaler.fit_transform(df[num_cols])
+
+# Label encoding for ordinal categories
+le = LabelEncoder()
+df["priority"] = le.fit_transform(df["priority"])  # low=0, medium=1, high=2
+
+# One-hot encoding for nominal categories
+df = pd.get_dummies(df, columns=["city", "device_type"], drop_first=True)</code></pre>
+
+        <h3>Outlier Detection &amp; Removal</h3>
+        <pre><code>import numpy as np
+
+# IQR method
+def remove_outliers_iqr(df, col, factor=1.5):
+    q1, q3 = df[col].quantile([0.25, 0.75])
+    iqr = q3 - q1
+    return df[(df[col] >= q1 - factor*iqr) & (df[col] <= q3 + factor*iqr)]
+
+# Z-score method
+def remove_outliers_zscore(df, col, threshold=3.0):
+    z = np.abs((df[col] - df[col].mean()) / df[col].std())
+    return df[z < threshold]
+
+df = remove_outliers_iqr(df, "income")</code></pre>
+
+        <h3>Train/Val/Test Split with Stratification</h3>
+        <pre><code>from sklearn.model_selection import train_test_split
+
+# 70/15/15 split, stratified by label
+train_df, temp_df = train_test_split(df, test_size=0.3, random_state=42, stratify=df["label"])
+val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42, stratify=temp_df["label"])
+print(f"Train: {len(train_df)}, Val: {len(val_df)}, Test: {len(test_df)}")
+
+# Verify class distribution preserved
+for name, split in [("train", train_df), ("val", val_df), ("test", test_df)]:
+    print(f"{name}: {split['label'].value_counts(normalize=True).to_dict()}")</code></pre>
+
         <div class="callout">
-          <strong>Always inspect your data first.</strong> <code>df.describe()</code>, <code>df.isnull().sum()</code>, class distribution via <code>df["label"].value_counts()</code>. Skipping EDA is the #1 source of wasted training time.
+          <strong>Always inspect your data first.</strong> <code>df.describe()</code>, <code>df.isnull().sum()</code>, class distribution via <code>df["label"].value_counts()</code>. Check for duplicates with <code>df.duplicated().sum()</code>. Skipping EDA is the #1 source of wasted training time.
         </div>
       </section>
 

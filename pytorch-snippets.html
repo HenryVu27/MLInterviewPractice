@@ -4,33 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PyTorch &amp; HuggingFace Snippets</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0f0f1a; --bg-card: #1e1e3a; --text: #e0e0e0; --text-muted: #8888aa;
-      --accent: #4a9eff; --border: #2a2a4a; --code-bg: #161630;
-      --font-mono: 'JetBrains Mono', monospace;
-      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --bg: #f2efe8; --text: #2c2926; --muted: #6d6355;
+      --border: #ddd8cd; --code-bg: #e9e5db; --vermillion: #8b2500;
+      --font-serif: "Palatino Linotype", Palatino, Georgia, serif;
+      --font-mono: "Monaco", "Menlo", "Consolas", monospace;
     }
-    html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:var(--font-sans); font-size:15px; line-height:1.6; }
-    .page { max-width:860px; margin:0 auto; padding:24px 32px 64px; }
-    .nav { margin-bottom:16px; }
-    .back-btn { color:var(--accent); text-decoration:none; font-size:0.9rem; }
-    .back-btn:hover { text-decoration:underline; }
-    h1 { font-family:var(--font-mono); font-size:1.6rem; margin:0 0 4px; }
-    .meta { color:var(--text-muted); font-size:0.85rem; margin:0 0 12px; }
-    hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
-    h2 { font-family:var(--font-mono); font-size:1.15rem; color:var(--accent); margin:32px 0 12px; border-bottom:1px solid var(--border); padding-bottom:6px; }
-    h3 { font-family:var(--font-mono); font-size:0.95rem; margin:20px 0 8px; }
-    pre { background:var(--code-bg); border:1px solid var(--border); border-radius:6px; padding:14px 16px; overflow-x:auto; margin:8px 0 16px; }
-    code { font-family:var(--font-mono); font-size:0.82rem; line-height:1.5; color:var(--text); }
-    .callout { background:rgba(74,158,255,0.08); border-left:3px solid var(--accent); padding:12px 16px; margin:12px 0 20px; border-radius:0 6px 6px 0; font-size:0.88rem; }
-    .callout strong { color:var(--accent); }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:var(--font-serif); font-size:18px; line-height:1.6; }
+    .page { max-width:720px; margin:48px auto 64px; padding:0 32px; }
+    .nav { margin-bottom:24px; }
+    .back-btn { color:var(--text); text-decoration:none; font-size:18px; }
+    .back-btn:hover { color:var(--vermillion); }
+    h1 { font-family:var(--font-serif); font-size:36px; font-weight:300; margin:0 0 6px; }
+    .meta { color:var(--muted); font-size:18px; margin:0 0 24px; }
+    hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
+    h2 { font-family:var(--font-serif); font-size:28px; font-weight:400; margin:40px 0 14px; }
+    h3 { font-family:var(--font-serif); font-size:22px; font-weight:400; margin:28px 0 10px; }
+    pre { background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; margin:8px 0 16px; font-size:14px; line-height:1.55; }
+    code { font-family:var(--font-mono); font-size:0.78em; background:var(--code-bg); padding:1px 5px; border-radius:4px; }
+    pre code { background:transparent; padding:0; border-radius:0; font-size:14px; }
+    .callout { border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin:16px 0; font-size:16px; }
+    .callout strong { color:var(--text); }
     .footer { margin-top:40px; }
-    .footer p { color:var(--text-muted); font-size:0.82rem; }
-    .footer a { color:var(--accent); }
+    .footer p { color:var(--muted); font-size:16px; }
+    .footer a { color:var(--text); }
+    .footer a:hover { color:var(--vermillion); }
   </style>
 </head>
 <body>
@@ -47,9 +46,303 @@
 
     <article class="post">
 
-      <!-- Section 1: Loading Models & Tokenizers -->
+      <!-- Section: Data Loading & Preprocessing -->
       <section class="section">
-        <h2>1. Loading Models &amp; Tokenizers</h2>
+        <h2>1. Data Loading &amp; Preprocessing</h2>
+
+        <h3>Loading CSV/JSON Data with Pandas</h3>
+        <pre><code>import pandas as pd
+from sklearn.model_selection import train_test_split
+
+df = pd.read_csv("dataset.csv")  # or pd.read_json("dataset.json")
+print(df.shape, df.dtypes)
+print(df.describe())
+print(df.isnull().sum())
+
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df["label"])
+print(f"Train: {len(train_df)}, Test: {len(test_df)}")</code></pre>
+
+        <h3>Text Cleaning Pipeline</h3>
+        <pre><code>import re
+
+def clean_text(text: str) -> str:
+    """Lowercase, strip URLs/HTML/special chars, collapse whitespace."""
+    text = text.lower()
+    text = re.sub(r"http\S+|www\.\S+", "", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"[^a-z0-9\s]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+print(clean_text("Check &lt;b&gt;THIS&lt;/b&gt; out: https://example.com !!!"))
+# "check this out"</code></pre>
+
+        <h3>Data Augmentation for Text</h3>
+        <pre><code>import random
+from nltk.corpus import wordnet
+
+def synonym_replace(words: list[str], n: int = 1) -> list[str]:
+    """Replace n random words with WordNet synonyms."""
+    new_words = words.copy()
+    targets = [w for w in words if wordnet.synsets(w)]
+    random.shuffle(targets)
+    for word in targets[:n]:
+        syns = wordnet.synsets(word)
+        lemmas = [l.name() for s in syns for l in s.lemmas() if l.name() != word]
+        if lemmas:
+            new_words = [random.choice(lemmas) if w == word else w for w in new_words]
+    return new_words
+
+def random_insertion(words: list[str], n: int = 1) -> list[str]:
+    """Insert n random synonyms at random positions."""
+    new_words = words.copy()
+    for _ in range(n):
+        syns = []
+        while not syns:
+            w = random.choice(new_words)
+            all_syns = wordnet.synsets(w)
+            syns = [l.name() for s in all_syns for l in s.lemmas() if l.name() != w]
+        new_words.insert(random.randint(0, len(new_words)), random.choice(syns))
+    return new_words
+
+# Back-translation sketch (requires translation API):
+# translate(text, src="en", tgt="de") -> translate(result, src="de", tgt="en")</code></pre>
+
+        <h3>Handling Class Imbalance</h3>
+        <pre><code>import torch
+from torch.utils.data import WeightedRandomSampler, DataLoader
+
+# Method 1: Weighted loss
+class_counts = [8000, 2000]  # [negative, positive]
+weights = torch.tensor([1.0 / c for c in class_counts])
+weights = weights / weights.sum()
+loss_fn = torch.nn.CrossEntropyLoss(weight=weights)
+
+# Method 2: WeightedRandomSampler for oversampling minority class
+labels = [0]*8000 + [1]*2000
+sample_weights = [1.0/class_counts[l] for l in labels]
+sampler = WeightedRandomSampler(sample_weights, num_samples=len(labels), replacement=True)
+loader = DataLoader(dataset, batch_size=32, sampler=sampler)</code></pre>
+
+        <div class="callout">
+          <strong>Always inspect your data first.</strong> <code>df.describe()</code>, <code>df.isnull().sum()</code>, class distribution via <code>df["label"].value_counts()</code>. Skipping EDA is the #1 source of wasted training time.
+        </div>
+      </section>
+
+      <!-- Section: Building a Classification Pipeline -->
+      <section class="section">
+        <h2>2. Building a Classification Pipeline</h2>
+
+        <h3>End-to-End Spam Classifier with Pretrained Transformer</h3>
+        <pre><code>import torch
+from torch.utils.data import Dataset, DataLoader
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.model_selection import train_test_split
+
+texts = ["Buy cheap meds now!", "Meeting at 3pm tomorrow", "You won $1M!", "Project update attached"]
+labels = [1, 0, 1, 0]  # 1=spam, 0=ham
+train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=0.25, random_state=42)
+
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+class SpamDataset(Dataset):
+    def __init__(self, texts, labels, tokenizer, max_len=128):
+        self.encodings = tokenizer(texts, truncation=True, padding="max_length", max_length=max_len, return_tensors="pt")
+        self.labels = torch.tensor(labels)
+    def __len__(self): return len(self.labels)
+    def __getitem__(self, idx):
+        return {k: v[idx] for k, v in self.encodings.items()}, self.labels[idx]
+
+train_loader = DataLoader(SpamDataset(train_texts, train_labels, tokenizer), batch_size=2, shuffle=True)
+val_loader = DataLoader(SpamDataset(val_texts, val_labels, tokenizer), batch_size=2)
+
+model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
+loss_fn = torch.nn.CrossEntropyLoss()
+
+for epoch in range(3):
+    model.train()
+    for batch, lbl in train_loader:
+        optimizer.zero_grad()
+        out = model(**batch)
+        loss = loss_fn(out.logits, lbl)
+        loss.backward()
+        optimizer.step()
+
+    model.eval()
+    all_preds, all_labels = [], []
+    with torch.no_grad():
+        for batch, lbl in val_loader:
+            preds = model(**batch).logits.argmax(dim=-1)
+            all_preds.extend(preds.tolist())
+            all_labels.extend(lbl.tolist())
+    p, r, f1, _ = precision_recall_fscore_support(all_labels, all_preds, average="binary")
+    print(f"Epoch {epoch+1}: P={p:.3f} R={r:.3f} F1={f1:.3f}")</code></pre>
+
+        <h3>Sklearn Baseline for Comparison</h3>
+        <pre><code>from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report
+
+pipe = Pipeline([
+    ("tfidf", TfidfVectorizer(max_features=10000, ngram_range=(1, 2))),
+    ("clf", LogisticRegression(max_iter=1000)),
+])
+pipe.fit(train_texts, train_labels)
+preds = pipe.predict(val_texts)
+print(classification_report(val_labels, preds, target_names=["ham", "spam"]))</code></pre>
+
+        <div class="callout">
+          <strong>Always build a simple baseline first</strong> (TF-IDF + LogReg). If the transformer doesn't beat it significantly, your data or labels may be the problem, not the model.
+        </div>
+      </section>
+
+      <!-- Section: K-Means & Clustering -->
+      <section class="section">
+        <h2>3. K-Means &amp; Clustering</h2>
+
+        <h3>K-Means from Scratch (NumPy)</h3>
+        <pre><code>import numpy as np
+
+def kmeans(X: np.ndarray, k: int, max_iters: int = 100, seed: int = 42) -> tuple:
+    """K-Means with k-means++ initialization. Returns (centroids, assignments)."""
+    rng = np.random.RandomState(seed)
+    n, d = X.shape
+    # K-means++ init
+    centroids = [X[rng.randint(n)]]
+    for _ in range(1, k):
+        dists = np.min([np.sum((X - c)**2, axis=1) for c in centroids], axis=0)
+        probs = dists / dists.sum()
+        centroids.append(X[rng.choice(n, p=probs)])
+    centroids = np.array(centroids)
+
+    for _ in range(max_iters):
+        dists = np.linalg.norm(X[:, None] - centroids[None], axis=2)  # (n, k)
+        assignments = np.argmin(dists, axis=1)
+        new_centroids = np.array([X[assignments == j].mean(axis=0) if (assignments == j).any() else centroids[j] for j in range(k)])
+        if np.allclose(centroids, new_centroids): break
+        centroids = new_centroids
+    return centroids, assignments
+
+X = np.random.randn(200, 5)
+centroids, labels = kmeans(X, k=3)
+print(f"Cluster sizes: {[np.sum(labels == i) for i in range(3)]}")</code></pre>
+
+        <h3>K-Means with Sklearn</h3>
+        <pre><code>import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+X = np.random.randn(500, 10)
+
+# Elbow method
+inertias = []
+K_range = range(2, 11)
+for k in K_range:
+    km = KMeans(n_clusters=k, n_init=10, random_state=42).fit(X)
+    inertias.append(km.inertia_)
+print("Inertias:", [f"{v:.0f}" for v in inertias])
+
+# Pick best k via silhouette
+best_k, best_score = 2, -1
+for k in K_range:
+    km = KMeans(n_clusters=k, n_init=10, random_state=42).fit(X)
+    score = silhouette_score(X, km.labels_)
+    if score > best_score: best_k, best_score = k, score
+print(f"Best k={best_k}, silhouette={best_score:.3f}")</code></pre>
+
+        <h3>Embedding Clustering</h3>
+        <pre><code>from sentence_transformers import SentenceTransformer
+from sklearn.cluster import KMeans
+import numpy as np
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
+texts = [
+    "How to train a neural network", "Backpropagation explained", "Gradient descent variants",
+    "Best Italian restaurants nearby", "Pizza dough recipe", "Pasta carbonara tips",
+    "Stock market predictions", "Portfolio diversification", "Bond yields explained",
+]
+embeddings = model.encode(texts, convert_to_numpy=True)
+
+km = KMeans(n_clusters=3, n_init=10, random_state=42).fit(embeddings)
+for i in range(3):
+    members = [texts[j] for j in range(len(texts)) if km.labels_[j] == i]
+    print(f"Cluster {i}: {members}")</code></pre>
+
+        <div class="callout">
+          <strong>Use silhouette score and elbow method to pick k.</strong> For high-dimensional embeddings, apply PCA or UMAP first for better clustering and visualization.
+        </div>
+      </section>
+
+      <!-- Section: Logistic & Linear Regression from Scratch -->
+      <section class="section">
+        <h2>4. Logistic &amp; Linear Regression from Scratch</h2>
+
+        <h3>Logistic Regression (NumPy)</h3>
+        <pre><code>import numpy as np
+
+def sigmoid(z): return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
+
+def logistic_regression(X: np.ndarray, y: np.ndarray, lr: float = 0.1, epochs: int = 1000) -> np.ndarray:
+    """Binary logistic regression via gradient descent. Returns weights."""
+    n, d = X.shape
+    X_b = np.hstack([np.ones((n, 1)), X])  # add bias
+    W = np.zeros(d + 1)
+    for _ in range(epochs):
+        preds = sigmoid(X_b @ W)
+        grad = X_b.T @ (preds - y) / n
+        W -= lr * grad
+    return W
+
+def predict(X: np.ndarray, W: np.ndarray) -> np.ndarray:
+    X_b = np.hstack([np.ones((X.shape[0], 1)), X])
+    return (sigmoid(X_b @ W) >= 0.5).astype(int)
+
+np.random.seed(42)
+X = np.random.randn(200, 3)
+y = (X @ [1, -2, 0.5] + np.random.randn(200) * 0.5 > 0).astype(float)
+W = logistic_regression(X, y, lr=0.5, epochs=2000)
+acc = (predict(X, W) == y).mean()
+print(f"Accuracy: {acc:.3f}")
+print(f"Gradient formula: dW = X.T @ (sigmoid(X @ W) - y) / n")</code></pre>
+
+        <h3>Linear Regression (NumPy)</h3>
+        <pre><code>import numpy as np
+
+def linear_regression_closed(X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Normal equation: W = (X^T X)^{-1} X^T y."""
+    X_b = np.hstack([np.ones((X.shape[0], 1)), X])
+    return np.linalg.pinv(X_b.T @ X_b) @ X_b.T @ y
+
+def linear_regression_gd(X: np.ndarray, y: np.ndarray, lr: float = 0.01, epochs: int = 1000) -> np.ndarray:
+    """Gradient descent: dW = X^T (X W - y) / n."""
+    X_b = np.hstack([np.ones((X.shape[0], 1)), X])
+    W = np.zeros(X_b.shape[1])
+    n = len(y)
+    for _ in range(epochs):
+        grad = X_b.T @ (X_b @ W - y) / n
+        W -= lr * grad
+    return W
+
+np.random.seed(42)
+X = np.random.randn(100, 2)
+y = X @ [3, -1.5] + 2 + np.random.randn(100) * 0.3
+
+W_closed = linear_regression_closed(X, y)
+W_gd = linear_regression_gd(X, y, lr=0.1, epochs=2000)
+print(f"Closed-form: bias={W_closed[0]:.2f}, weights={W_closed[1:]}")
+print(f"GD solution: bias={W_gd[0]:.2f}, weights={W_gd[1:]}")</code></pre>
+
+        <div class="callout">
+          <strong>Interviewers love asking "implement logistic regression from scratch."</strong> Know the gradient: <code>dW = X.T @ (predictions - y) / n</code>. For linear regression, know both the normal equation and the GD approach.
+        </div>
+      </section>
+
+      <!-- Section 5: Loading Models & Tokenizers -->
+      <section class="section">
+        <h2>5. Loading Models &amp; Tokenizers</h2>
 
         <h3>Load a Pre-Trained Transformer (BERT)</h3>
         <pre><code>from transformers import AutoModel, AutoTokenizer
@@ -94,9 +387,9 @@ with torch.no_grad():
         </div>
       </section>
 
-      <!-- Section 2: Tokenization Patterns -->
+      <!-- Section 6: Tokenization Patterns -->
       <section class="section">
-        <h2>2. Tokenization Patterns</h2>
+        <h2>6. Tokenization Patterns</h2>
 
         <h3>Basic Tokenization with Padding/Truncation</h3>
         <pre><code>from transformers import AutoTokenizer
@@ -173,9 +466,9 @@ print(f"Document split into {len(chunks)} overlapping chunks")</code></pre>
         </div>
       </section>
 
-      <!-- Section 3: Generating Embeddings -->
+      <!-- Section 7: Generating Embeddings -->
       <section class="section">
-        <h2>3. Generating Embeddings</h2>
+        <h2>7. Generating Embeddings</h2>
 
         <h3>Get [CLS] Token Embedding from BERT</h3>
         <pre><code>import torch
@@ -283,9 +576,9 @@ print(embeddings.shape)  # (3, 384)</code></pre>
         </div>
       </section>
 
-      <!-- Section 4: Similarity Search with Embeddings -->
+      <!-- Section 8: Similarity Search with Embeddings -->
       <section class="section">
-        <h2>4. Similarity Search with Embeddings</h2>
+        <h2>8. Similarity Search with Embeddings</h2>
 
         <h3>Cosine Similarity with torch.nn.functional</h3>
         <pre><code>import torch
@@ -366,9 +659,9 @@ print(f"HNSW top-10: {indices[0]}")</code></pre>
         </div>
       </section>
 
-      <!-- Section 5: Fine-Tuning a Transformer -->
+      <!-- Section 9: Fine-Tuning a Transformer -->
       <section class="section">
-        <h2>5. Fine-Tuning a Transformer</h2>
+        <h2>9. Fine-Tuning a Transformer</h2>
 
         <h3>Classification Fine-Tuning Loop (Manual PyTorch)</h3>
         <pre><code>import torch
@@ -473,116 +766,9 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)</code></pre>
         </div>
       </section>
 
-      <!-- Section 6: Contrastive Learning for Embeddings -->
+      <!-- Section 10: Training Loop Essentials -->
       <section class="section">
-        <h2>6. Contrastive Learning for Embeddings</h2>
-
-        <h3>InfoNCE / NT-Xent Loss in PyTorch</h3>
-        <pre><code>import torch
-import torch.nn.functional as F
-
-def info_nce_loss(
-    query: torch.Tensor,
-    positive: torch.Tensor,
-    negatives: torch.Tensor,
-    temperature: float = 0.07,
-) -> torch.Tensor:
-    """InfoNCE loss for contrastive learning."""
-    query = F.normalize(query, dim=-1)
-    positive = F.normalize(positive, dim=-1)
-    negatives = F.normalize(negatives, dim=-1)
-
-    pos_sim = torch.sum(query * positive, dim=-1, keepdim=True) / temperature
-    neg_sim = torch.bmm(negatives, query.unsqueeze(-1)).squeeze(-1) / temperature
-
-    logits = torch.cat([pos_sim, neg_sim], dim=-1)
-    labels = torch.zeros(query.size(0), dtype=torch.long, device=query.device)
-
-    return F.cross_entropy(logits, labels)
-
-batch_size, dim, num_neg = 32, 384, 15
-query = torch.randn(batch_size, dim)
-positive = torch.randn(batch_size, dim)
-negatives = torch.randn(batch_size, num_neg, dim)
-loss = info_nce_loss(query, positive, negatives)
-print(f"InfoNCE loss: {loss.item():.4f}")</code></pre>
-
-        <h3>Triplet Loss Training Step</h3>
-        <pre><code>import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-class TripletTrainer:
-    def __init__(self, encoder: nn.Module, margin: float = 0.3, lr: float = 2e-5):
-        self.encoder = encoder
-        self.loss_fn = nn.TripletMarginLoss(margin=margin, p=2)
-        self.optimizer = torch.optim.AdamW(encoder.parameters(), lr=lr)
-
-    def train_step(
-        self,
-        anchor_ids: torch.Tensor,
-        anchor_mask: torch.Tensor,
-        positive_ids: torch.Tensor,
-        positive_mask: torch.Tensor,
-        negative_ids: torch.Tensor,
-        negative_mask: torch.Tensor,
-    ) -> float:
-        self.encoder.train()
-        self.optimizer.zero_grad()
-
-        anchor_emb = self._encode(anchor_ids, anchor_mask)
-        positive_emb = self._encode(positive_ids, positive_mask)
-        negative_emb = self._encode(negative_ids, negative_mask)
-
-        loss = self.loss_fn(anchor_emb, positive_emb, negative_emb)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), 1.0)
-        self.optimizer.step()
-        return loss.item()
-
-    def _encode(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
-        token_embs = outputs.last_hidden_state
-        mask = attention_mask.unsqueeze(-1).expand(token_embs.size()).float()
-        return F.normalize(torch.sum(token_embs * mask, 1) / mask.sum(1), dim=-1)</code></pre>
-
-        <h3>Hard Negative Mining</h3>
-        <pre><code>import torch
-import torch.nn.functional as F
-
-def mine_hard_negatives(
-    query_embs: torch.Tensor,
-    all_embs: torch.Tensor,
-    positive_indices: list[int],
-    num_hard_negatives: int = 5,
-) -> torch.Tensor:
-    """Select hardest negatives (closest non-positive vectors)."""
-    sims = torch.mm(
-        F.normalize(query_embs, dim=-1),
-        F.normalize(all_embs, dim=-1).t()
-    )
-
-    for i, pos_idx in enumerate(positive_indices):
-        sims[i, pos_idx] = -float("inf")
-
-    _, hard_neg_indices = torch.topk(sims, k=num_hard_negatives, dim=1)
-    return hard_neg_indices
-
-queries = torch.randn(8, 384)
-corpus = torch.randn(10000, 384)
-positives = [42, 99, 150, 200, 310, 555, 700, 888]
-hard_negs = mine_hard_negatives(queries, corpus, positives, num_hard_negatives=10)
-print(hard_negs.shape)  # (8, 10)</code></pre>
-
-        <div class="callout">
-          <strong>Why Contrastive Learning Matters for Retrieval</strong><br>
-          Pre-trained BERT embeddings are not optimized for similarity -- sentences with similar meaning can be far apart in embedding space. Contrastive learning (InfoNCE, triplet loss) explicitly trains the model to push matching pairs together and non-matching pairs apart. This is how sentence-transformers achieves high-quality retrieval embeddings. For Samsung Bixby's memory system, contrastive fine-tuning on (query, relevant_memory) pairs dramatically improves recall compared to using raw BERT embeddings.
-        </div>
-      </section>
-
-      <!-- Section 7: Training Loop Essentials -->
-      <section class="section">
-        <h2>7. Training Loop Essentials</h2>
+        <h2>10. Training Loop Essentials</h2>
 
         <h3>Complete Training Loop with Validation, Early Stopping, Gradient Accumulation</h3>
         <pre><code>import torch
@@ -757,234 +943,9 @@ scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=total_st
         </div>
       </section>
 
-      <!-- Section 8: Model Optimization for On-Device -->
+      <!-- Section 11: RAG Pipeline -->
       <section class="section">
-        <h2>8. Model Optimization for On-Device</h2>
-
-        <h3>PyTorch Quantization (Dynamic and Static)</h3>
-        <pre><code>import torch
-import torch.nn as nn
-from transformers import AutoModel
-
-# Dynamic quantization (no calibration data needed)
-model = AutoModel.from_pretrained("bert-base-uncased")
-model.eval()
-
-quantized_model = torch.quantization.quantize_dynamic(
-    model, {nn.Linear}, dtype=torch.qint8,
-)
-
-original_size = sum(p.numel() * p.element_size() for p in model.parameters()) / 1e6
-quantized_size = sum(p.numel() * p.element_size() for p in quantized_model.parameters()) / 1e6
-print(f"Original: {original_size:.1f} MB -> Quantized: {quantized_size:.1f} MB")
-
-# Static quantization (needs calibration data, better accuracy)
-model_static = AutoModel.from_pretrained("bert-base-uncased")
-model_static.eval()
-
-model_static.qconfig = torch.quantization.get_default_qconfig("x86")
-model_prepared = torch.quantization.prepare(model_static)
-
-# Run calibration data, then convert:
-# for batch in calibration_loader:
-#     model_prepared(**batch)
-# model_quantized = torch.quantization.convert(model_prepared)</code></pre>
-
-        <h3>ONNX Export</h3>
-        <pre><code>import torch
-from transformers import AutoModel, AutoTokenizer
-
-model_name = "bert-base-uncased"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModel.from_pretrained(model_name)
-model.eval()
-
-dummy_input = tokenizer("Samsung Bixby", return_tensors="pt", padding="max_length", max_length=128)
-
-torch.onnx.export(
-    model,
-    (dummy_input["input_ids"], dummy_input["attention_mask"]),
-    "bert_base.onnx",
-    input_names=["input_ids", "attention_mask"],
-    output_names=["last_hidden_state", "pooler_output"],
-    dynamic_axes={
-        "input_ids": {0: "batch_size"},
-        "attention_mask": {0: "batch_size"},
-        "last_hidden_state": {0: "batch_size"},
-        "pooler_output": {0: "batch_size"},
-    },
-    opset_version=17,
-)
-print("Exported to bert_base.onnx")
-
-import onnxruntime as ort
-import numpy as np
-
-session = ort.InferenceSession("bert_base.onnx")
-inputs = {
-    "input_ids": dummy_input["input_ids"].numpy(),
-    "attention_mask": dummy_input["attention_mask"].numpy(),
-}
-outputs = session.run(None, inputs)
-print(f"ONNX output shape: {outputs[0].shape}")</code></pre>
-
-        <h3>Knowledge Distillation Training Step</h3>
-        <pre><code>import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-def distillation_loss(
-    student_logits: torch.Tensor,
-    teacher_logits: torch.Tensor,
-    labels: torch.Tensor,
-    temperature: float = 4.0,
-    alpha: float = 0.7,
-) -> torch.Tensor:
-    """Combined distillation (KL-div on soft targets) + hard label loss."""
-    soft_loss = F.kl_div(
-        F.log_softmax(student_logits / temperature, dim=-1),
-        F.softmax(teacher_logits / temperature, dim=-1),
-        reduction="batchmean",
-    ) * (temperature ** 2)
-
-    hard_loss = F.cross_entropy(student_logits, labels)
-
-    return alpha * soft_loss + (1 - alpha) * hard_loss
-
-teacher_model.eval()
-student_model.train()
-
-with torch.no_grad():
-    teacher_logits = teacher_model(input_ids, attention_mask)
-
-student_logits = student_model(input_ids, attention_mask)
-loss = distillation_loss(student_logits, teacher_logits, labels, temperature=4.0, alpha=0.7)
-loss.backward()</code></pre>
-
-        <h3>Model Pruning Basics</h3>
-        <pre><code>import torch
-import torch.nn.utils.prune as prune
-from transformers import AutoModel
-
-model = AutoModel.from_pretrained("bert-base-uncased")
-
-# Zero out 30% of weights in each Linear layer (unstructured L1 pruning)
-for name, module in model.named_modules():
-    if isinstance(module, torch.nn.Linear):
-        prune.l1_unstructured(module, name="weight", amount=0.3)
-
-total_params = 0
-zero_params = 0
-for name, module in model.named_modules():
-    if isinstance(module, torch.nn.Linear):
-        total_params += module.weight.nelement()
-        zero_params += (module.weight == 0).sum().item()
-
-print(f"Sparsity: {zero_params / total_params:.1%}")
-
-# Make pruning permanent
-for name, module in model.named_modules():
-    if isinstance(module, torch.nn.Linear):
-        prune.remove(module, "weight")</code></pre>
-
-        <div class="callout">
-          <strong>Samsung Galaxy Device Constraints</strong><br>
-          <strong>Galaxy S24/S25 (flagship):</strong> 12 GB RAM, Snapdragon 8 Gen 3/4 NPU. Can run quantized 7B models via Samsung's on-device LLM stack.<br>
-          <strong>Mid-range (A-series):</strong> 4-6 GB RAM. Embedding models must be tiny (&lt;50 MB). FAISS index with PQ compression is essential.<br>
-          <strong>Why quantization matters:</strong> INT8 cuts model size ~4x and inference latency ~2-3x on mobile NPUs. INT4 (GPTQ/AWQ) enables even larger models. For Bixby's memory retrieval, the embedding model + FAISS index must fit in ~100-200 MB on mid-range devices.
-        </div>
-      </section>
-
-      <!-- Section 9: Vision Embeddings -->
-      <section class="section">
-        <h2>9. Vision Embeddings</h2>
-
-        <h3>Load CLIP Model and Encode Images + Text</h3>
-        <pre><code>import torch
-from transformers import CLIPModel, CLIPProcessor
-from PIL import Image
-
-model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-model.eval()
-
-texts: list[str] = ["a photo of a cat", "a photo of a dog", "a sunset over the ocean"]
-text_inputs = processor(text=texts, return_tensors="pt", padding=True)
-
-with torch.no_grad():
-    text_features = model.get_text_features(**text_inputs)
-    text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-
-print(f"Text embeddings: {text_features.shape}")  # (3, 512)
-
-image = Image.new("RGB", (224, 224), color="blue")
-image_inputs = processor(images=image, return_tensors="pt")
-
-with torch.no_grad():
-    image_features = model.get_image_features(**image_inputs)
-    image_features = image_features / image_features.norm(dim=-1, keepdim=True)
-
-print(f"Image embedding: {image_features.shape}")  # (1, 512)
-
-similarity = torch.mm(image_features, text_features.t())
-print(f"Image-text similarities: {similarity}")</code></pre>
-
-        <h3>Patch Embedding Extraction from Vision Transformer</h3>
-        <pre><code>import torch
-from transformers import ViTModel, ViTFeatureExtractor
-from PIL import Image
-
-model = ViTModel.from_pretrained("google/vit-base-patch16-224")
-feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224")
-model.eval()
-
-image = Image.new("RGB", (224, 224), color="red")
-inputs = feature_extractor(images=image, return_tensors="pt")
-
-with torch.no_grad():
-    outputs = model(**inputs)
-
-# Index 0 is [CLS], rest are patch embeddings
-cls_token = outputs.last_hidden_state[:, 0, :]       # (1, 768)
-patch_tokens = outputs.last_hidden_state[:, 1:, :]   # (1, 196, 768) -- 14x14 patches
-
-print(f"CLS token: {cls_token.shape}")
-print(f"Patch tokens: {patch_tokens.shape}")  # 196 = (224/16)^2</code></pre>
-
-        <h3>Image Preprocessing Pipeline (Transforms)</h3>
-        <pre><code>import torch
-from torchvision import transforms
-from PIL import Image
-
-train_transform = transforms.Compose([
-    transforms.RandomResizedCrop(224),
-    transforms.RandomHorizontalFlip(),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
-
-eval_transform = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
-
-image = Image.new("RGB", (300, 400), color="green")
-train_tensor: torch.Tensor = train_transform(image)   # (3, 224, 224)
-eval_tensor: torch.Tensor = eval_transform(image)     # (3, 224, 224)
-print(f"Train: {train_tensor.shape}, Eval: {eval_tensor.shape}")</code></pre>
-
-        <div class="callout">
-          <strong>CLIP for Multi-Modal Retrieval in Bixby</strong><br>
-          CLIP jointly trains an image encoder and a text encoder to share the same embedding space. This enables "search my photos for pictures of my dog at the beach" -- embed the text query and compare against pre-computed image embeddings using cosine similarity. For Samsung Gallery / Bixby photo search, CLIP or SigLIP models can be quantized and run on-device, with FAISS indexing the photo library for instant retrieval.
-        </div>
-      </section>
-
-      <!-- Section 10: RAG Pipeline -->
-      <section class="section">
-        <h2>10. RAG Pipeline (End-to-End)</h2>
+        <h2>11. RAG Pipeline (End-to-End)</h2>
 
         <h3>Full Mini RAG Pipeline</h3>
         <pre><code>import torch
@@ -1095,9 +1056,9 @@ for doc, score in results:
         </div>
       </section>
 
-      <!-- Section 11: Evaluation -->
+      <!-- Section 12: Evaluation -->
       <section class="section">
-        <h2>11. Evaluation</h2>
+        <h2>12. Evaluation</h2>
 
         <h3>Computing Retrieval Metrics (Recall@K, NDCG)</h3>
         <pre><code>import torch

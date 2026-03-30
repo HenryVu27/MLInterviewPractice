@@ -59,7 +59,6 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModel.from_pretrained(model_name)
 model.eval()
 
-# Quick sanity check
 tokens = tokenizer("Hello world", return_tensors="pt")
 output = model(**tokens)
 print(output.last_hidden_state.shape)  # (1, seq_len, 768)</code></pre>
@@ -76,7 +75,6 @@ print(embeddings.shape)  # (2, 384)</code></pre>
         <h3>Load a Model for Feature Extraction (No Head)</h3>
         <pre><code>from transformers import AutoModel, AutoTokenizer
 
-# AutoModel gives the base transformer without any task-specific head
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 model = AutoModel.from_pretrained("bert-base-uncased")
 model.eval()
@@ -109,12 +107,12 @@ text: str = "Samsung Bixby remembers your preferences over time."
 tokens = tokenizer(
     text,
     max_length=128,
-    padding="max_length",      # pad to max_length
-    truncation=True,           # truncate if longer than max_length
-    return_tensors="pt",       # return PyTorch tensors
+    padding="max_length",
+    truncation=True,
+    return_tensors="pt",
 )
 print(tokens["input_ids"].shape)       # (1, 128)
-print(tokens["attention_mask"].shape)  # (1, 128) -- 1 for real tokens, 0 for padding</code></pre>
+print(tokens["attention_mask"].shape)  # (1, 128)</code></pre>
 
         <h3>Batch Tokenization</h3>
         <pre><code>from transformers import AutoTokenizer
@@ -129,7 +127,7 @@ texts: list[str] = [
 batch = tokenizer(
     texts,
     max_length=64,
-    padding="longest",         # pad to the longest sequence in the batch
+    padding="longest",
     truncation=True,
     return_tensors="pt",
 )
@@ -193,8 +191,7 @@ tokens = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max
 with torch.no_grad():
     outputs = model(**tokens)
 
-# [CLS] is always the first token (index 0)
-cls_embedding: torch.Tensor = outputs.last_hidden_state[:, 0, :]
+cls_embedding: torch.Tensor = outputs.last_hidden_state[:, 0, :]  # [CLS]
 print(cls_embedding.shape)  # (1, 768)</code></pre>
 
         <h3>Mean-Pooled Sentence Embedding (Proper Way)</h3>
@@ -202,11 +199,9 @@ print(cls_embedding.shape)  # (1, 768)</code></pre>
 from transformers import AutoModel, AutoTokenizer
 
 def mean_pooling(model_output, attention_mask: torch.Tensor) -> torch.Tensor:
-    """Mean pooling that correctly ignores padding tokens."""
-    token_embeddings = model_output.last_hidden_state  # (batch, seq_len, hidden)
-    # Expand attention_mask to match embedding dimensions
+    """Mean pooling ignoring padding tokens."""
+    token_embeddings = model_output.last_hidden_state
     mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    # Sum embeddings for real tokens, divide by count of real tokens
     sum_embeddings = torch.sum(token_embeddings * mask_expanded, dim=1)
     sum_mask = torch.clamp(mask_expanded.sum(dim=1), min=1e-9)
     return sum_embeddings / sum_mask
@@ -235,7 +230,7 @@ def embed_batch(
     max_length: int = 128,
     device: str = "cpu",
 ) -> torch.Tensor:
-    """Embed a batch of texts using mean pooling. Returns (N, hidden_dim)."""
+    """Embed texts using mean pooling. Returns (N, hidden_dim)."""
     tokens = tokenizer(
         texts, return_tensors="pt", padding=True, truncation=True, max_length=max_length
     ).to(device)
@@ -250,7 +245,6 @@ def embed_batch(
     counts = torch.clamp(mask.sum(dim=1), min=1e-9)
     embeddings = summed / counts
 
-    # L2 normalize for cosine similarity
     return torch.nn.functional.normalize(embeddings, p=2, dim=1)
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
@@ -272,11 +266,10 @@ texts: list[str] = [
     "Read my unread messages",
 ]
 
-# Returns numpy array by default; convert_to_tensor=True for PyTorch
 embeddings: torch.Tensor = model.encode(
     texts,
     convert_to_tensor=True,
-    normalize_embeddings=True,  # L2 normalize (cosine sim = dot product)
+    normalize_embeddings=True,
     batch_size=32,
     show_progress_bar=False,
 )
@@ -304,12 +297,11 @@ def pairwise_cosine_similarity(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor
     b_norm = F.normalize(b, p=2, dim=1)
     return torch.mm(a_norm, b_norm.t())
 
-# Example
 query = torch.randn(1, 768)
 database = torch.randn(1000, 768)
 similarities = pairwise_cosine_similarity(query, database)
 top_k_values, top_k_indices = torch.topk(similarities, k=5, dim=1)
-print(top_k_indices)  # indices of 5 most similar vectors</code></pre>
+print(top_k_indices)</code></pre>
 
         <h3>Build a Simple FAISS Index (Flat L2 and IVF)</h3>
         <pre><code>import numpy as np
@@ -318,25 +310,23 @@ import faiss
 dim: int = 384
 num_vectors: int = 100_000
 
-# Generate random data (in practice, these are your embeddings)
 embeddings = np.random.randn(num_vectors, dim).astype("float32")
-faiss.normalize_L2(embeddings)  # normalize for cosine similarity
+faiss.normalize_L2(embeddings)
 
-# --- Flat index (exact, brute force) ---
-flat_index = faiss.IndexFlatIP(dim)  # inner product (= cosine after normalization)
+# Flat index (exact brute-force search)
+flat_index = faiss.IndexFlatIP(dim)
 flat_index.add(embeddings)
 print(f"Flat index size: {flat_index.ntotal}")
 
-# --- IVF index (approximate, much faster for large datasets) ---
-nlist: int = 256  # number of Voronoi cells
+# IVF index (approximate, partitions into Voronoi cells)
+nlist: int = 256
 quantizer = faiss.IndexFlatIP(dim)
 ivf_index = faiss.IndexIVFFlat(quantizer, dim, nlist, faiss.METRIC_INNER_PRODUCT)
-ivf_index.train(embeddings)  # IVF needs training
+ivf_index.train(embeddings)
 ivf_index.add(embeddings)
-ivf_index.nprobe = 16  # search 16 out of 256 cells (speed vs accuracy trade-off)
+ivf_index.nprobe = 16
 print(f"IVF index size: {ivf_index.ntotal}")
 
-# --- Search ---
 query = np.random.randn(1, dim).astype("float32")
 faiss.normalize_L2(query)
 
@@ -355,10 +345,9 @@ num_vectors: int = 100_000
 embeddings = np.random.randn(num_vectors, dim).astype("float32")
 faiss.normalize_L2(embeddings)
 
-# HNSW index -- graph-based, no training needed, great recall
-hnsw_index = faiss.IndexHNSWFlat(dim, 32)  # 32 = M (num neighbors per node)
-hnsw_index.hnsw.efConstruction = 200       # build quality (higher = better but slower)
-hnsw_index.hnsw.efSearch = 64             # search quality (higher = better recall)
+hnsw_index = faiss.IndexHNSWFlat(dim, 32)  # M=32 neighbors per node
+hnsw_index.hnsw.efConstruction = 200
+hnsw_index.hnsw.efSearch = 64
 hnsw_index.metric_type = faiss.METRIC_INNER_PRODUCT
 
 hnsw_index.add(embeddings)
@@ -400,21 +389,18 @@ class TransformerClassifier(nn.Module):
         cls_output = outputs.last_hidden_state[:, 0, :]  # [CLS]
         return self.classifier(self.dropout(cls_output))
 
-# Setup
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 model = TransformerClassifier("bert-base-uncased", num_classes=4).to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
 criterion = nn.CrossEntropyLoss()
 
-# Dummy data (replace with real tokenized data)
 texts = ["Set an alarm", "Play music", "Check weather", "Call mom"] * 50
 labels = [0, 1, 2, 3] * 50
 tokens = tokenizer(texts, padding=True, truncation=True, max_length=64, return_tensors="pt")
 dataset = TensorDataset(tokens["input_ids"], tokens["attention_mask"], torch.tensor(labels))
 loader = DataLoader(dataset, batch_size=16, shuffle=True)
 
-# Training loop
 model.train()
 for epoch in range(3):
     total_loss = 0.0
@@ -441,11 +427,9 @@ from transformers import AutoModel
 model_name: str = "bert-base-uncased"
 encoder = AutoModel.from_pretrained(model_name)
 
-# Freeze all encoder parameters
 for param in encoder.parameters():
     param.requires_grad = False
 
-# Only the classifier head will be trained
 classifier = nn.Sequential(
     nn.Linear(encoder.config.hidden_size, 256),
     nn.ReLU(),
@@ -453,13 +437,11 @@ classifier = nn.Sequential(
     nn.Linear(256, 4),
 )
 
-# Verify: only classifier params are trainable
 trainable = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
 frozen = sum(p.numel() for p in encoder.parameters())
 print(f"Trainable: {trainable:,} params")   # ~200K
 print(f"Frozen:    {frozen:,} params")       # ~110M
 
-# Optimizer only gets classifier parameters
 optimizer = torch.optim.Adam(classifier.parameters(), lr=1e-3)</code></pre>
 
         <h3>LoRA / PEFT Adapter Setup</h3>
@@ -472,17 +454,15 @@ base_model = AutoModelForSequenceClassification.from_pretrained(
 
 lora_config = LoraConfig(
     task_type=TaskType.SEQ_CLS,
-    r=8,                          # rank of the low-rank matrices
-    lora_alpha=32,                # scaling factor (effective lr = alpha/r)
+    r=8,
+    lora_alpha=32,                # effective lr scales as alpha/r
     lora_dropout=0.1,
-    target_modules=["query", "value"],  # which layers to adapt
+    target_modules=["query", "value"],
 )
 
 model = get_peft_model(base_model, lora_config)
 model.print_trainable_parameters()
-# Output: trainable params: ~300K || all params: ~110M || trainable%: 0.27%
 
-# Train as usual -- only LoRA params update
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)</code></pre>
 
         <div class="callout">
@@ -507,34 +487,19 @@ def info_nce_loss(
     negatives: torch.Tensor,
     temperature: float = 0.07,
 ) -> torch.Tensor:
-    """InfoNCE loss for contrastive learning.
-
-    Args:
-        query:     (batch, dim) -- anchor embeddings
-        positive:  (batch, dim) -- positive pair embeddings
-        negatives: (batch, num_neg, dim) -- negative embeddings
-        temperature: scaling factor (lower = sharper distribution)
-    Returns:
-        Scalar loss
-    """
-    # Normalize all embeddings
+    """InfoNCE loss for contrastive learning."""
     query = F.normalize(query, dim=-1)
     positive = F.normalize(positive, dim=-1)
     negatives = F.normalize(negatives, dim=-1)
 
-    # Positive similarity: (batch,)
     pos_sim = torch.sum(query * positive, dim=-1, keepdim=True) / temperature
-
-    # Negative similarities: (batch, num_neg)
     neg_sim = torch.bmm(negatives, query.unsqueeze(-1)).squeeze(-1) / temperature
 
-    # Logits: positive is index 0
-    logits = torch.cat([pos_sim, neg_sim], dim=-1)  # (batch, 1 + num_neg)
+    logits = torch.cat([pos_sim, neg_sim], dim=-1)
     labels = torch.zeros(query.size(0), dtype=torch.long, device=query.device)
 
     return F.cross_entropy(logits, labels)
 
-# Example
 batch_size, dim, num_neg = 32, 384, 15
 query = torch.randn(batch_size, dim)
 positive = torch.randn(batch_size, dim)
@@ -548,7 +513,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class TripletTrainer:
-    """Training step using triplet margin loss."""
     def __init__(self, encoder: nn.Module, margin: float = 0.3, lr: float = 2e-5):
         self.encoder = encoder
         self.loss_fn = nn.TripletMarginLoss(margin=margin, p=2)
@@ -563,11 +527,9 @@ class TripletTrainer:
         negative_ids: torch.Tensor,
         negative_mask: torch.Tensor,
     ) -> float:
-        """One training step. Returns loss value."""
         self.encoder.train()
         self.optimizer.zero_grad()
 
-        # Encode all three
         anchor_emb = self._encode(anchor_ids, anchor_mask)
         positive_emb = self._encode(positive_ids, positive_mask)
         negative_emb = self._encode(negative_ids, negative_mask)
@@ -579,7 +541,6 @@ class TripletTrainer:
         return loss.item()
 
     def _encode(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        """Mean-pooled encoding."""
         outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
         token_embs = outputs.last_hidden_state
         mask = attention_mask.unsqueeze(-1).expand(token_embs.size()).float()
@@ -595,31 +556,18 @@ def mine_hard_negatives(
     positive_indices: list[int],
     num_hard_negatives: int = 5,
 ) -> torch.Tensor:
-    """Select the hardest negatives (closest non-positive vectors).
-
-    Args:
-        query_embs:       (num_queries, dim)
-        all_embs:         (corpus_size, dim)
-        positive_indices: list of positive doc indices per query
-        num_hard_negatives: how many hard negatives per query
-    Returns:
-        hard_neg_indices: (num_queries, num_hard_negatives)
-    """
-    # Compute similarities
+    """Select hardest negatives (closest non-positive vectors)."""
     sims = torch.mm(
         F.normalize(query_embs, dim=-1),
         F.normalize(all_embs, dim=-1).t()
-    )  # (num_queries, corpus_size)
+    )
 
-    # Mask out positives by setting their similarity to -inf
     for i, pos_idx in enumerate(positive_indices):
         sims[i, pos_idx] = -float("inf")
 
-    # Take top-k highest similarity among remaining (these are the hardest)
     _, hard_neg_indices = torch.topk(sims, k=num_hard_negatives, dim=1)
     return hard_neg_indices
 
-# Example
 queries = torch.randn(8, 384)
 corpus = torch.randn(10000, 384)
 positives = [42, 99, 150, 200, 310, 555, 700, 888]
@@ -651,7 +599,6 @@ def train_model(
     patience: int = 3,
     device: str = "cuda",
 ) -> nn.Module:
-    """Full training loop with gradient accumulation, validation, and early stopping."""
     model = model.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     criterion = nn.CrossEntropyLoss()
@@ -659,7 +606,6 @@ def train_model(
     patience_counter = 0
 
     for epoch in range(num_epochs):
-        # --- Training ---
         model.train()
         train_loss = 0.0
         optimizer.zero_grad()
@@ -681,7 +627,6 @@ def train_model(
 
         avg_train_loss = train_loss / len(train_loader)
 
-        # --- Validation ---
         model.eval()
         val_loss = 0.0
         correct = 0
@@ -703,7 +648,6 @@ def train_model(
         val_acc = correct / total
         print(f"Epoch {epoch+1}: train_loss={avg_train_loss:.4f} val_loss={avg_val_loss:.4f} val_acc={val_acc:.4f}")
 
-        # --- Early Stopping ---
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             patience_counter = 0
@@ -723,7 +667,6 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer
 
 class TextClassificationDataset(Dataset):
-    """Custom dataset for text classification."""
     def __init__(self, texts: list[str], labels: list[int], tokenizer, max_length: int = 128):
         self.encodings = tokenizer(
             texts, padding="max_length", truncation=True, max_length=max_length, return_tensors="pt"
@@ -764,17 +707,14 @@ def train_step_mixed_precision(
     scaler: GradScaler,
     device: str = "cuda",
 ) -> float:
-    """Single training step with automatic mixed precision."""
     input_ids, attention_mask, labels = [x.to(device) for x in batch]
 
     optimizer.zero_grad()
 
-    # Forward pass in mixed precision (float16 where safe)
     with autocast(device_type="cuda"):
         logits = model(input_ids, attention_mask)
         loss = criterion(logits, labels)
 
-    # Backward pass with scaled gradients
     scaler.scale(loss).backward()
     scaler.unscale_(optimizer)
     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -783,9 +723,7 @@ def train_step_mixed_precision(
 
     return loss.item()
 
-# Setup
-scaler = GradScaler()
-# Use in training loop: train_step_mixed_precision(model, batch, optimizer, criterion, scaler)</code></pre>
+scaler = GradScaler()</code></pre>
 
         <h3>Learning Rate Scheduling (Warmup + Cosine Decay)</h3>
         <pre><code>import torch
@@ -797,7 +735,6 @@ def get_cosine_schedule_with_warmup(
     num_warmup_steps: int,
     num_training_steps: int,
 ) -> LambdaLR:
-    """Linear warmup followed by cosine decay to 0."""
     def lr_lambda(current_step: int) -> float:
         if current_step < num_warmup_steps:
             return float(current_step) / float(max(1, num_warmup_steps))
@@ -808,13 +745,11 @@ def get_cosine_schedule_with_warmup(
 
     return LambdaLR(optimizer, lr_lambda)
 
-# Usage
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
 total_steps = len(train_loader) * num_epochs
 scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=total_steps // 10, num_training_steps=total_steps)
 
-# In training loop, after optimizer.step():
-# scheduler.step()</code></pre>
+# Call scheduler.step() after each optimizer.step()</code></pre>
 
         <div class="callout">
           <strong>Gradient Accumulation for Large Batch Simulation</strong><br>
@@ -831,35 +766,28 @@ scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=total_st
 import torch.nn as nn
 from transformers import AutoModel
 
-# --- Dynamic Quantization (easiest, no calibration data) ---
+# Dynamic quantization (no calibration data needed)
 model = AutoModel.from_pretrained("bert-base-uncased")
 model.eval()
 
 quantized_model = torch.quantization.quantize_dynamic(
-    model,
-    {nn.Linear},          # quantize all Linear layers
-    dtype=torch.qint8,    # 8-bit integers
+    model, {nn.Linear}, dtype=torch.qint8,
 )
 
-# Compare sizes
 original_size = sum(p.numel() * p.element_size() for p in model.parameters()) / 1e6
 quantized_size = sum(p.numel() * p.element_size() for p in quantized_model.parameters()) / 1e6
 print(f"Original: {original_size:.1f} MB -> Quantized: {quantized_size:.1f} MB")
 
-# --- Static Quantization (needs calibration data, better accuracy) ---
+# Static quantization (needs calibration data, better accuracy)
 model_static = AutoModel.from_pretrained("bert-base-uncased")
 model_static.eval()
 
-# Step 1: Fuse layers (Conv+BN+ReLU, Linear+ReLU)
-# Step 2: Insert observers
 model_static.qconfig = torch.quantization.get_default_qconfig("x86")
 model_prepared = torch.quantization.prepare(model_static)
 
-# Step 3: Run calibration data through the model
+# Run calibration data, then convert:
 # for batch in calibration_loader:
 #     model_prepared(**batch)
-
-# Step 4: Convert to quantized model
 # model_quantized = torch.quantization.convert(model_prepared)</code></pre>
 
         <h3>ONNX Export</h3>
@@ -871,7 +799,6 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModel.from_pretrained(model_name)
 model.eval()
 
-# Create dummy inputs
 dummy_input = tokenizer("Samsung Bixby", return_tensors="pt", padding="max_length", max_length=128)
 
 torch.onnx.export(
@@ -890,7 +817,6 @@ torch.onnx.export(
 )
 print("Exported to bert_base.onnx")
 
-# Inference with ONNX Runtime
 import onnxruntime as ort
 import numpy as np
 
@@ -914,28 +840,17 @@ def distillation_loss(
     temperature: float = 4.0,
     alpha: float = 0.7,
 ) -> torch.Tensor:
-    """Combined distillation + hard label loss.
-
-    Args:
-        student_logits: (batch, num_classes) from student model
-        teacher_logits: (batch, num_classes) from teacher model (detached)
-        labels:         (batch,) ground truth
-        temperature:    softens probability distribution (higher = softer)
-        alpha:          weight for distillation loss vs hard label loss
-    """
-    # Soft target loss (KL divergence between softened distributions)
+    """Combined distillation (KL-div on soft targets) + hard label loss."""
     soft_loss = F.kl_div(
         F.log_softmax(student_logits / temperature, dim=-1),
         F.softmax(teacher_logits / temperature, dim=-1),
         reduction="batchmean",
     ) * (temperature ** 2)
 
-    # Hard target loss (standard cross-entropy)
     hard_loss = F.cross_entropy(student_logits, labels)
 
     return alpha * soft_loss + (1 - alpha) * hard_loss
 
-# Usage in training loop
 teacher_model.eval()
 student_model.train()
 
@@ -953,12 +868,11 @@ from transformers import AutoModel
 
 model = AutoModel.from_pretrained("bert-base-uncased")
 
-# Unstructured pruning: zero out 30% of weights in each Linear layer
+# Zero out 30% of weights in each Linear layer (unstructured L1 pruning)
 for name, module in model.named_modules():
     if isinstance(module, torch.nn.Linear):
         prune.l1_unstructured(module, name="weight", amount=0.3)
 
-# Count zeros
 total_params = 0
 zero_params = 0
 for name, module in model.named_modules():
@@ -968,7 +882,7 @@ for name, module in model.named_modules():
 
 print(f"Sparsity: {zero_params / total_params:.1%}")
 
-# Make pruning permanent (remove the forward hooks, keep the mask applied)
+# Make pruning permanent
 for name, module in model.named_modules():
     if isinstance(module, torch.nn.Linear):
         prune.remove(module, "weight")</code></pre>
@@ -994,7 +908,6 @@ model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 model.eval()
 
-# Encode text
 texts: list[str] = ["a photo of a cat", "a photo of a dog", "a sunset over the ocean"]
 text_inputs = processor(text=texts, return_tensors="pt", padding=True)
 
@@ -1004,8 +917,7 @@ with torch.no_grad():
 
 print(f"Text embeddings: {text_features.shape}")  # (3, 512)
 
-# Encode image
-image = Image.new("RGB", (224, 224), color="blue")  # dummy image
+image = Image.new("RGB", (224, 224), color="blue")
 image_inputs = processor(images=image, return_tensors="pt")
 
 with torch.no_grad():
@@ -1014,9 +926,8 @@ with torch.no_grad():
 
 print(f"Image embedding: {image_features.shape}")  # (1, 512)
 
-# Cross-modal similarity
 similarity = torch.mm(image_features, text_features.t())
-print(f"Image-text similarities: {similarity}")  # highest score = best match</code></pre>
+print(f"Image-text similarities: {similarity}")</code></pre>
 
         <h3>Patch Embedding Extraction from Vision Transformer</h3>
         <pre><code>import torch
@@ -1027,15 +938,14 @@ model = ViTModel.from_pretrained("google/vit-base-patch16-224")
 feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224")
 model.eval()
 
-image = Image.new("RGB", (224, 224), color="red")  # dummy image
+image = Image.new("RGB", (224, 224), color="red")
 inputs = feature_extractor(images=image, return_tensors="pt")
 
 with torch.no_grad():
     outputs = model(**inputs)
 
-# outputs.last_hidden_state: (batch, num_patches + 1, hidden_dim)
 # Index 0 is [CLS], rest are patch embeddings
-cls_token = outputs.last_hidden_state[:, 0, :]       # (1, 768) -- global image repr
+cls_token = outputs.last_hidden_state[:, 0, :]       # (1, 768)
 patch_tokens = outputs.last_hidden_state[:, 1:, :]   # (1, 196, 768) -- 14x14 patches
 
 print(f"CLS token: {cls_token.shape}")
@@ -1046,7 +956,6 @@ print(f"Patch tokens: {patch_tokens.shape}")  # 196 = (224/16)^2</code></pre>
 from torchvision import transforms
 from PIL import Image
 
-# Standard ImageNet preprocessing
 train_transform = transforms.Compose([
     transforms.RandomResizedCrop(224),
     transforms.RandomHorizontalFlip(),
@@ -1062,7 +971,6 @@ eval_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
-# Usage
 image = Image.new("RGB", (300, 400), color="green")
 train_tensor: torch.Tensor = train_transform(image)   # (3, 224, 224)
 eval_tensor: torch.Tensor = eval_transform(image)     # (3, 224, 224)
@@ -1093,13 +1001,11 @@ class MiniRAG:
         retriever_model: str = "all-MiniLM-L6-v2",
         generator_model: str = "gpt2",
     ):
-        # Retriever
         self.retriever = SentenceTransformer(retriever_model)
         self.dim = self.retriever.get_sentence_embedding_dimension()
         self.index = faiss.IndexFlatIP(self.dim)
         self.documents: list[str] = []
 
-        # Generator
         self.tokenizer = AutoTokenizer.from_pretrained(generator_model)
         self.generator = AutoModelForCausalLM.from_pretrained(generator_model)
         self.generator.eval()
@@ -1107,28 +1013,20 @@ class MiniRAG:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
     def index_documents(self, documents: list[str]) -> None:
-        """Embed and index a list of documents."""
         self.documents = documents
         embeddings = self.retriever.encode(documents, normalize_embeddings=True)
         self.index.add(embeddings.astype("float32"))
         print(f"Indexed {self.index.ntotal} documents")
 
     def retrieve(self, query: str, top_k: int = 3) -> list[str]:
-        """Retrieve top-k relevant documents for a query."""
         query_emb = self.retriever.encode([query], normalize_embeddings=True).astype("float32")
         scores, indices = self.index.search(query_emb, top_k)
         return [self.documents[i] for i in indices[0]]
 
     def generate(self, query: str, top_k: int = 3, max_new_tokens: int = 100) -> str:
-        """Full RAG: retrieve context, then generate answer."""
-        # Step 1: Retrieve
         context_docs = self.retrieve(query, top_k)
         context = "\n".join(f"- {doc}" for doc in context_docs)
-
-        # Step 2: Format prompt
         prompt = f"Context:\n{context}\n\nQuestion: {query}\nAnswer:"
-
-        # Step 3: Generate
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
         with torch.no_grad():
             output_ids = self.generator.generate(
@@ -1141,7 +1039,6 @@ class MiniRAG:
         response = self.tokenizer.decode(output_ids[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
         return response
 
-# Usage
 rag = MiniRAG()
 docs = [
     "User prefers jazz music in the evening and classical in the morning.",
@@ -1167,34 +1064,19 @@ def retrieve_and_rerank(
     initial_k: int = 20,
     final_k: int = 5,
 ) -> list[tuple[str, float]]:
-    """Two-stage retrieval: bi-encoder recall + cross-encoder precision.
-
-    Args:
-        query:         the search query
-        candidates:    full document corpus
-        bi_encoder:    fast bi-encoder for initial retrieval
-        cross_encoder: slow but accurate cross-encoder for reranking
-        initial_k:     how many to retrieve in stage 1
-        final_k:       how many to return after reranking
-    Returns:
-        List of (document, score) tuples, sorted by relevance
-    """
-    # Stage 1: Bi-encoder retrieval (fast, approximate)
+    """Two-stage retrieval: bi-encoder recall + cross-encoder reranking."""
     query_emb = bi_encoder.encode([query], normalize_embeddings=True)
     doc_embs = bi_encoder.encode(candidates, normalize_embeddings=True)
     scores = (query_emb @ doc_embs.T)[0]
     top_indices = scores.argsort()[::-1][:initial_k]
     shortlist = [candidates[i] for i in top_indices]
 
-    # Stage 2: Cross-encoder reranking (slow, precise)
     pairs = [[query, doc] for doc in shortlist]
     rerank_scores = cross_encoder.predict(pairs)
 
-    # Sort by rerank score
     ranked = sorted(zip(shortlist, rerank_scores), key=lambda x: x[1], reverse=True)
     return ranked[:final_k]
 
-# Usage
 from sentence_transformers import SentenceTransformer
 
 bi_encoder = SentenceTransformer("all-MiniLM-L6-v2")
@@ -1226,15 +1108,7 @@ def recall_at_k(
     relevant_indices: list[list[int]],
     k: int,
 ) -> float:
-    """Recall@K: fraction of relevant items found in top-K.
-
-    Args:
-        retrieved_indices: (num_queries, num_retrieved) -- ranked retrieved doc indices
-        relevant_indices:  list of lists of relevant doc indices per query
-        k: cutoff
-    Returns:
-        Mean recall@k across queries
-    """
+    """Recall@K: fraction of relevant items found in top-K."""
     recalls = []
     for i in range(len(relevant_indices)):
         top_k = set(retrieved_indices[i, :k].tolist())
@@ -1249,32 +1123,21 @@ def ndcg_at_k(
     relevance_scores: list[dict[int, float]],
     k: int,
 ) -> float:
-    """NDCG@K: normalized discounted cumulative gain.
-
-    Args:
-        retrieved_indices: (num_queries, num_retrieved)
-        relevance_scores:  list of dicts {doc_id: relevance_score} per query
-        k: cutoff
-    Returns:
-        Mean NDCG@k across queries
-    """
+    """NDCG@K: normalized discounted cumulative gain."""
     ndcgs = []
     for i in range(len(relevance_scores)):
-        # DCG
         dcg = 0.0
         for rank in range(min(k, retrieved_indices.shape[1])):
             doc_id = retrieved_indices[i, rank].item()
             rel = relevance_scores[i].get(doc_id, 0.0)
-            dcg += (2**rel - 1) / np.log2(rank + 2)  # rank+2 because log2(1)=0
+            dcg += (2**rel - 1) / np.log2(rank + 2)
 
-        # Ideal DCG
         ideal_rels = sorted(relevance_scores[i].values(), reverse=True)[:k]
         idcg = sum((2**r - 1) / np.log2(j + 2) for j, r in enumerate(ideal_rels))
 
         ndcgs.append(dcg / idcg if idcg > 0 else 0.0)
     return np.mean(ndcgs)
 
-# Example
 retrieved = torch.tensor([[3, 1, 4, 0, 2], [1, 0, 3, 2, 4]])
 relevant = [[1, 3], [0, 1]]
 print(f"Recall@3: {recall_at_k(retrieved, relevant, k=3):.4f}")
@@ -1287,17 +1150,13 @@ print(f"NDCG@3: {ndcg_at_k(retrieved, rel_scores, k=3):.4f}")</code></pre>
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def compute_perplexity(model, tokenizer, text: str, device: str = "cpu") -> float:
-    """Compute perplexity of a text under a causal LM.
-
-    Lower perplexity = model is more confident about the text.
-    """
+    """Perplexity of text under a causal LM. Lower = more confident."""
     model.eval()
     model.to(device)
     encodings = tokenizer(text, return_tensors="pt").to(device)
 
     with torch.no_grad():
         outputs = model(**encodings, labels=encodings["input_ids"])
-        # outputs.loss is the mean cross-entropy loss over all tokens
         neg_log_likelihood = outputs.loss
 
     return torch.exp(neg_log_likelihood).item()
@@ -1328,22 +1187,13 @@ def run_ab_test(
     group_b: np.ndarray,
     alpha: float = 0.05,
 ) -> ABTestResult:
-    """Two-sample t-test for A/B testing a personalization change.
-
-    Args:
-        group_a: metric values for control group (e.g., retrieval recall per user)
-        group_b: metric values for treatment group
-        alpha: significance threshold
-    Returns:
-        ABTestResult with statistics
-    """
+    """Two-sample Welch's t-test for A/B testing."""
     t_stat, p_value = stats.ttest_ind(group_a, group_b, equal_var=False)
 
     mean_a = np.mean(group_a)
     mean_b = np.mean(group_b)
     lift = (mean_b - mean_a) / mean_a * 100
 
-    # 95% confidence interval for the difference
     diff = group_b.mean() - group_a.mean()
     se = np.sqrt(np.var(group_a) / len(group_a) + np.var(group_b) / len(group_b))
     ci = (diff - 1.96 * se, diff + 1.96 * se)
@@ -1357,10 +1207,9 @@ def run_ab_test(
         confidence_interval=ci,
     )
 
-# Example: testing a new embedding model for Bixby memory retrieval
 np.random.seed(42)
-control_recall = np.random.normal(0.72, 0.08, size=500)   # old model
-treatment_recall = np.random.normal(0.75, 0.08, size=500)  # new model
+control_recall = np.random.normal(0.72, 0.08, size=500)
+treatment_recall = np.random.normal(0.75, 0.08, size=500)
 
 result = run_ab_test(control_recall, treatment_recall)
 print(f"Control recall:   {result.metric_a:.4f}")

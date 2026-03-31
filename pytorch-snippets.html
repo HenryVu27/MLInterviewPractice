@@ -173,8 +173,11 @@ class SpamDataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        item = {k: v[idx] for k, v in self.encodings.items()}
-        return item, self.labels[idx]
+        # pull input_ids and attention_mask for this sample
+        item = {}
+        for key, val in self.encodings.items():
+            item[key] = val[idx]               # each is (seq_len,)
+        return item, self.labels[idx]          # dict, scalar
 
 train_loader = DataLoader(SpamDataset(train_texts, train_labels, tokenizer), batch_size=2, shuffle=True)
 val_loader = DataLoader(SpamDataset(val_texts, val_labels, tokenizer), batch_size=2)
@@ -296,74 +299,76 @@ def sigmoid(z):
 
 def logistic_regression(X, y, lr=0.1, epochs=1000):
     n, d = X.shape                         # n=samples, d=features
-
-    # Add bias column: X was (n, d), now X_b is (n, d+1)
-    # e.g. [[x1, x2]] -> [[1, x1, x2]]  so W[0] acts as the bias term
-    bias_col = np.ones((n, 1))             # (n, 1)
-    X_b = np.hstack([bias_col, X])         # (n, d+1)
-
-    W = np.zeros(d + 1)                    # (d+1,) -- one weight per feature + bias
+    W = np.zeros(d)                        # (d,) -- one weight per feature
+    b = 0.0                                # scalar bias
 
     for _ in range(epochs):
-        z = X_b @ W                        # (n,) -- linear combination
+        z = X @ W + b                      # (n,) -- linear combination
         preds = sigmoid(z)                 # (n,) -- probabilities between 0 and 1
         error = preds - y                  # (n,) -- how far off each prediction is
-        grad = X_b.T @ error / n           # (d+1,) -- average gradient
-        W = W - lr * grad                  # update weights
 
-    return W                               # (d+1,) -- W[0]=bias, W[1:]=feature weights
+        dW = X.T @ error / n               # (d,) -- gradient for weights
+        db = np.mean(error)                # scalar -- gradient for bias
 
-def predict(X, W):
-    bias_col = np.ones((X.shape[0], 1))
-    X_b = np.hstack([bias_col, X])         # (n, d+1)
-    probs = sigmoid(X_b @ W)              # (n,)
+        W = W - lr * dW
+        b = b - lr * db
+
+    return W, b                            # (d,), scalar
+
+def predict(X, W, b):
+    probs = sigmoid(X @ W + b)             # (n,)
     return (probs >= 0.5).astype(int)      # (n,) -- 0 or 1
 
 np.random.seed(42)
 X = np.random.randn(200, 3)               # 200 samples, 3 features
 y = (X @ [1, -2, 0.5] + np.random.randn(200) * 0.5 > 0).astype(float)  # binary labels
-W = logistic_regression(X, y, lr=0.5, epochs=2000)
-acc = (predict(X, W) == y).mean()
-print(f"Accuracy: {acc:.3f}")</code></pre>
+
+W, b = logistic_regression(X, y, lr=0.5, epochs=2000)
+acc = (predict(X, W, b) == y).mean()
+print(f"Accuracy: {acc:.3f}, bias: {b:.3f}")</code></pre>
 
         <h3>Linear Regression (NumPy)</h3>
         <pre><code>import numpy as np
 
-def linear_regression_closed(X, y):
-    """Normal equation: W = (X^T X)^{-1} X^T y."""
-    bias_col = np.ones((X.shape[0], 1))
-    X_b = np.hstack([bias_col, X])              # (n, d+1)
-    return np.linalg.pinv(X_b.T @ X_b) @ X_b.T @ y  # (d+1,)
-
 def linear_regression_gd(X, y, lr=0.01, epochs=1000):
-    """Gradient descent: dW = X^T (X W - y) / n."""
     n, d = X.shape
-    bias_col = np.ones((n, 1))
-    X_b = np.hstack([bias_col, X])              # (n, d+1)
-    W = np.zeros(d + 1)                         # (d+1,)
+    W = np.zeros(d)                        # (d,)
+    b = 0.0                                # scalar
 
     for _ in range(epochs):
-        predictions = X_b @ W                   # (n,)
-        error = predictions - y                 # (n,)
-        grad = X_b.T @ error / n                # (d+1,)
-        W = W - lr * grad
+        preds = X @ W + b                  # (n,)
+        error = preds - y                  # (n,)
 
-    return W
+        dW = X.T @ error / n               # (d,)
+        db = np.mean(error)                # scalar
+
+        W = W - lr * dW
+        b = b - lr * db
+
+    return W, b
+
+# Closed-form (normal equation) -- for reference
+def linear_regression_closed(X, y):
+    """W = (X^T X)^{-1} X^T y -- solves in one step, no iterations."""
+    # Here we use the hstack trick to fold bias into W
+    ones = np.ones((X.shape[0], 1))        # (n, 1)
+    X_b = np.hstack([ones, X])             # (n, d+1) -- prepend column of 1s
+    W_b = np.linalg.pinv(X_b.T @ X_b) @ X_b.T @ y  # (d+1,)
+    return W_b[1:], W_b[0]                 # weights (d,), bias scalar
 
 np.random.seed(42)
-X = np.random.randn(100, 2)                     # 100 samples, 2 features
-y = X @ [3, -1.5] + 2 + np.random.randn(100) * 0.3  # true weights=[3, -1.5], bias=2
+X = np.random.randn(100, 2)               # 100 samples, 2 features
+y = X @ [3, -1.5] + 2 + np.random.randn(100) * 0.3  # true: W=[3, -1.5], b=2
 
-W_closed = linear_regression_closed(X, y)
-W_gd = linear_regression_gd(X, y, lr=0.1, epochs=2000)
-print(f"Closed-form: bias={W_closed[0]:.2f}, weights={W_closed[1:]}")
-print(f"GD solution: bias={W_gd[0]:.2f}, weights={W_gd[1:]}")</code></pre>
+W_gd, b_gd = linear_regression_gd(X, y, lr=0.1, epochs=2000)
+W_cf, b_cf = linear_regression_closed(X, y)
+print(f"GD:          bias={b_gd:.2f}, weights={W_gd}")
+print(f"Closed-form: bias={b_cf:.2f}, weights={W_cf}")</code></pre>
 
         <div class="callout">
-          <strong>Key gradient formulas:</strong><br>
-          <strong>Logistic:</strong> <code>grad = X.T @ (sigmoid(X @ W) - y) / n</code><br>
-          <strong>Linear:</strong> <code>grad = X.T @ (X @ W - y) / n</code><br>
-          Same structure -- only difference is logistic wraps the prediction in sigmoid. For linear regression, also know the closed-form: <code>W = (X^T X)^{-1} X^T y</code>.
+          <strong>Key gradient formulas (same structure for both):</strong><br>
+          <code>dW = X.T @ error / n</code> &nbsp;&nbsp; <code>db = mean(error)</code><br>
+          Where <code>error = preds - y</code>. Only difference: logistic wraps the prediction in sigmoid, linear does not.
         </div>
       </section>
 
@@ -416,13 +421,13 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 model = AutoModel.from_pretrained("bert-base-uncased")
 model.eval()
 
-text: str = "User prefers jazz music in the evening."
+text = "User prefers jazz music in the evening."
 tokens = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=128)
 
 with torch.no_grad():
     outputs = model(**tokens)
 
-cls_embedding: torch.Tensor = outputs.last_hidden_state[:, 0, :]  # [CLS]
+cls_embedding =outputs.last_hidden_state[:, 0, :]  # [CLS]
 print(cls_embedding.shape)  # (1, 768)</code></pre>
 
         <h3>Mean-Pooled Sentence Embedding (Proper Way)</h3>
@@ -442,7 +447,7 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 model = AutoModel.from_pretrained("bert-base-uncased")
 model.eval()
 
-text: str = "Schedule a meeting with the design team."
+text = "Schedule a meeting with the design team."
 tokens = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=128)
 
 with torch.no_grad():
@@ -489,13 +494,13 @@ import torch
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-texts: list[str] = [
+texts =[
     "Play relaxing music",
     "Navigate to the nearest coffee shop",
     "Read my unread messages",
 ]
 
-embeddings: torch.Tensor = model.encode(
+embeddings =model.encode(
     texts,
     convert_to_tensor=True,
     normalize_embeddings=True,

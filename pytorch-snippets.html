@@ -12,7 +12,7 @@
       --font-mono: "Monaco", "Menlo", "Consolas", monospace;
     }
     html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:var(--font-serif); font-size:18px; line-height:1.6; }
-    .page { max-width:720px; margin:48px auto 64px; padding:0 32px; }
+    .page { max-width:960px; margin:48px auto 64px; padding:0 32px; }
     .nav { margin-bottom:24px; }
     .back-btn { color:var(--text); text-decoration:none; font-size:18px; }
     .back-btn:hover { color:var(--vermillion); }
@@ -46,6 +46,117 @@
 
     <article class="post">
 
+      <!-- Section 0: Quick Reference -->
+      <section class="section">
+        <h2>0. Quick Reference -- Common Syntax</h2>
+
+        <h3>NumPy Essentials</h3>
+        <pre><code>import numpy as np
+
+# Creating arrays
+a = np.array([1, 2, 3])                  # from list
+z = np.zeros((3, 4))                      # 3x4 of zeros
+o = np.ones((2, 3))                       # 2x3 of ones
+e = np.empty((2, 2))                      # uninitialized
+r = np.random.randn(5, 3)                 # 5x3 standard normal
+ri = np.random.randint(0, 10, size=(3,))  # 3 random ints in [0, 10)
+seq = np.arange(0, 10, 2)                 # [0, 2, 4, 6, 8]
+lin = np.linspace(0, 1, 5)               # [0, 0.25, 0.5, 0.75, 1.0]
+eye = np.eye(3)                           # 3x3 identity
+
+# Shape operations
+a.reshape(1, 3)                           # reshape to (1, 3)
+a[None, :]                                # add dim at front: (1, 3)  -- same as np.expand_dims(a, 0)
+a[:, None]                                # add dim at back: (3, 1)
+np.squeeze(z)                             # remove dims of size 1
+np.concatenate([a, a], axis=0)            # concat along axis
+np.stack([a, a], axis=0)                  # stack into new dim: (2, 3)
+
+# Math
+np.dot(a, a)                              # dot product (scalar)
+A @ B                                     # matrix multiply
+np.linalg.norm(a)                         # L2 norm
+np.sum(r, axis=1)                         # sum along axis
+np.mean(r, axis=0)                        # mean along axis
+np.argmax(r, axis=1)                      # index of max per row
+np.clip(a, 0, 5)                          # clamp values to [0, 5]
+np.exp(a)                                 # element-wise exp
+np.log(a)                                 # element-wise log
+
+# Indexing / Boolean
+mask = a > 1                              # [False, True, True]
+a[mask]                                   # [2, 3] -- boolean indexing
+np.where(a > 1, a, 0)                     # [0, 2, 3] -- conditional
+idx = np.argsort(a)                       # indices that sort the array
+a[idx[::-1]]                              # sorted descending</code></pre>
+
+        <h3>PyTorch Essentials</h3>
+        <pre><code>import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+# Creating tensors
+t = torch.tensor([1.0, 2.0, 3.0])        # from list
+z = torch.zeros(3, 4)                     # 3x4 zeros
+r = torch.randn(5, 3)                     # 5x3 standard normal
+t = torch.from_numpy(np_array)            # numpy -> tensor
+n = t.numpy()                             # tensor -> numpy (shares memory)
+
+# Shape operations
+t.view(1, -1)                             # reshape (-1 infers size)
+t.unsqueeze(0)                            # add dim: (3,) -> (1, 3)
+t.squeeze()                               # remove size-1 dims
+torch.cat([t, t], dim=0)                  # concat along dim
+torch.stack([t, t], dim=0)                # stack into new dim
+
+# Common operations
+t.argmax(dim=-1)                          # index of max
+F.softmax(t, dim=-1)                      # softmax
+F.normalize(t, p=2, dim=-1)              # L2 normalize
+F.cosine_similarity(a, b, dim=-1)         # cosine sim
+torch.topk(t, k=3, dim=-1)               # top-k values + indices
+torch.mm(A, B)                            # matrix multiply
+torch.bmm(A, B)                           # batched matmul
+
+# Gradient control
+with torch.no_grad():                     # disable grad tracking
+    out = model(x)
+param.requires_grad = False               # freeze a parameter
+
+# Common layers
+nn.Linear(in_features, out_features)      # fully connected
+nn.Embedding(vocab_size, embed_dim)       # embedding lookup
+nn.Dropout(p=0.1)                         # dropout
+nn.LayerNorm(hidden_size)                 # layer normalization
+nn.CrossEntropyLoss()                     # classification loss
+nn.MSELoss()                              # regression loss</code></pre>
+
+        <h3>Python Essentials</h3>
+        <pre><code># List comprehension
+squares = [x**2 for x in range(10)]
+filtered = [x for x in items if x > 0]
+
+# Dict comprehension
+d = {k: v for k, v in zip(keys, values)}
+
+# Enumerate, zip
+for i, item in enumerate(items):
+    print(i, item)
+for a, b in zip(list1, list2):
+    print(a, b)
+
+# Sorting
+sorted(items, key=lambda x: x[1], reverse=True)
+
+# Collections
+from collections import defaultdict, Counter
+counts = Counter(words)                   # word -> count
+groups = defaultdict(list)                # key -> list of values
+
+# Unpacking
+first, *rest = [1, 2, 3, 4]              # first=1, rest=[2,3,4]</code></pre>
+      </section>
+
       <!-- Section: Data Loading & Preprocessing -->
       <section class="section">
         <h2>1. Data Loading &amp; Preprocessing</h2>
@@ -76,50 +187,6 @@ def clean_text(text: str) -> str:
 
 print(clean_text("Check &lt;b&gt;THIS&lt;/b&gt; out: https://example.com !!!"))
 # "check this out"</code></pre>
-
-        <h3>Data Augmentation for Text</h3>
-        <pre><code>import random
-from nltk.corpus import wordnet
-
-def synonym_replace(words, n=1):
-    """Replace n random words with WordNet synonyms."""
-    new_words = words.copy()
-    targets = [w for w in words if wordnet.synsets(w)]
-    random.shuffle(targets)
-
-    for word in targets[:n]:
-        syns = wordnet.synsets(word)
-        # Collect all synonym lemmas (excluding the word itself)
-        lemmas = []
-        for s in syns:
-            for l in s.lemmas():
-                if l.name() != word:
-                    lemmas.append(l.name())
-        if lemmas:
-            replacement = random.choice(lemmas)
-            new_words = [replacement if w == word else w for w in new_words]
-    return new_words
-
-def random_insertion(words, n=1):
-    """Insert n random synonyms at random positions."""
-    new_words = words.copy()
-    for _ in range(n):
-        # Pick a random word and find its synonyms
-        w = random.choice(new_words)
-        syns = wordnet.synsets(w)
-        lemmas = []
-        for s in syns:
-            for l in s.lemmas():
-                if l.name() != w:
-                    lemmas.append(l.name())
-        if lemmas:
-            synonym = random.choice(lemmas)
-            pos = random.randint(0, len(new_words))
-            new_words.insert(pos, synonym)
-    return new_words
-
-# Back-translation sketch (requires translation API):
-# translate(text, src="en", tgt="de") -> translate(result, src="de", tgt="en")</code></pre>
 
         <h3>Handling Class Imbalance</h3>
         <pre><code>import torch
@@ -177,38 +244,6 @@ for col in df.select_dtypes(include=[np.number]).columns:
     df[col] = df[col].fillna(df[col].median())
 for col in df.select_dtypes(include=["object"]).columns:
     df[col] = df[col].fillna(df[col].mode()[0])</code></pre>
-
-        <h3>Feature Scaling &amp; Encoding</h3>
-        <pre><code>from sklearn.preprocessing import StandardScaler, LabelEncoder
-import pandas as pd
-
-# Numeric scaling
-scaler = StandardScaler()
-num_cols = ["age", "income", "score"]
-df[num_cols] = scaler.fit_transform(df[num_cols])
-
-# Label encoding for ordinal categories
-le = LabelEncoder()
-df["priority"] = le.fit_transform(df["priority"])  # low=0, medium=1, high=2
-
-# One-hot encoding for nominal categories
-df = pd.get_dummies(df, columns=["city", "device_type"], drop_first=True)</code></pre>
-
-        <h3>Outlier Detection &amp; Removal</h3>
-        <pre><code>import numpy as np
-
-# IQR method
-def remove_outliers_iqr(df, col, factor=1.5):
-    q1, q3 = df[col].quantile([0.25, 0.75])
-    iqr = q3 - q1
-    return df[(df[col] >= q1 - factor*iqr) & (df[col] <= q3 + factor*iqr)]
-
-# Z-score method
-def remove_outliers_zscore(df, col, threshold=3.0):
-    z = np.abs((df[col] - df[col].mean()) / df[col].std())
-    return df[z < threshold]
-
-df = remove_outliers_iqr(df, "income")</code></pre>
 
         <h3>Train/Val/Test Split with Stratification</h3>
         <pre><code>from sklearn.model_selection import train_test_split
@@ -428,132 +463,46 @@ print(f"GD solution: bias={W_gd[0]:.2f}, weights={W_gd[1:]}")</code></pre>
         </div>
       </section>
 
-      <!-- Section 5: Loading Models & Tokenizers -->
+      <!-- Section 5: Models & Tokenization -->
       <section class="section">
-        <h2>5. Loading Models &amp; Tokenizers</h2>
+        <h2>5. Models &amp; Tokenization</h2>
 
-        <h3>Load a Pre-Trained Transformer (BERT)</h3>
-        <pre><code>from transformers import AutoModel, AutoTokenizer
-
-model_name: str = "bert-base-uncased"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModel.from_pretrained(model_name)
-model.eval()
-
-tokens = tokenizer("Hello world", return_tensors="pt")
-output = model(**tokens)
-print(output.last_hidden_state.shape)  # (1, seq_len, 768)</code></pre>
-
-        <h3>Load a Sentence Embedding Model</h3>
-        <pre><code>from sentence_transformers import SentenceTransformer
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-sentences: list[str] = ["Samsung Bixby is a voice assistant", "Memory systems store user preferences"]
-embeddings = model.encode(sentences, convert_to_tensor=True)
-print(embeddings.shape)  # (2, 384)</code></pre>
-
-        <h3>Load a Model for Feature Extraction (No Head)</h3>
+        <h3>Load Model + Tokenize</h3>
         <pre><code>from transformers import AutoModel, AutoTokenizer
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 model = AutoModel.from_pretrained("bert-base-uncased")
 model.eval()
 
-tokens = tokenizer("Extract features from this.", return_tensors="pt")
-with torch.no_grad():
-    outputs = model(**tokens)
+# Single text
+tokens = tokenizer("Hello world", return_tensors="pt", padding=True, truncation=True, max_length=128)
+output = model(**tokens)
+print(output.last_hidden_state.shape)  # (1, seq_len, 768)
 
-# outputs.last_hidden_state: (batch, seq_len, hidden_dim)
-# outputs.pooler_output:     (batch, hidden_dim) -- [CLS] through linear + tanh</code></pre>
-
-        <div class="callout">
-          <strong>AutoModel vs AutoModelForSequenceClassification vs AutoModelForCausalLM</strong><br>
-          <strong>AutoModel</strong> -- base transformer, returns hidden states only. Use for embeddings, feature extraction, or attaching your own head.<br>
-          <strong>AutoModelForSequenceClassification</strong> -- adds a linear classification head on top of [CLS]. Use for sentiment, intent classification, NLI.<br>
-          <strong>AutoModelForCausalLM</strong> -- adds an LM head for next-token prediction. Use for text generation (GPT-style models, LLM inference).
-        </div>
-      </section>
-
-      <!-- Section 6: Tokenization Patterns -->
-      <section class="section">
-        <h2>6. Tokenization Patterns</h2>
-
-        <h3>Basic Tokenization with Padding/Truncation</h3>
-        <pre><code>from transformers import AutoTokenizer
-
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-
-text: str = "Samsung Bixby remembers your preferences over time."
-tokens = tokenizer(
-    text,
-    max_length=128,
-    padding="max_length",
-    truncation=True,
-    return_tensors="pt",
-)
-print(tokens["input_ids"].shape)       # (1, 128)
-print(tokens["attention_mask"].shape)  # (1, 128)</code></pre>
-
-        <h3>Batch Tokenization</h3>
-        <pre><code>from transformers import AutoTokenizer
-
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-
-texts: list[str] = [
-    "What is the weather today?",
-    "Remind me to call mom at 5pm.",
-    "Play my morning playlist.",
-]
-batch = tokenizer(
-    texts,
-    max_length=64,
-    padding="longest",
-    truncation=True,
-    return_tensors="pt",
-)
+# Batch
+texts = ["What is the weather?", "Remind me to call mom.", "Play my morning playlist."]
+batch = tokenizer(texts, return_tensors="pt", padding="longest", truncation=True, max_length=64)
 print(batch["input_ids"].shape)  # (3, longest_seq_len)</code></pre>
 
-        <h3>Handling Long Documents (Chunking with Overlap)</h3>
-        <pre><code>from transformers import AutoTokenizer
+        <h3>Sentence Embedding Model</h3>
+        <pre><code>from sentence_transformers import SentenceTransformer
 
-def chunk_document(text, tokenizer, max_length=512, stride=128):
-    """Split a long document into overlapping chunks for embedding."""
-    encoding = tokenizer(
-        text,
-        max_length=max_length,
-        truncation=False,
-        return_overflowing_tokens=True,
-        stride=stride,
-        return_tensors="pt",
-        padding="max_length",
-    )
-    num_chunks = encoding["input_ids"].shape[0]
-    chunks = []
-    for i in range(num_chunks):
-        chunk = {
-            "input_ids": encoding["input_ids"][i].unsqueeze(0),
-            "attention_mask": encoding["attention_mask"][i].unsqueeze(0),
-        }
-        chunks.append(chunk)
-    return chunks
-
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-long_text = "This is a very long document. " * 200
-chunks = chunk_document(long_text, tokenizer, max_length=128, stride=32)
-print(f"Document split into {len(chunks)} overlapping chunks")</code></pre>
+model = SentenceTransformer("all-MiniLM-L6-v2")
+sentences = ["Samsung Bixby is a voice assistant", "Memory systems store user preferences"]
+embeddings = model.encode(sentences, convert_to_tensor=True)
+print(embeddings.shape)  # (2, 384)</code></pre>
 
         <div class="callout">
-          <strong>Tokenization details</strong><br>
-          <strong>max_length</strong> -- maximum number of tokens. BERT: 512. Many modern models: 8192+.<br>
-          <strong>padding="longest"</strong> -- pad to the longest item in the batch (efficient). <strong>padding="max_length"</strong> -- pad to max_length (fixed size, needed for static batching).<br>
-          <strong>attention_mask</strong> -- binary tensor. 1 = real token, 0 = padding. Always pass it to the model so padding tokens are ignored in self-attention.
+          <strong>AutoModel</strong> -- base transformer, returns hidden states. For embeddings or custom heads.<br>
+          <strong>AutoModelForSequenceClassification</strong> -- adds classification head on [CLS]. For sentiment, intent.<br>
+          <strong>AutoModelForCausalLM</strong> -- LM head for next-token prediction. For text generation.<br>
+          <strong>attention_mask</strong> -- 1 = real token, 0 = padding. Always pass to model.
         </div>
       </section>
 
       <!-- Section 7: Generating Embeddings -->
       <section class="section">
-        <h2>7. Generating Embeddings</h2>
+        <h2>6. Generating Embeddings</h2>
 
         <h3>Get [CLS] Token Embedding from BERT</h3>
         <pre><code>import torch
@@ -661,7 +610,7 @@ print(embeddings.shape)  # (3, 384)</code></pre>
 
       <!-- Section 8: Similarity Search with Embeddings -->
       <section class="section">
-        <h2>8. Similarity Search with Embeddings</h2>
+        <h2>7. Similarity Search with Embeddings</h2>
 
         <h3>Cosine Similarity with torch.nn.functional</h3>
         <pre><code>import torch
@@ -742,183 +691,75 @@ print(f"HNSW top-10: {indices[0]}")</code></pre>
         </div>
       </section>
 
-      <!-- Section 9: Fine-Tuning a Transformer -->
+      <!-- Section 9: Training Loop Essentials -->
       <section class="section">
-        <h2>9. Fine-Tuning a Transformer</h2>
+        <h2>8. Training Loop Essentials</h2>
 
-        <h3>Classification Fine-Tuning Loop (Manual PyTorch)</h3>
+        <h3>Custom Dataset + DataLoader</h3>
         <pre><code>import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
-from transformers import AutoModel, AutoTokenizer
+from torch.utils.data import Dataset, DataLoader
+from transformers import AutoTokenizer
 
-class TransformerClassifier(nn.Module):
-    """BERT + linear classification head."""
-    def __init__(self, model_name: str, num_classes: int):
-        super().__init__()
-        self.encoder = AutoModel.from_pretrained(model_name)
-        self.classifier = nn.Linear(self.encoder.config.hidden_size, num_classes)
-        self.dropout = nn.Dropout(0.1)
+class TextDataset(Dataset):
+    def __init__(self, texts, labels, tokenizer, max_length=128):
+        self.encodings = tokenizer(texts, padding="max_length", truncation=True,
+                                   max_length=max_length, return_tensors="pt")
+        self.labels = torch.tensor(labels, dtype=torch.long)
 
-    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
-        cls_output = outputs.last_hidden_state[:, 0, :]  # [CLS]
-        return self.classifier(self.dropout(cls_output))
+    def __len__(self):
+        return len(self.labels)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    def __getitem__(self, idx):
+        return self.encodings["input_ids"][idx], self.encodings["attention_mask"][idx], self.labels[idx]
+
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-model = TransformerClassifier("bert-base-uncased", num_classes=4).to(device)
-optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
-criterion = nn.CrossEntropyLoss()
+dataset = TextDataset(["Set alarm", "Play jazz", "Weather?"], [0, 1, 2], tokenizer)
+loader = DataLoader(dataset, batch_size=2, shuffle=True)</code></pre>
 
-texts = ["Set an alarm", "Play music", "Check weather", "Call mom"] * 50
-labels = [0, 1, 2, 3] * 50
-tokens = tokenizer(texts, padding=True, truncation=True, max_length=64, return_tensors="pt")
-dataset = TensorDataset(tokens["input_ids"], tokens["attention_mask"], torch.tensor(labels))
-loader = DataLoader(dataset, batch_size=16, shuffle=True)
-
-model.train()
-for epoch in range(3):
-    total_loss = 0.0
-    for input_ids, attention_mask, batch_labels in loader:
-        input_ids = input_ids.to(device)
-        attention_mask = attention_mask.to(device)
-        batch_labels = batch_labels.to(device)
-
-        optimizer.zero_grad()
-        logits = model(input_ids, attention_mask)
-        loss = criterion(logits, batch_labels)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        optimizer.step()
-        total_loss += loss.item()
-
-    print(f"Epoch {epoch+1}, Loss: {total_loss / len(loader):.4f}")</code></pre>
-
-        <h3>Freeze Base Model, Train Only Classifier Head</h3>
+        <h3>Training Loop with Validation and Early Stopping</h3>
         <pre><code>import torch
 import torch.nn as nn
-from transformers import AutoModel
 
-model_name: str = "bert-base-uncased"
-encoder = AutoModel.from_pretrained(model_name)
-
-for param in encoder.parameters():
-    param.requires_grad = False
-
-classifier = nn.Sequential(
-    nn.Linear(encoder.config.hidden_size, 256),
-    nn.ReLU(),
-    nn.Dropout(0.1),
-    nn.Linear(256, 4),
-)
-
-trainable = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
-frozen = sum(p.numel() for p in encoder.parameters())
-print(f"Trainable: {trainable:,} params")   # ~200K
-print(f"Frozen:    {frozen:,} params")       # ~110M
-
-optimizer = torch.optim.Adam(classifier.parameters(), lr=1e-3)</code></pre>
-
-        <h3>LoRA / PEFT Adapter Setup</h3>
-        <pre><code>from transformers import AutoModelForSequenceClassification
-from peft import LoraConfig, get_peft_model, TaskType
-
-base_model = AutoModelForSequenceClassification.from_pretrained(
-    "bert-base-uncased", num_labels=4
-)
-
-lora_config = LoraConfig(
-    task_type=TaskType.SEQ_CLS,
-    r=8,
-    lora_alpha=32,                # effective lr scales as alpha/r
-    lora_dropout=0.1,
-    target_modules=["query", "value"],
-)
-
-model = get_peft_model(base_model, lora_config)
-model.print_trainable_parameters()
-
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)</code></pre>
-
-        <div class="callout">
-          <strong>Full Fine-Tune vs Head-Only vs LoRA</strong><br>
-          <strong>Full fine-tune</strong> -- update all parameters. Best accuracy when you have enough data (&gt;10K examples). Expensive, risk of catastrophic forgetting.<br>
-          <strong>Head-only</strong> -- freeze encoder, train a new classifier. Fast, data-efficient, no forgetting. Good baseline for few-shot classification.<br>
-          <strong>LoRA</strong> -- add small trainable rank decomposition matrices. 0.1-1% of parameters. Near full-fine-tune quality with fraction of the cost. Best for on-device adaptation where you cannot store full model copies.
-        </div>
-      </section>
-
-      <!-- Section 10: Training Loop Essentials -->
-      <section class="section">
-        <h2>10. Training Loop Essentials</h2>
-
-        <h3>Complete Training Loop with Validation, Early Stopping, Gradient Accumulation</h3>
-        <pre><code>import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-
-def train_model(
-    model: nn.Module,
-    train_loader: DataLoader,
-    val_loader: DataLoader,
-    num_epochs: int = 10,
-    lr: float = 2e-5,
-    accumulation_steps: int = 4,
-    patience: int = 3,
-    device: str = "cuda",
-) -> nn.Module:
+def train_model(model, train_loader, val_loader, num_epochs=10, lr=2e-5, patience=3, device="cuda"):
     model = model.to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
     best_val_loss = float("inf")
     patience_counter = 0
 
     for epoch in range(num_epochs):
+        # Train
         model.train()
         train_loss = 0.0
-        optimizer.zero_grad()
+        for input_ids, attention_mask, labels in train_loader:
+            input_ids, attention_mask, labels = input_ids.to(device), attention_mask.to(device), labels.to(device)
 
-        for step, (input_ids, attention_mask, labels) in enumerate(train_loader):
-            input_ids = input_ids.to(device)
-            attention_mask = attention_mask.to(device)
-            labels = labels.to(device)
-
+            optimizer.zero_grad()
             logits = model(input_ids, attention_mask)
-            loss = criterion(logits, labels) / accumulation_steps
+            loss = criterion(logits, labels)
             loss.backward()
-            train_loss += loss.item() * accumulation_steps
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+            train_loss += loss.item()
 
-            if (step + 1) % accumulation_steps == 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                optimizer.step()
-                optimizer.zero_grad()
-
-        avg_train_loss = train_loss / len(train_loader)
-
+        # Validate
         model.eval()
-        val_loss = 0.0
-        correct = 0
-        total = 0
-
+        val_loss, correct, total = 0.0, 0, 0
         with torch.no_grad():
             for input_ids, attention_mask, labels in val_loader:
-                input_ids = input_ids.to(device)
-                attention_mask = attention_mask.to(device)
-                labels = labels.to(device)
-
+                input_ids, attention_mask, labels = input_ids.to(device), attention_mask.to(device), labels.to(device)
                 logits = model(input_ids, attention_mask)
                 val_loss += criterion(logits, labels).item()
-                preds = logits.argmax(dim=-1)
-                correct += (preds == labels).sum().item()
+                correct += (logits.argmax(-1) == labels).sum().item()
                 total += labels.size(0)
 
-        avg_val_loss = val_loss / len(val_loader)
-        val_acc = correct / total
-        print(f"Epoch {epoch+1}: train_loss={avg_train_loss:.4f} val_loss={avg_val_loss:.4f} val_acc={val_acc:.4f}")
+        avg_train = train_loss / len(train_loader)
+        avg_val = val_loss / len(val_loader)
+        print(f"Epoch {epoch+1}: train={avg_train:.4f} val={avg_val:.4f} acc={correct/total:.4f}")
 
-        if avg_val_loss < best_val_loss:
-            best_val_loss = avg_val_loss
+        # Early stopping
+        if avg_val < best_val_loss:
+            best_val_loss = avg_val
             patience_counter = 0
             torch.save(model.state_dict(), "best_model.pt")
         else:
@@ -930,176 +771,14 @@ def train_model(
     model.load_state_dict(torch.load("best_model.pt"))
     return model</code></pre>
 
-        <h3>DataLoader Setup with Custom Dataset</h3>
-        <pre><code>import torch
-from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer
-
-class TextClassificationDataset(Dataset):
-    def __init__(self, texts: list[str], labels: list[int], tokenizer, max_length: int = 128):
-        self.encodings = tokenizer(
-            texts, padding="max_length", truncation=True, max_length=max_length, return_tensors="pt"
-        )
-        self.labels = torch.tensor(labels, dtype=torch.long)
-
-    def __len__(self) -> int:
-        return len(self.labels)
-
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        return (
-            self.encodings["input_ids"][idx],
-            self.encodings["attention_mask"][idx],
-            self.labels[idx],
-        )
-
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-train_texts = ["Set an alarm for 7am", "What is the weather?", "Play some jazz"]
-train_labels = [0, 1, 2]
-
-dataset = TextClassificationDataset(train_texts, train_labels, tokenizer)
-loader = DataLoader(dataset, batch_size=2, shuffle=True, num_workers=0, pin_memory=True)
-
-for input_ids, attention_mask, labels in loader:
-    print(input_ids.shape, attention_mask.shape, labels.shape)
-    break</code></pre>
-
-        <h3>Mixed Precision Training with torch.cuda.amp</h3>
-        <pre><code>import torch
-import torch.nn as nn
-from torch.amp import autocast, GradScaler
-
-def train_step_mixed_precision(
-    model: nn.Module,
-    batch: tuple,
-    optimizer: torch.optim.Optimizer,
-    criterion: nn.Module,
-    scaler: GradScaler,
-    device: str = "cuda",
-) -> float:
-    input_ids, attention_mask, labels = [x.to(device) for x in batch]
-
-    optimizer.zero_grad()
-
-    with autocast(device_type="cuda"):
-        logits = model(input_ids, attention_mask)
-        loss = criterion(logits, labels)
-
-    scaler.scale(loss).backward()
-    scaler.unscale_(optimizer)
-    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-    scaler.step(optimizer)
-    scaler.update()
-
-    return loss.item()
-
-scaler = GradScaler()</code></pre>
-
-        <h3>Learning Rate Scheduling (Warmup + Cosine Decay)</h3>
-        <pre><code>import torch
-from torch.optim.lr_scheduler import LambdaLR
-import math
-
-def get_cosine_schedule_with_warmup(
-    optimizer: torch.optim.Optimizer,
-    num_warmup_steps: int,
-    num_training_steps: int,
-) -> LambdaLR:
-    def lr_lambda(current_step: int) -> float:
-        if current_step < num_warmup_steps:
-            return float(current_step) / float(max(1, num_warmup_steps))
-        progress = float(current_step - num_warmup_steps) / float(
-            max(1, num_training_steps - num_warmup_steps)
-        )
-        return max(0.0, 0.5 * (1.0 + math.cos(math.pi * progress)))
-
-    return LambdaLR(optimizer, lr_lambda)
-
-optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
-total_steps = len(train_loader) * num_epochs
-scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=total_steps // 10, num_training_steps=total_steps)
-
-# Call scheduler.step() after each optimizer.step()</code></pre>
-
         <div class="callout">
-          <strong>Gradient Accumulation for Large Batch Simulation</strong><br>
-          When GPU memory is limited (e.g., on-device or single GPU), you cannot fit a large batch. Gradient accumulation simulates a larger effective batch by accumulating gradients over multiple forward/backward passes before calling optimizer.step(). With accumulation_steps=4 and batch_size=8, the effective batch size is 32. Key: divide loss by accumulation_steps to keep the gradient magnitude correct.
+          <strong>Training loop pattern: zero_grad -> forward -> loss -> backward -> clip_grad -> step.</strong> Always validate after each epoch. Early stopping prevents overfitting: track best val loss and stop if it hasn't improved for <code>patience</code> epochs.
         </div>
       </section>
 
-      <!-- Section 11: RAG Pipeline -->
+      <!-- Section 10: Two-Stage Retrieval -->
       <section class="section">
-        <h2>11. RAG Pipeline (End-to-End)</h2>
-
-        <h3>Full Mini RAG Pipeline</h3>
-        <pre><code>import torch
-import numpy as np
-import faiss
-from sentence_transformers import SentenceTransformer
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-class MiniRAG:
-    """Minimal retrieval-augmented generation pipeline."""
-
-    def __init__(
-        self,
-        retriever_model: str = "all-MiniLM-L6-v2",
-        generator_model: str = "gpt2",
-    ):
-        self.retriever = SentenceTransformer(retriever_model)
-        self.dim = self.retriever.get_sentence_embedding_dimension()
-        self.index = faiss.IndexFlatIP(self.dim)
-        self.documents: list[str] = []
-
-        self.tokenizer = AutoTokenizer.from_pretrained(generator_model)
-        self.generator = AutoModelForCausalLM.from_pretrained(generator_model)
-        self.generator.eval()
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-
-    def index_documents(self, documents: list[str]) -> None:
-        self.documents = documents
-        embeddings = self.retriever.encode(documents, normalize_embeddings=True)
-        self.index.add(embeddings.astype("float32"))
-        print(f"Indexed {self.index.ntotal} documents")
-
-    def retrieve(self, query: str, top_k: int = 3) -> list[str]:
-        query_emb = self.retriever.encode([query], normalize_embeddings=True).astype("float32")
-        scores, indices = self.index.search(query_emb, top_k)
-        return [self.documents[i] for i in indices[0]]
-
-    def generate(self, query: str, top_k: int = 3, max_new_tokens: int = 100) -> str:
-        context_docs = self.retrieve(query, top_k)
-        context = "\n".join(f"- {doc}" for doc in context_docs)
-        prompt = f"Context:\n{context}\n\nQuestion: {query}\nAnswer:"
-
-        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
-        with torch.no_grad():
-            output_ids = self.generator.generate(
-                **inputs,
-                max_new_tokens=max_new_tokens,
-                do_sample=True,
-                temperature=0.7,
-                top_p=0.9,
-            )
-
-        # Decode only the generated tokens (skip the prompt)
-        prompt_len = inputs["input_ids"].shape[1]
-        generated_tokens = output_ids[0][prompt_len:]
-        response = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
-        return response
-
-rag = MiniRAG()
-docs = [
-    "User prefers jazz music in the evening and classical in the morning.",
-    "User's favorite restaurant is Nobu in Palo Alto.",
-    "User has a meeting with the design team every Tuesday at 2pm.",
-    "User's dog is named Luna, a golden retriever.",
-    "User's home address is 123 Main St, Mountain View, CA.",
-]
-rag.index_documents(docs)
-
-answer = rag.generate("What kind of music does the user like?")
-print(answer)</code></pre>
+        <h2>9. Two-Stage Retrieval (Bi-Encoder + Cross-Encoder)</h2>
 
         <h3>Reranking with Cross-Encoder</h3>
         <pre><code>import torch
@@ -1142,7 +821,7 @@ for doc, score in results:
 
       <!-- Section 12: Evaluation -->
       <section class="section">
-        <h2>12. Evaluation</h2>
+        <h2>10. Evaluation Metrics</h2>
 
         <h3>Computing Retrieval Metrics (Recall@K, NDCG)</h3>
         <pre><code>import torch
@@ -1210,58 +889,8 @@ text = "Samsung Bixby is a voice assistant that remembers your preferences."
 ppl = compute_perplexity(model, tokenizer, text)
 print(f"Perplexity: {ppl:.2f}")</code></pre>
 
-        <h3>A/B Testing Framework Sketch</h3>
-        <pre><code>import numpy as np
-from scipy import stats
-from dataclasses import dataclass
-
-@dataclass
-class ABTestResult:
-    metric_a: float
-    metric_b: float
-    p_value: float
-    is_significant: bool
-    lift_percent: float
-    confidence_interval: tuple[float, float]
-
-def run_ab_test(group_a, group_b, alpha=0.05):
-    """Two-sample Welch's t-test for A/B testing."""
-    t_stat, p_value = stats.ttest_ind(group_a, group_b, equal_var=False)
-
-    mean_a = np.mean(group_a)
-    mean_b = np.mean(group_b)
-    lift = (mean_b - mean_a) / mean_a * 100
-
-    # 95% confidence interval for the difference
-    diff = mean_b - mean_a
-    se = np.sqrt(np.var(group_a) / len(group_a) + np.var(group_b) / len(group_b))
-    ci = (diff - 1.96 * se, diff + 1.96 * se)
-
-    return ABTestResult(
-        metric_a=mean_a,
-        metric_b=mean_b,
-        p_value=p_value,
-        is_significant=p_value < alpha,
-        lift_percent=lift,
-        confidence_interval=ci,
-    )
-
-np.random.seed(42)
-control_recall = np.random.normal(0.72, 0.08, size=500)
-treatment_recall = np.random.normal(0.75, 0.08, size=500)
-
-result = run_ab_test(control_recall, treatment_recall)
-print(f"Control recall:   {result.metric_a:.4f}")
-print(f"Treatment recall: {result.metric_b:.4f}")
-print(f"Lift: {result.lift_percent:.1f}%")
-print(f"p-value: {result.p_value:.4f}")
-print(f"Significant: {result.is_significant}")</code></pre>
-
         <div class="callout">
-          <strong>Offline vs Online Evaluation for Personalization</strong><br>
-          <strong>Offline:</strong> Recall@K, NDCG, MRR on held-out query-document pairs. Fast iteration, reproducible. But cannot capture real user satisfaction.<br>
-          <strong>Online:</strong> A/B test with real users -- measure click-through rate, task completion, engagement time. Gold standard but slow and expensive.<br>
-          <strong>Bridge:</strong> Use offline metrics for rapid model iteration, then validate the best candidate with a small-scale online A/B test. For Bixby memory, offline = "did we retrieve the right memory?", online = "did the user find the response helpful?"
+          <strong>Recall@K</strong> -- did we find the relevant items in the top K? <strong>NDCG</strong> -- are relevant items ranked higher? Both are standard for evaluating retrieval/memory systems. Perplexity measures how confident the LM is in its predictions (lower = better).
         </div>
       </section>
 

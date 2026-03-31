@@ -50,64 +50,45 @@
       <section class="section">
         <h2>0. Quick Reference -- Common Syntax</h2>
 
-        <h3>NumPy Essentials</h3>
+        <h3>NumPy</h3>
         <pre><code>import numpy as np
 
 # Creating arrays
 a = np.array([1, 2, 3])                  # from list
-z = np.zeros((3, 4))                      # 3x4 of zeros
-o = np.ones((2, 3))                       # 2x3 of ones
-e = np.empty((2, 2))                      # uninitialized
-r = np.random.randn(5, 3)                 # 5x3 standard normal
-ri = np.random.randint(0, 10, size=(3,))  # 3 random ints in [0, 10)
-seq = np.arange(0, 10, 2)                 # [0, 2, 4, 6, 8]
-lin = np.linspace(0, 1, 5)               # [0, 0.25, 0.5, 0.75, 1.0]
-eye = np.eye(3)                           # 3x3 identity
+np.ones((2, 3))                           # 2x3 of ones
+np.random.randn(5, 3)                     # 5x3 standard normal
+np.random.randint(0, 10, size=(3,))       # 3 random ints in [0, 10)
+np.arange(0, 10, 2)                       # [0, 2, 4, 6, 8]
+np.linspace(0, 1, 5)                      # [0, 0.25, 0.5, 0.75, 1.0]
+np.eye(3)                                 # 3x3 identity
 
-# Shape operations
+# Shape
 a.reshape(1, 3)                           # reshape to (1, 3)
-a[None, :]                                # add dim at front: (1, 3)  -- same as np.expand_dims(a, 0)
-a[:, None]                                # add dim at back: (3, 1)
-np.squeeze(z)                             # remove dims of size 1
-np.concatenate([a, a], axis=0)            # concat along axis
-np.stack([a, a], axis=0)                  # stack into new dim: (2, 3)
+a[:, None]                                # add dim: (3,) -> (3, 1)
+np.squeeze(a)                             # remove dims of size 1
 
-# Math
-np.dot(a, a)                              # dot product (scalar)
-A @ B                                     # matrix multiply
-np.linalg.norm(a)                         # L2 norm
-np.sum(r, axis=1)                         # sum along axis
-np.mean(r, axis=0)                        # mean along axis
-np.argmax(r, axis=1)                      # index of max per row
-np.clip(a, 0, 5)                          # clamp values to [0, 5]
-np.exp(a)                                 # element-wise exp
-np.log(a)                                 # element-wise log
-
-# Indexing / Boolean
+# Indexing
 mask = a > 1                              # [False, True, True]
 a[mask]                                   # [2, 3] -- boolean indexing
 np.where(a > 1, a, 0)                     # [0, 2, 3] -- conditional
-idx = np.argsort(a)                       # indices that sort the array
-a[idx[::-1]]                              # sorted descending</code></pre>
+np.argsort(a)                             # indices that sort the array
+np.argmax(a)                              # index of max</code></pre>
 
-        <h3>PyTorch Essentials</h3>
+        <h3>PyTorch</h3>
         <pre><code>import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 # Creating tensors
 t = torch.tensor([1.0, 2.0, 3.0])        # from list
-z = torch.zeros(3, 4)                     # 3x4 zeros
-r = torch.randn(5, 3)                     # 5x3 standard normal
-t = torch.from_numpy(np_array)            # numpy -> tensor
-n = t.numpy()                             # tensor -> numpy (shares memory)
+torch.randn(5, 3)                         # 5x3 standard normal
+torch.from_numpy(np_array)                # numpy -> tensor
+t.numpy()                                 # tensor -> numpy (shares memory)
 
-# Shape operations
+# Shape
 t.view(1, -1)                             # reshape (-1 infers size)
 t.unsqueeze(0)                            # add dim: (3,) -> (1, 3)
 t.squeeze()                               # remove size-1 dims
-torch.cat([t, t], dim=0)                  # concat along dim
-torch.stack([t, t], dim=0)                # stack into new dim
 
 # Common operations
 t.argmax(dim=-1)                          # index of max
@@ -115,8 +96,6 @@ F.softmax(t, dim=-1)                      # softmax
 F.normalize(t, p=2, dim=-1)              # L2 normalize
 F.cosine_similarity(a, b, dim=-1)         # cosine sim
 torch.topk(t, k=3, dim=-1)               # top-k values + indices
-torch.mm(A, B)                            # matrix multiply
-torch.bmm(A, B)                           # batched matmul
 
 # Gradient control
 with torch.no_grad():                     # disable grad tracking
@@ -127,138 +106,44 @@ param.requires_grad = False               # freeze a parameter
 nn.Linear(in_features, out_features)      # fully connected
 nn.Embedding(vocab_size, embed_dim)       # embedding lookup
 nn.Dropout(p=0.1)                         # dropout
-nn.LayerNorm(hidden_size)                 # layer normalization
 nn.CrossEntropyLoss()                     # classification loss
 nn.MSELoss()                              # regression loss</code></pre>
-
-        <h3>Python Essentials</h3>
-        <pre><code># List comprehension
-squares = [x**2 for x in range(10)]
-filtered = [x for x in items if x > 0]
-
-# Dict comprehension
-d = {k: v for k, v in zip(keys, values)}
-
-# Enumerate, zip
-for i, item in enumerate(items):
-    print(i, item)
-for a, b in zip(list1, list2):
-    print(a, b)
-
-# Sorting
-sorted(items, key=lambda x: x[1], reverse=True)
-
-# Collections
-from collections import defaultdict, Counter
-counts = Counter(words)                   # word -> count
-groups = defaultdict(list)                # key -> list of values
-
-# Unpacking
-first, *rest = [1, 2, 3, 4]              # first=1, rest=[2,3,4]</code></pre>
       </section>
 
-      <!-- Section: Data Loading & Preprocessing -->
+      <!-- Section: Data Preprocessing -->
       <section class="section">
-        <h2>1. Data Loading &amp; Preprocessing</h2>
+        <h2>1. Data Preprocessing</h2>
 
-        <h3>Loading CSV/JSON Data with Pandas</h3>
+        <h3>Load, Split, Handle Imbalance</h3>
         <pre><code>import pandas as pd
+import torch
 from sklearn.model_selection import train_test_split
-
-df = pd.read_csv("dataset.csv")  # or pd.read_json("dataset.json")
-print(df.shape, df.dtypes)
-print(df.describe())
-print(df.isnull().sum())
-
-train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df["label"])
-print(f"Train: {len(train_df)}, Test: {len(test_df)}")</code></pre>
-
-        <h3>Text Cleaning Pipeline</h3>
-        <pre><code>import re
-
-def clean_text(text: str) -> str:
-    """Lowercase, strip URLs/HTML/special chars, collapse whitespace."""
-    text = text.lower()
-    text = re.sub(r"http\S+|www\.\S+", "", text)
-    text = re.sub(r"<[^>]+>", "", text)
-    text = re.sub(r"[^a-z0-9\s]", "", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
-print(clean_text("Check &lt;b&gt;THIS&lt;/b&gt; out: https://example.com !!!"))
-# "check this out"</code></pre>
-
-        <h3>Handling Class Imbalance</h3>
-        <pre><code>import torch
 from torch.utils.data import WeightedRandomSampler, DataLoader
 
-# Method 1: Weighted loss
+# Load and inspect
+df = pd.read_csv("dataset.csv")
+print(df.shape, df.dtypes, df.isnull().sum())
+print(df["label"].value_counts())
+
+# 70/15/15 stratified split
+train_df, temp_df = train_test_split(df, test_size=0.3, random_state=42, stratify=df["label"])
+val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42, stratify=temp_df["label"])
+print(f"Train: {len(train_df)}, Val: {len(val_df)}, Test: {len(test_df)}")
+
+# Handle class imbalance -- Option A: weighted loss
 class_counts = [8000, 2000]  # [negative, positive]
 weights = torch.tensor([1.0 / c for c in class_counts])
 weights = weights / weights.sum()
 loss_fn = torch.nn.CrossEntropyLoss(weight=weights)
 
-# Method 2: WeightedRandomSampler for oversampling minority class
+# Handle class imbalance -- Option B: oversample minority
 labels = [0] * 8000 + [1] * 2000
 sample_weights = [1.0 / class_counts[l] for l in labels]
 sampler = WeightedRandomSampler(sample_weights, num_samples=len(labels), replacement=True)
 loader = DataLoader(dataset, batch_size=32, sampler=sampler)</code></pre>
 
-        <h3>Deduplication</h3>
-        <pre><code>import hashlib
-
-# Exact deduplication
-df = df.drop_duplicates(subset=["text"], keep="first")
-
-# Near-duplicate detection via hashing (MinHash sketch)
-def shingle_hash(text: str, k: int = 3) -> set[str]:
-    tokens = text.lower().split()
-    return {" ".join(tokens[i:i+k]) for i in range(len(tokens)-k+1)}
-
-def jaccard_sim(a: set, b: set) -> float:
-    return len(a & b) / len(a | b) if a | b else 0.0
-
-# Flag near-dupes above threshold
-seen = []
-to_drop = []
-for idx, row in df.iterrows():
-    shingles = shingle_hash(row["text"])
-    if any(jaccard_sim(shingles, s) > 0.8 for s in seen):
-        to_drop.append(idx)
-    else:
-        seen.append(shingles)
-df = df.drop(to_drop)</code></pre>
-
-        <h3>Missing Value Handling</h3>
-        <pre><code>import numpy as np
-
-# Inspect
-print(df.isnull().sum())
-print(f"Rows with any null: {df.isnull().any(axis=1).sum()}")
-
-# Drop rows where target is missing
-df = df.dropna(subset=["label"])
-
-# Fill numeric columns with median, categorical with mode
-for col in df.select_dtypes(include=[np.number]).columns:
-    df[col] = df[col].fillna(df[col].median())
-for col in df.select_dtypes(include=["object"]).columns:
-    df[col] = df[col].fillna(df[col].mode()[0])</code></pre>
-
-        <h3>Train/Val/Test Split with Stratification</h3>
-        <pre><code>from sklearn.model_selection import train_test_split
-
-# 70/15/15 split, stratified by label
-train_df, temp_df = train_test_split(df, test_size=0.3, random_state=42, stratify=df["label"])
-val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42, stratify=temp_df["label"])
-print(f"Train: {len(train_df)}, Val: {len(val_df)}, Test: {len(test_df)}")
-
-# Verify class distribution preserved
-for name, split in [("train", train_df), ("val", val_df), ("test", test_df)]:
-    print(f"{name}: {split['label'].value_counts(normalize=True).to_dict()}")</code></pre>
-
         <div class="callout">
-          <strong>Always inspect your data first.</strong> <code>df.describe()</code>, <code>df.isnull().sum()</code>, class distribution via <code>df["label"].value_counts()</code>. Check for duplicates with <code>df.duplicated().sum()</code>. Skipping EDA is the #1 source of wasted training time.
+          <strong>Always inspect first:</strong> <code>df.describe()</code>, <code>df.isnull().sum()</code>, <code>df["label"].value_counts()</code>. Two ways to handle imbalance: weighted loss (penalize mistakes on minority class more) or oversampling (show minority class more often).
         </div>
       </section>
 
@@ -300,9 +185,9 @@ loss_fn = torch.nn.CrossEntropyLoss()
 
 for epoch in range(3):
     model.train()
-    for batch, lbl in train_loader:
+    for batch, lbl in train_loader:                     # batch: dict of (B, seq_len), lbl: (B,)
         optimizer.zero_grad()
-        out = model(**batch)
+        out = model(**batch)                             # out.logits: (B, num_labels)
         loss = loss_fn(out.logits, lbl)
         loss.backward()
         optimizer.step()
@@ -311,7 +196,7 @@ for epoch in range(3):
     all_preds, all_labels = [], []
     with torch.no_grad():
         for batch, lbl in val_loader:
-            preds = model(**batch).logits.argmax(dim=-1)
+            preds = model(**batch).logits.argmax(dim=-1)  # (B,)
             all_preds.extend(preds.tolist())
             all_labels.extend(lbl.tolist())
     p, r, f1, _ = precision_recall_fscore_support(all_labels, all_preds, average="binary")
@@ -345,23 +230,23 @@ print(classification_report(val_labels, preds, target_names=["ham", "spam"]))</c
 
 def kmeans(X, k, max_iters=100, seed=42):
     rng = np.random.RandomState(seed)
-    n = X.shape[0]
+    n, d = X.shape                         # n=num points, d=num features
 
     # Random initialization: pick k random points as centroids
-    indices = rng.choice(n, size=k, replace=False)
-    centroids = X[indices]
+    indices = rng.choice(n, size=k, replace=False)  # (k,)
+    centroids = X[indices]                           # (k, d)
 
     for _ in range(max_iters):
         # Assign each point to nearest centroid
         dists = np.linalg.norm(X[:, None] - centroids[None], axis=2)  # (n, k)
-        assignments = np.argmin(dists, axis=1)
+        assignments = np.argmin(dists, axis=1)                         # (n,)
 
         # Update centroids to mean of assigned points
-        new_centroids = np.empty_like(centroids)
+        new_centroids = np.empty_like(centroids)     # (k, d)
         for j in range(k):
-            members = X[assignments == j]
+            members = X[assignments == j]            # (num_in_cluster_j, d)
             if len(members) > 0:
-                new_centroids[j] = members.mean(axis=0)
+                new_centroids[j] = members.mean(axis=0)  # (d,)
             else:
                 new_centroids[j] = centroids[j]
 
@@ -369,9 +254,9 @@ def kmeans(X, k, max_iters=100, seed=42):
             break
         centroids = new_centroids
 
-    return centroids, assignments
+    return centroids, assignments                    # (k, d), (n,)
 
-X = np.random.randn(200, 5)
+X = np.random.randn(200, 5)                         # 200 points, 5 features
 centroids, labels = kmeans(X, k=3)
 for i in range(3):
     print(f"Cluster {i}: {np.sum(labels == i)} points")</code></pre>
@@ -386,10 +271,10 @@ texts = [
     "Best Italian restaurants nearby", "Pizza dough recipe", "Pasta carbonara tips",
     "Stock market predictions", "Portfolio diversification", "Bond yields explained",
 ]
-embeddings = model.encode(texts, convert_to_numpy=True)
+embeddings = model.encode(texts, convert_to_numpy=True)  # (9, 384)
 
 # Use our kmeans from above
-centroids, labels = kmeans(embeddings, k=3)
+centroids, labels = kmeans(embeddings, k=3)              # (3, 384), (9,)
 for i in range(3):
     members = [texts[j] for j in range(len(texts)) if labels[j] == i]
     print(f"Cluster {i}: {members}")</code></pre>
@@ -406,52 +291,68 @@ for i in range(3):
         <h3>Logistic Regression (NumPy)</h3>
         <pre><code>import numpy as np
 
-def sigmoid(z): return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))            # maps any real number to (0, 1)
 
-def logistic_regression(X: np.ndarray, y: np.ndarray, lr: float = 0.1, epochs: int = 1000) -> np.ndarray:
-    """Binary logistic regression via gradient descent. Returns weights."""
-    n, d = X.shape
-    X_b = np.hstack([np.ones((n, 1)), X])  # add bias
-    W = np.zeros(d + 1)
+def logistic_regression(X, y, lr=0.1, epochs=1000):
+    n, d = X.shape                         # n=samples, d=features
+
+    # Add bias column: X was (n, d), now X_b is (n, d+1)
+    # e.g. [[x1, x2]] -> [[1, x1, x2]]  so W[0] acts as the bias term
+    bias_col = np.ones((n, 1))             # (n, 1)
+    X_b = np.hstack([bias_col, X])         # (n, d+1)
+
+    W = np.zeros(d + 1)                    # (d+1,) -- one weight per feature + bias
+
     for _ in range(epochs):
-        preds = sigmoid(X_b @ W)
-        grad = X_b.T @ (preds - y) / n
-        W -= lr * grad
-    return W
+        z = X_b @ W                        # (n,) -- linear combination
+        preds = sigmoid(z)                 # (n,) -- probabilities between 0 and 1
+        error = preds - y                  # (n,) -- how far off each prediction is
+        grad = X_b.T @ error / n           # (d+1,) -- average gradient
+        W = W - lr * grad                  # update weights
 
-def predict(X: np.ndarray, W: np.ndarray) -> np.ndarray:
-    X_b = np.hstack([np.ones((X.shape[0], 1)), X])
-    return (sigmoid(X_b @ W) >= 0.5).astype(int)
+    return W                               # (d+1,) -- W[0]=bias, W[1:]=feature weights
+
+def predict(X, W):
+    bias_col = np.ones((X.shape[0], 1))
+    X_b = np.hstack([bias_col, X])         # (n, d+1)
+    probs = sigmoid(X_b @ W)              # (n,)
+    return (probs >= 0.5).astype(int)      # (n,) -- 0 or 1
 
 np.random.seed(42)
-X = np.random.randn(200, 3)
-y = (X @ [1, -2, 0.5] + np.random.randn(200) * 0.5 > 0).astype(float)
+X = np.random.randn(200, 3)               # 200 samples, 3 features
+y = (X @ [1, -2, 0.5] + np.random.randn(200) * 0.5 > 0).astype(float)  # binary labels
 W = logistic_regression(X, y, lr=0.5, epochs=2000)
 acc = (predict(X, W) == y).mean()
-print(f"Accuracy: {acc:.3f}")
-print(f"Gradient formula: dW = X.T @ (sigmoid(X @ W) - y) / n")</code></pre>
+print(f"Accuracy: {acc:.3f}")</code></pre>
 
         <h3>Linear Regression (NumPy)</h3>
         <pre><code>import numpy as np
 
-def linear_regression_closed(X: np.ndarray, y: np.ndarray) -> np.ndarray:
+def linear_regression_closed(X, y):
     """Normal equation: W = (X^T X)^{-1} X^T y."""
-    X_b = np.hstack([np.ones((X.shape[0], 1)), X])
-    return np.linalg.pinv(X_b.T @ X_b) @ X_b.T @ y
+    bias_col = np.ones((X.shape[0], 1))
+    X_b = np.hstack([bias_col, X])              # (n, d+1)
+    return np.linalg.pinv(X_b.T @ X_b) @ X_b.T @ y  # (d+1,)
 
-def linear_regression_gd(X: np.ndarray, y: np.ndarray, lr: float = 0.01, epochs: int = 1000) -> np.ndarray:
+def linear_regression_gd(X, y, lr=0.01, epochs=1000):
     """Gradient descent: dW = X^T (X W - y) / n."""
-    X_b = np.hstack([np.ones((X.shape[0], 1)), X])
-    W = np.zeros(X_b.shape[1])
-    n = len(y)
+    n, d = X.shape
+    bias_col = np.ones((n, 1))
+    X_b = np.hstack([bias_col, X])              # (n, d+1)
+    W = np.zeros(d + 1)                         # (d+1,)
+
     for _ in range(epochs):
-        grad = X_b.T @ (X_b @ W - y) / n
-        W -= lr * grad
+        predictions = X_b @ W                   # (n,)
+        error = predictions - y                 # (n,)
+        grad = X_b.T @ error / n                # (d+1,)
+        W = W - lr * grad
+
     return W
 
 np.random.seed(42)
-X = np.random.randn(100, 2)
-y = X @ [3, -1.5] + 2 + np.random.randn(100) * 0.3
+X = np.random.randn(100, 2)                     # 100 samples, 2 features
+y = X @ [3, -1.5] + 2 + np.random.randn(100) * 0.3  # true weights=[3, -1.5], bias=2
 
 W_closed = linear_regression_closed(X, y)
 W_gd = linear_regression_gd(X, y, lr=0.1, epochs=2000)
@@ -459,7 +360,10 @@ print(f"Closed-form: bias={W_closed[0]:.2f}, weights={W_closed[1:]}")
 print(f"GD solution: bias={W_gd[0]:.2f}, weights={W_gd[1:]}")</code></pre>
 
         <div class="callout">
-          <strong>Interviewers love asking "implement logistic regression from scratch."</strong> Know the gradient: <code>dW = X.T @ (predictions - y) / n</code>. For linear regression, know both the normal equation and the GD approach.
+          <strong>Key gradient formulas:</strong><br>
+          <strong>Logistic:</strong> <code>grad = X.T @ (sigmoid(X @ W) - y) / n</code><br>
+          <strong>Linear:</strong> <code>grad = X.T @ (X @ W - y) / n</code><br>
+          Same structure -- only difference is logistic wraps the prediction in sigmoid. For linear regression, also know the closed-form: <code>W = (X^T X)^{-1} X^T y</code>.
         </div>
       </section>
 
@@ -616,46 +520,43 @@ print(embeddings.shape)  # (3, 384)</code></pre>
         <pre><code>import torch
 import torch.nn.functional as F
 
-def pairwise_cosine_similarity(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-    """Cosine similarity between all pairs. a: (M, D), b: (N, D) -> (M, N)."""
-    a_norm = F.normalize(a, p=2, dim=1)
-    b_norm = F.normalize(b, p=2, dim=1)
-    return torch.mm(a_norm, b_norm.t())
+def pairwise_cosine_similarity(a, b):
+    """a: (M, D), b: (N, D) -> (M, N) cosine similarities."""
+    a_norm = F.normalize(a, p=2, dim=1)       # (M, D)
+    b_norm = F.normalize(b, p=2, dim=1)       # (N, D)
+    return torch.mm(a_norm, b_norm.t())        # (M, N)
 
-query = torch.randn(1, 768)
-database = torch.randn(1000, 768)
-similarities = pairwise_cosine_similarity(query, database)
-top_k_values, top_k_indices = torch.topk(similarities, k=5, dim=1)
+query = torch.randn(1, 768)                   # 1 query, 768-dim
+database = torch.randn(1000, 768)              # 1000 docs, 768-dim
+similarities = pairwise_cosine_similarity(query, database)  # (1, 1000)
+top_k_values, top_k_indices = torch.topk(similarities, k=5, dim=1)  # (1, 5)
 print(top_k_indices)</code></pre>
 
         <h3>Build a Simple FAISS Index (Flat L2 and IVF)</h3>
         <pre><code>import numpy as np
 import faiss
 
-dim: int = 384
-num_vectors: int = 100_000
-
-embeddings = np.random.randn(num_vectors, dim).astype("float32")
+dim = 384
+num_vectors = 100_000
+embeddings = np.random.randn(num_vectors, dim).astype("float32")  # (100K, 384)
 faiss.normalize_L2(embeddings)
 
 # Flat index (exact brute-force search)
 flat_index = faiss.IndexFlatIP(dim)
 flat_index.add(embeddings)
-print(f"Flat index size: {flat_index.ntotal}")
 
 # IVF index (approximate, partitions into Voronoi cells)
-nlist: int = 256
+nlist = 256  # number of Voronoi cells
 quantizer = faiss.IndexFlatIP(dim)
 ivf_index = faiss.IndexIVFFlat(quantizer, dim, nlist, faiss.METRIC_INNER_PRODUCT)
 ivf_index.train(embeddings)
 ivf_index.add(embeddings)
-ivf_index.nprobe = 16
-print(f"IVF index size: {ivf_index.ntotal}")
+ivf_index.nprobe = 16  # search 16 of 256 cells
 
-query = np.random.randn(1, dim).astype("float32")
+query = np.random.randn(1, dim).astype("float32")  # (1, 384)
 faiss.normalize_L2(query)
 
-distances, indices = flat_index.search(query, k=5)
+distances, indices = flat_index.search(query, k=5)  # distances: (1, 5), indices: (1, 5)
 print(f"Flat results: {indices[0]}")
 
 distances, indices = ivf_index.search(query, k=5)
@@ -665,9 +566,9 @@ print(f"IVF results: {indices[0]}")</code></pre>
         <pre><code>import numpy as np
 import faiss
 
-dim: int = 384
-num_vectors: int = 100_000
-embeddings = np.random.randn(num_vectors, dim).astype("float32")
+dim = 384
+num_vectors = 100_000
+embeddings = np.random.randn(num_vectors, dim).astype("float32")  # (100K, 384)
 faiss.normalize_L2(embeddings)
 
 hnsw_index = faiss.IndexHNSWFlat(dim, 32)  # M=32 neighbors per node
@@ -677,9 +578,9 @@ hnsw_index.metric_type = faiss.METRIC_INNER_PRODUCT
 
 hnsw_index.add(embeddings)
 
-query = np.random.randn(1, dim).astype("float32")
+query = np.random.randn(1, dim).astype("float32")  # (1, 384)
 faiss.normalize_L2(query)
-distances, indices = hnsw_index.search(query, k=10)
+distances, indices = hnsw_index.search(query, k=10)  # (1, 10), (1, 10)
 print(f"HNSW top-10: {indices[0]}")</code></pre>
 
         <div class="callout">
@@ -710,6 +611,7 @@ class TextDataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx):
+        # returns input_ids (max_length,), attention_mask (max_length,), label (scalar)
         return self.encodings["input_ids"][idx], self.encodings["attention_mask"][idx], self.labels[idx]
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
@@ -731,12 +633,12 @@ def train_model(model, train_loader, val_loader, num_epochs=10, lr=2e-5, patienc
         # Train
         model.train()
         train_loss = 0.0
-        for input_ids, attention_mask, labels in train_loader:
+        for input_ids, attention_mask, labels in train_loader:  # (B, seq_len), (B, seq_len), (B,)
             input_ids, attention_mask, labels = input_ids.to(device), attention_mask.to(device), labels.to(device)
 
             optimizer.zero_grad()
-            logits = model(input_ids, attention_mask)
-            loss = criterion(logits, labels)
+            logits = model(input_ids, attention_mask)          # (B, num_classes)
+            loss = criterion(logits, labels)                   # scalar
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
@@ -787,15 +689,15 @@ from sentence_transformers import CrossEncoder
 def retrieve_and_rerank(query, candidates, bi_encoder, cross_encoder, initial_k=20, final_k=5):
     """Two-stage retrieval: bi-encoder recall + cross-encoder reranking."""
     # Stage 1: bi-encoder retrieves top candidates
-    query_emb = bi_encoder.encode([query], normalize_embeddings=True)
-    doc_embs = bi_encoder.encode(candidates, normalize_embeddings=True)
-    scores = (query_emb @ doc_embs.T)[0]
-    top_indices = scores.argsort()[::-1][:initial_k]
+    query_emb = bi_encoder.encode([query], normalize_embeddings=True)   # (1, d)
+    doc_embs = bi_encoder.encode(candidates, normalize_embeddings=True) # (N, d)
+    scores = (query_emb @ doc_embs.T)[0]             # (N,)
+    top_indices = scores.argsort()[::-1][:initial_k]  # (initial_k,)
     shortlist = [candidates[i] for i in top_indices]
 
     # Stage 2: cross-encoder reranks the shortlist
-    pairs = [[query, doc] for doc in shortlist]
-    rerank_scores = cross_encoder.predict(pairs)
+    pairs = [[query, doc] for doc in shortlist]       # list of [query, doc] pairs
+    rerank_scores = cross_encoder.predict(pairs)      # (initial_k,) float scores
 
     # Sort by rerank score descending
     ranked = sorted(zip(shortlist, rerank_scores), key=lambda x: x[1], reverse=True)
@@ -828,19 +730,25 @@ for doc, score in results:
 import numpy as np
 
 def recall_at_k(retrieved_indices, relevant_indices, k):
-    """Recall@K: fraction of relevant items found in top-K."""
+    """Recall@K: fraction of relevant items found in top-K.
+    retrieved_indices: (num_queries, num_retrieved) -- doc IDs per query
+    relevant_indices:  list of lists -- ground truth relevant doc IDs per query
+    """
     recalls = []
     for i in range(len(relevant_indices)):
-        top_k = set(retrieved_indices[i, :k].tolist())
+        top_k = set(retrieved_indices[i, :k].tolist())  # set of k doc IDs
         relevant = set(relevant_indices[i])
         if len(relevant) == 0:
             continue
-        hit_count = len(top_k & relevant)
+        hit_count = len(top_k & relevant)                # how many relevant found
         recalls.append(hit_count / len(relevant))
     return np.mean(recalls)
 
 def ndcg_at_k(retrieved_indices, relevance_scores, k):
-    """NDCG@K: normalized discounted cumulative gain."""
+    """NDCG@K: normalized discounted cumulative gain.
+    retrieved_indices: (num_queries, num_retrieved)
+    relevance_scores:  list of dicts {doc_id: relevance_score} per query
+    """
     ndcgs = []
     for i in range(len(relevance_scores)):
         # Compute DCG from retrieved order
@@ -870,17 +778,17 @@ print(f"NDCG@3: {ndcg_at_k(retrieved, rel_scores, k=3):.4f}")</code></pre>
         <pre><code>import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-def compute_perplexity(model, tokenizer, text: str, device: str = "cpu") -> float:
+def compute_perplexity(model, tokenizer, text, device="cpu"):
     """Perplexity of text under a causal LM. Lower = more confident."""
     model.eval()
     model.to(device)
-    encodings = tokenizer(text, return_tensors="pt").to(device)
+    encodings = tokenizer(text, return_tensors="pt").to(device)  # input_ids: (1, seq_len)
 
     with torch.no_grad():
         outputs = model(**encodings, labels=encodings["input_ids"])
-        neg_log_likelihood = outputs.loss
+        neg_log_likelihood = outputs.loss  # scalar -- avg cross-entropy over tokens
 
-    return torch.exp(neg_log_likelihood).item()
+    return torch.exp(neg_log_likelihood).item()  # scalar
 
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 model = AutoModelForCausalLM.from_pretrained("gpt2")
